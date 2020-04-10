@@ -1,0 +1,30 @@
+cc_test {
+
+    name: "DrmSessionManager_test",
+
+    srcs: ["DrmSessionManager_test.cpp"],
+
+    shared_libs: [
+        "liblog",
+        "libbinder",
+        "libmedia",
+        "libmediaplayerservice",
+        "libmediadrm",
+        "libresourcemanagerservice",
+        "libutils",
+        "android.hardware.drm@1.0",
+        "android.hardware.drm@1.1",
+        "android.hardware.drm@1.2",
+    ],
+
+    include_dirs: [
+        "frameworks/av/include",
+        "frameworks/av/services/mediaresourcemanager",
+    ],
+
+    cflags: [
+        "-Werror",
+        "-Wall",
+    ],
+
+}
