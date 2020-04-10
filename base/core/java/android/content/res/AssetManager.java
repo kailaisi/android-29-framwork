@@ -497,23 +497,22 @@ public final class AssetManager implements AutoCloseable {
      * @return {@code true} if the data was loaded into {@code outValue},
      *         {@code false} otherwise
      */
+    //加载当前配置的特定资源标识符关联的数据，然后将数据设置到outValue。
     @UnsupportedAppUsage
-    boolean getResourceValue(@AnyRes int resId, int densityDpi, @NonNull TypedValue outValue,
-            boolean resolveRefs) {
-        Preconditions.checkNotNull(outValue, "outValue");
+    boolean getResourceValue(@AnyRes int resId, int densityDpi, @NonNull TypedValue outValue,boolean resolveRefs) {Preconditions.checkNotNull(outValue, "outValue");
         synchronized (this) {
             ensureValidLocked();
-            final int cookie = nativeGetResourceValue(
-                    mObject, resId, (short) densityDpi, outValue, resolveRefs);
+            //进行本地方法的调用，将底层数据赋值给cookie。这里对应的本地方法位置为frameworks\base\core\jni\android_util_AssetManager.cpp
+            final int cookie = nativeGetResourceValue(mObject, resId, (short) densityDpi, outValue, resolveRefs);
             if (cookie <= 0) {
                 return false;
             }
 
             // Convert the changing configurations flags populated by native code.
-            outValue.changingConfigurations = ActivityInfo.activityInfoConfigNativeToJava(
-                    outValue.changingConfigurations);
+            outValue.changingConfigurations = ActivityInfo.activityInfoConfigNativeToJava(outValue.changingConfigurations);
 
             if (outValue.type == TypedValue.TYPE_STRING) {
+                //如果类型是String，则从全局字符串字符串中获取对应TypeValue中data对应的字符串数据。
                 outValue.string = mApkAssets[cookie - 1].getStringFromPool(outValue.data);
             }
             return true;

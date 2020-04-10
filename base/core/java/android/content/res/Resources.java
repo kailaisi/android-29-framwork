@@ -2271,21 +2271,24 @@ public class Resources {
      * @return a parser for the specified XML file
      * @throws NotFoundException if the file could not be loaded
      */
+    //为指定的文件加载XML解析器。
     @NonNull
     @UnsupportedAppUsage
-    XmlResourceParser loadXmlResourceParser(@AnyRes int id, @NonNull String type)
-            throws NotFoundException {
+    XmlResourceParser loadXmlResourceParser(@AnyRes int id, @NonNull String type)throws NotFoundException {
+        //获取一个typedValue。这里其实是将池(虽然这个池中只有一个)中的TypedValue取出，然后在最后的releaseTempTypedValue时，再将取出的这个typedValue放回池中
         final TypedValue value = obtainTempTypedValue();
         try {
+            //这里是个ResourcesImpl类
             final ResourcesImpl impl = mResourcesImpl;
+            //根据id，查询layout
             impl.getValue(id, value, true);
             if (value.type == TypedValue.TYPE_STRING) {
-                return impl.loadXmlResourceParser(value.string.toString(), id,
-                        value.assetCookie, type);
+                //通过impl加载Parser
+                return impl.loadXmlResourceParser(value.string.toString(), id,value.assetCookie, type);
             }
-            throw new NotFoundException("Resource ID #0x" + Integer.toHexString(id)
-                    + " type #0x" + Integer.toHexString(value.type) + " is not valid");
+            throw new NotFoundException("Resource ID #0x" + Integer.toHexString(id)+ " type #0x" + Integer.toHexString(value.type) + " is not valid");
         } finally {
+            //释放资源
             releaseTempTypedValue(value);
         }
     }

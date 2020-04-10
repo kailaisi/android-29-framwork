@@ -127,11 +127,12 @@ public abstract class LayoutInflater {
      * {@link #onCreateView(Context, View, String, AttributeSet)}.
      */
     @UnsupportedAppUsage(maxTargetSdk = Build.VERSION_CODES.P)
+    //构造方法的参数值
     final Object[] mConstructorArgs = new Object[2];
 
+    //使用双参数的构造方法对应的参数类型
     @UnsupportedAppUsage
-    static final Class<?>[] mConstructorSignature = new Class[] {
-            Context.class, AttributeSet.class};
+    static final Class<?>[] mConstructorSignature = new Class[] {Context.class, AttributeSet.class};
 
     @UnsupportedAppUsage(maxTargetSdk = Build.VERSION_CODES.P, trackingBug = 123769490)
     private static final HashMap<String, Constructor<? extends View>> sConstructorMap =
@@ -280,8 +281,8 @@ public abstract class LayoutInflater {
      * Obtains the LayoutInflater from the given context.
      */
     public static LayoutInflater from(Context context) {
-        LayoutInflater LayoutInflater =
-                (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+    	//通过IBinder机制获取LayoutInflater
+        LayoutInflater LayoutInflater =(LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         if (LayoutInflater == null) {
             throw new AssertionError("LayoutInflater not found.");
         }
@@ -524,13 +525,19 @@ public abstract class LayoutInflater {
             Log.d(TAG, "INFLATING from resource: \"" + res.getResourceName(resource) + "\" ("
                   + Integer.toHexString(resource) + ")");
         }
-
+        //如果存在预编译，则可以通过tryInflatePrecompiled获取到View
         View view = tryInflatePrecompiled(resource, res, root, attachToRoot);
         if (view != null) {
             return view;
         }
+        //获取解析器XmlResourceParser：它包含解析后xml布局信息，通过它，可以获得xml中各种标签的信息，甚至你可以简化的看做是一个包含xml格式字符串的缓存对象
+        //通过上面的操作，完成了resources.arsc文件的解析，获得了一个ResTable对象，该对象包含了应用程序的全部资源信息（动态加载的先不考虑），之后，
+        //就可以通过ResTable的getResource来获得指定资源，而对于xml布局文件，这里获得的就是一个引用，需要res.resolveReference二次解析，之后就得到了id对应的资源项。
+        //这里的xml布局文件对应的资源项的值是一个字符串，其实是一个布局文件路径，它指向一个经过编译的二进制格式保存的Xml资源文件。
+        //有了这个Xml资源文件的路径之后，会再次通过loadXmlResourceParser来对该Xml资源文件进行解析，从而得到布局文件解析对象XmlResourceParser
         XmlResourceParser parser = res.getLayout(resource);
         try {
+            //调用重载方法
             return inflate(parser, root, attachToRoot);
         } finally {
             parser.close();
@@ -589,8 +596,7 @@ public abstract class LayoutInflater {
      * Advances the given parser to the first START_TAG. Throws InflateException if no start tag is
      * found.
      */
-    private void advanceToRootNode(XmlPullParser parser)
-        throws InflateException, IOException, XmlPullParserException {
+    private void advanceToRootNode(XmlPullParser parser)throws InflateException, IOException, XmlPullParserException {
         // Look for the root node.
         int type;
         while ((type = parser.next()) != XmlPullParser.START_TAG &&
@@ -629,43 +635,47 @@ public abstract class LayoutInflater {
     public View inflate(XmlPullParser parser, @Nullable ViewGroup root, boolean attachToRoot) {
         synchronized (mConstructorArgs) {
             Trace.traceBegin(Trace.TRACE_TAG_VIEW, "inflate");
-
+            //mContext是通过LayoutInflater的构造方法传进来的的context，这里一般不调用构造方法，所以基本是null
             final Context inflaterContext = mContext;
             final AttributeSet attrs = Xml.asAttributeSet(parser);
+            //mConstructorArgs保存了构造方法的参数值信息，第一个是context，第二个是attr
+            //这里先将参数的lastContext临时保存，在最后的位置再进行恢复
             Context lastContext = (Context) mConstructorArgs[0];
             mConstructorArgs[0] = inflaterContext;
+            //解析以后最终的View树
             View result = root;
 
             try {
+                //会将parser进行遍历，找到根节点，从根节点开始解析
                 advanceToRootNode(parser);
+                //name是根节点标签
                 final String name = parser.getName();
 
                 if (DEBUG) {
                     System.out.println("**************************");
-                    System.out.println("Creating root view: "
-                            + name);
+                    System.out.println("Creating root view: "+ name);
                     System.out.println("**************************");
                 }
-
+                //根布局是Merge标签
                 if (TAG_MERGE.equals(name)) {
+                    //merge标签必须嵌套到对应的父布局中来使用。所以如果root是空或者merge不绑定到布局中，那么就报错
                     if (root == null || !attachToRoot) {
-                        throw new InflateException("<merge /> can be used only with a valid "
-                                + "ViewGroup root and attachToRoot=true");
+                        throw new InflateException("<merge /> can be used only with a valid "+ "ViewGroup root and attachToRoot=true");
                     }
-
+                    //进行布局文件的绘制
                     rInflate(parser, root, inflaterContext, attrs, false);
                 } else {
                     // Temp is the root view that was found in the xml
+                    //通过标签来创建View
                     final View temp = createViewFromTag(root, name, inflaterContext, attrs);
-
                     ViewGroup.LayoutParams params = null;
 
                     if (root != null) {
                         if (DEBUG) {
-                            System.out.println("Creating params from root: " +
-                                    root);
+                            System.out.println("Creating params from root: " +root);
                         }
                         // Create layout params that match root, if supplied
+                        //
                         params = root.generateLayoutParams(attrs);
                         if (!attachToRoot) {
                             // Set the layout params for temp if we are not
@@ -795,13 +805,13 @@ public abstract class LayoutInflater {
      * @return View The newly instantiated view, or null.
      */
     @Nullable
-    public final View createView(@NonNull Context viewContext, @NonNull String name,
-            @Nullable String prefix, @Nullable AttributeSet attrs)
-            throws ClassNotFoundException, InflateException {
+    public final View createView(@NonNull Context viewContext, @NonNull String name, @Nullable String prefix, @Nullable AttributeSet attrs) throws ClassNotFoundException, InflateException {
         Objects.requireNonNull(viewContext);
         Objects.requireNonNull(name);
+        //从缓存中获取构造方法
         Constructor<? extends View> constructor = sConstructorMap.get(name);
         if (constructor != null && !verifyClassLoader(constructor)) {
+            //如果缓存的类加载器不是根加载器中的不一致
             constructor = null;
             sConstructorMap.remove(name);
         }
@@ -812,8 +822,8 @@ public abstract class LayoutInflater {
 
             if (constructor == null) {
                 // Class not found in the cache, see if it's real, and try to add it
-                clazz = Class.forName(prefix != null ? (prefix + name) : name, false,
-                        mContext.getClassLoader()).asSubclass(View.class);
+                //获取clazz文件
+                clazz = Class.forName(prefix != null ? (prefix + name) : name, false,mContext.getClassLoader()).asSubclass(View.class);
 
                 if (mFilter != null && clazz != null) {
                     boolean allowed = mFilter.onLoadClass(clazz);
@@ -821,6 +831,7 @@ public abstract class LayoutInflater {
                         failNotAllowed(name, prefix, viewContext, attrs);
                     }
                 }
+                //获取构造方法，获取的是参数为(Context.class, AttributeSet)的那个构造方法
                 constructor = clazz.getConstructor(mConstructorSignature);
                 constructor.setAccessible(true);
                 sConstructorMap.put(name, constructor);
@@ -831,8 +842,7 @@ public abstract class LayoutInflater {
                     Boolean allowedState = mFilterMap.get(name);
                     if (allowedState == null) {
                         // New class -- remember whether it is allowed
-                        clazz = Class.forName(prefix != null ? (prefix + name) : name, false,
-                                mContext.getClassLoader()).asSubclass(View.class);
+                        clazz = Class.forName(prefix != null ? (prefix + name) : name, false,mContext.getClassLoader()).asSubclass(View.class);
 
                         boolean allowed = clazz != null && mFilter.onLoadClass(clazz);
                         mFilterMap.put(name, allowed);
@@ -851,9 +861,11 @@ public abstract class LayoutInflater {
             args[1] = attrs;
 
             try {
+                //调用构造函数，生成View类
                 final View view = constructor.newInstance(args);
                 if (view instanceof ViewStub) {
                     // Use the same context when inflating ViewStub later.
+                    //如果是ViewStub类
                     final ViewStub viewStub = (ViewStub) view;
                     viewStub.setLayoutInflater(cloneInContext((Context) args[0]));
                 }
@@ -944,9 +956,7 @@ public abstract class LayoutInflater {
      * @return View The View created.
      */
     @Nullable
-    public View onCreateView(@NonNull Context viewContext, @Nullable View parent,
-            @NonNull String name, @Nullable AttributeSet attrs)
-            throws ClassNotFoundException {
+    public View onCreateView(@NonNull Context viewContext, @Nullable View parent,@NonNull String name, @Nullable AttributeSet attrs)throws ClassNotFoundException {
         return onCreateView(parent, name, attrs);
     }
 
@@ -977,14 +987,13 @@ public abstract class LayoutInflater {
      *                        {@code false} otherwise
      */
     @UnsupportedAppUsage
-    View createViewFromTag(View parent, String name, Context context, AttributeSet attrs,
-            boolean ignoreThemeAttr) {
+    View createViewFromTag(View parent, String name, Context context, AttributeSet attrs,boolean ignoreThemeAttr) {
         if (name.equals("view")) {
             name = attrs.getAttributeValue(null, "class");
         }
 
         // Apply a theme wrapper, if allowed and one is specified.
-        if (!ignoreThemeAttr) {
+        if (!ignoreThemeAttr) {//进行主题的处理
             final TypedArray ta = context.obtainStyledAttributes(attrs, ATTRS_THEME);
             final int themeResId = ta.getResourceId(0, 0);
             if (themeResId != 0) {
@@ -994,12 +1003,19 @@ public abstract class LayoutInflater {
         }
 
         try {
+            //尝试通过Factory来创建View。这里是个hook的点，如果没有设置的话，会返回 null
             View view = tryCreateView(parent, name, context, attrs);
 
             if (view == null) {
+                //如果创建的view为空，那么就尝试从系统的控件中加载
                 final Object lastContext = mConstructorArgs[0];
                 mConstructorArgs[0] = context;
                 try {
+                    //根据name是否包含“.”来判断是否是自定义view。一般自定义的View是包含.的，
+                    //其实最终都会调用createView方法。系统自带的View，会将prefix设置为“android.view”，然后调用createView方法
+                    /**
+                     * {@link #createView(Context, String, String, AttributeSet)} instead.
+                     */
                     if (-1 == name.indexOf('.')) {
                         view = onCreateView(context, parent, name, attrs);
                     } else {
@@ -1048,14 +1064,12 @@ public abstract class LayoutInflater {
      */
     @UnsupportedAppUsage(trackingBug = 122360734)
     @Nullable
-    public final View tryCreateView(@Nullable View parent, @NonNull String name,
-        @NonNull Context context,
-        @NonNull AttributeSet attrs) {
+    public final View tryCreateView(@Nullable View parent, @NonNull String name,@NonNull Context context, @NonNull AttributeSet attrs) {
         if (name.equals(TAG_1995)) {
             // Let's party like it's 1995!
             return new BlinkLayout(context, attrs);
         }
-
+        //通过Factory来创建View。这里是个hook的点吧？
         View view;
         if (mFactory2 != null) {
             view = mFactory2.onCreateView(parent, name, context, attrs);

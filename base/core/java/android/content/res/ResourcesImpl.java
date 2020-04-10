@@ -228,8 +228,8 @@ public class ResourcesImpl {
     }
 
     @UnsupportedAppUsage
-    void getValue(@AnyRes int id, TypedValue outValue, boolean resolveRefs)
-            throws NotFoundException {
+    void getValue(@AnyRes int id, TypedValue outValue, boolean resolveRefs)throws NotFoundException {
+        //mAssets是一个AssetManager对象，
         boolean found = mAssets.getResourceValue(id, 0, outValue, resolveRefs);
         if (found) {
             return;
@@ -1210,26 +1210,27 @@ public class ResourcesImpl {
      * @throws NotFoundException if the file could not be loaded
      */
     @NonNull
-    XmlResourceParser loadXmlResourceParser(@NonNull String file, @AnyRes int id, int assetCookie,
-            @NonNull String type)
+    XmlResourceParser loadXmlResourceParser(@NonNull String file, @AnyRes int id, int assetCookie,@NonNull String type)
             throws NotFoundException {
         if (id != 0) {
             try {
                 synchronized (mCachedXmlBlocks) {
+                    //mCachedXmlBlockCookies缓存了所有加载所的xml文件
                     final int[] cachedXmlBlockCookies = mCachedXmlBlockCookies;
                     final String[] cachedXmlBlockFiles = mCachedXmlBlockFiles;
                     final XmlBlock[] cachedXmlBlocks = mCachedXmlBlocks;
                     // First see if this block is in our cache.
+                    //先从缓存查找，如果缓存中获取到了，则直接返回
                     final int num = cachedXmlBlockFiles.length;
                     for (int i = 0; i < num; i++) {
-                        if (cachedXmlBlockCookies[i] == assetCookie && cachedXmlBlockFiles[i] != null
-                                && cachedXmlBlockFiles[i].equals(file)) {
+                        if (cachedXmlBlockCookies[i] == assetCookie && cachedXmlBlockFiles[i] != null&& cachedXmlBlockFiles[i].equals(file)) {
                             return cachedXmlBlocks[i].newParser(id);
                         }
                     }
 
                     // Not in the cache, create a new block and put it at
                     // the next slot in the cache.
+                    //如果获取不到，则通过openXmlBlockAsset从native查找数据
                     final XmlBlock block = mAssets.openXmlBlockAsset(assetCookie, file);
                     if (block != null) {
                         final int pos = (mLastCachedXmlBlockIndex + 1) % num;
@@ -1238,22 +1239,22 @@ public class ResourcesImpl {
                         if (oldBlock != null) {
                             oldBlock.close();
                         }
+                        //将数据进行缓存
                         cachedXmlBlockCookies[pos] = assetCookie;
                         cachedXmlBlockFiles[pos] = file;
                         cachedXmlBlocks[pos] = block;
+                        //通过block生成解析器
                         return block.newParser(id);
                     }
                 }
             } catch (Exception e) {
-                final NotFoundException rnf = new NotFoundException("File " + file
-                        + " from xml type " + type + " resource ID #0x" + Integer.toHexString(id));
+                final NotFoundException rnf = new NotFoundException("File " + file+ " from xml type " + type + " resource ID #0x" + Integer.toHexString(id));
                 rnf.initCause(e);
                 throw rnf;
             }
         }
 
-        throw new NotFoundException("File " + file + " from xml type " + type + " resource ID #0x"
-                + Integer.toHexString(id));
+        throw new NotFoundException("File " + file + " from xml type " + type + " resource ID #0x"+ Integer.toHexString(id));
     }
 
     /**
