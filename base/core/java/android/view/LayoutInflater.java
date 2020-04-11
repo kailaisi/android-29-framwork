@@ -346,6 +346,7 @@ public abstract class LayoutInflater {
      * merge your own factory with whatever factory the original instance is
      * using.
      */
+    //factory,factory2都只允许设置一次，而且只允许设置一个
     public void setFactory(Factory factory) {
         if (mFactorySet) {
             throw new IllegalStateException("A factory has already been set on this LayoutInflater");
@@ -675,9 +676,10 @@ public abstract class LayoutInflater {
                             System.out.println("Creating params from root: " +root);
                         }
                         // Create layout params that match root, if supplied
-                        //
+                        //根据要创建的布局的属性以及root的信息，生成布局对应的params信息
                         params = root.generateLayoutParams(attrs);
                         if (!attachToRoot) {
+                            //如果不添加到父布局，则使用params参数。如果添加到父布局的话，后面会通过addView来
                             // Set the layout params for temp if we are not
                             // attaching. (If we are, we use addView, below)
                             temp.setLayoutParams(params);
@@ -689,6 +691,7 @@ public abstract class LayoutInflater {
                     }
 
                     // Inflate all children under temp against its context.
+                    //绘制子控件，并添加到temp中
                     rInflateChildren(parser, temp, attrs, true);
 
                     if (DEBUG) {
@@ -697,12 +700,14 @@ public abstract class LayoutInflater {
 
                     // We are supposed to attach all the views we found (int temp)
                     // to root. Do that now.
+                    //如果设置了root，并且要添加到父控件，那么就进行rooot.addView操作
                     if (root != null && attachToRoot) {
                         root.addView(temp, params);
                     }
 
                     // Decide whether to return the root that was passed in or the
                     // top view found in xml.
+                    //如果root为空或者不添加到父控件。则直接返回绘制的view
                     if (root == null || !attachToRoot) {
                         result = temp;
                     }
@@ -713,16 +718,13 @@ public abstract class LayoutInflater {
                 ie.setStackTrace(EMPTY_STACK_TRACE);
                 throw ie;
             } catch (Exception e) {
-                final InflateException ie = new InflateException(
-                        getParserStateDescription(inflaterContext, attrs)
-                        + ": " + e.getMessage(), e);
+                final InflateException ie = new InflateException(getParserStateDescription(inflaterContext, attrs)+ ": " + e.getMessage(), e);
                 ie.setStackTrace(EMPTY_STACK_TRACE);
                 throw ie;
             } finally {
                 // Don't retain static reference on context.
                 mConstructorArgs[0] = lastContext;
                 mConstructorArgs[1] = null;
-
                 Trace.traceEnd(Trace.TRACE_TAG_VIEW);
             }
 
@@ -861,7 +863,7 @@ public abstract class LayoutInflater {
             args[1] = attrs;
 
             try {
-                //调用构造函数，生成View类
+                //调用构造函数，生成View类，args是两个参数的构造方法，所以也就是我们xml中写的布局，其实最后都会调用两个参数的那个构造方法
                 final View view = constructor.newInstance(args);
                 if (view instanceof ViewStub) {
                     // Use the same context when inflating ViewStub later.
@@ -993,6 +995,7 @@ public abstract class LayoutInflater {
         }
 
         // Apply a theme wrapper, if allowed and one is specified.
+        //如果需要该标签与主题相关，需要对context进行包装，将主题信息加入context包装类ContextWrapper
         if (!ignoreThemeAttr) {//进行主题的处理
             final TypedArray ta = context.obtainStyledAttributes(attrs, ATTRS_THEME);
             final int themeResId = ta.getResourceId(0, 0);
@@ -1065,6 +1068,7 @@ public abstract class LayoutInflater {
     @UnsupportedAppUsage(trackingBug = 122360734)
     @Nullable
     public final View tryCreateView(@Nullable View parent, @NonNull String name,@NonNull Context context, @NonNull AttributeSet attrs) {
+        //BlinkLayout是一种闪烁的FrameLayout，它包裹的内容会一直闪烁，类似QQ提示消息那种。
         if (name.equals(TAG_1995)) {
             // Let's party like it's 1995!
             return new BlinkLayout(context, attrs);
@@ -1093,50 +1097,52 @@ public abstract class LayoutInflater {
      * <strong>Note:</strong> Default visibility so the BridgeInflater can
      * call it.
      */
-    final void rInflateChildren(XmlPullParser parser, View parent, AttributeSet attrs,
-            boolean finishInflate) throws XmlPullParserException, IOException {
+    final void rInflateChildren(XmlPullParser parser, View parent, AttributeSet attrs,boolean finishInflate) throws XmlPullParserException, IOException {
         rInflate(parser, parent, parent.getContext(), attrs, finishInflate);
     }
 
     /**
-     * Recursive method used to descend down the xml hierarchy and instantiate
-     * views, instantiate their children, and then call onFinishInflate().
+     * Recursive method used to descend down the xml hierarchy and instantiate views, instantiate their children, and then call onFinishInflate().
      * <p>
      * <strong>Note:</strong> Default visibility so the BridgeInflater can
      * override it.
      */
-    void rInflate(XmlPullParser parser, View parent, Context context,
-            AttributeSet attrs, boolean finishInflate) throws XmlPullParserException, IOException {
+    //递归方法，用于向下传递xml层次结构并实例化视图、实例化其子视图，然后调用onfinishinfl()
+    void rInflate(XmlPullParser parser, View parent, Context context,AttributeSet attrs, boolean finishInflate) throws XmlPullParserException, IOException {
 
         final int depth = parser.getDepth();
         int type;
         boolean pendingRequestFocus = false;
 
-        while (((type = parser.next()) != XmlPullParser.END_TAG ||
-                parser.getDepth() > depth) && type != XmlPullParser.END_DOCUMENT) {
+        while (((type = parser.next()) != XmlPullParser.END_TAG ||parser.getDepth() > depth) && type != XmlPullParser.END_DOCUMENT) {
 
             if (type != XmlPullParser.START_TAG) {
                 continue;
             }
-
+            //获取标签名
             final String name = parser.getName();
 
             if (TAG_REQUEST_FOCUS.equals(name)) {
                 pendingRequestFocus = true;
                 consumeChildElements(parser);
             } else if (TAG_TAG.equals(name)) {
+                //tag标签
                 parseViewTag(parser, parent, attrs);
             } else if (TAG_INCLUDE.equals(name)) {
+                //include标签不能是根标签
                 if (parser.getDepth() == 0) {
                     throw new InflateException("<include /> cannot be the root element");
                 }
                 parseInclude(parser, context, parent, attrs);
             } else if (TAG_MERGE.equals(name)) {
+                //merge标签必须是布局的根元素
                 throw new InflateException("<merge /> must be the root element");
             } else {
+                //调用createViewFromTag方法，生成对应的view，然后将子view添加到parent布局中
                 final View view = createViewFromTag(parent, name, context, attrs);
                 final ViewGroup viewGroup = (ViewGroup) parent;
                 final ViewGroup.LayoutParams params = viewGroup.generateLayoutParams(attrs);
+                //遍历view下面的子控件
                 rInflateChildren(parser, view, attrs, true);
                 viewGroup.addView(view, params);
             }
