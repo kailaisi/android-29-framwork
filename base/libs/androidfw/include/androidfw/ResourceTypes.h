@@ -197,11 +197,13 @@ struct ResChunk_header
 {
     // Type identifier for this chunk.  The meaning of this value depends
     // on the containing chunk.
+    //当前这个chuck的类型
     uint16_t type;
 
     // Size of the chunk header (in bytes).  Adding this value to
     // the address of the chunk allows you to find its associated data
     // (if any).
+    //当前chuck的头部大小
     uint16_t headerSize;
 
     // Total size of this chunk (in bytes).  This is the chunkSize plus
@@ -209,10 +211,12 @@ struct ResChunk_header
     // to the chunk allows you to completely skip its contents (including
     // any child chunks).  If this value is the same as chunkSize, there is
     // no data associated with the chunk.
+    //当前chuck的大小
     uint32_t size;
 };
 
 enum {
+	//type的类型枚举
     RES_NULL_TYPE               = 0x0000,
     RES_STRING_POOL_TYPE        = 0x0001,
     RES_TABLE_TYPE              = 0x0002,
@@ -456,12 +460,15 @@ struct ResStringPool_header
         // String pool is encoded in UTF-8
         UTF8_FLAG = 1<<8
     };
+	//该字符串是string16还是string8类型
     uint32_t flags;
 
     // Index from header of the string data.
+    //字符串的起始位置
     uint32_t stringsStart;
 
     // Index from header of the style data.
+    //字符串样式的起始位置
     uint32_t stylesStart;
 };
 
@@ -856,11 +863,13 @@ private:
  * Specific entries within a resource table can be uniquely identified
  * with a single integer as defined by the ResTable_ref structure.
  */
+ //索引表的头部信息。包含了
 struct ResTable_header
 {
     struct ResChunk_header header;
 
     // The number of ResTable_package structures.
+    //package资源包的个数，通常一个app只有一个
     uint32_t packageCount;
 };
 
