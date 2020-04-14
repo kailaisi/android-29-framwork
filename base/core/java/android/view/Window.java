@@ -860,6 +860,7 @@ public abstract class Window {
      *
      * @param callback The desired Callback interface.
      */
+     //Activity.attach方法中会调用这个方法，
     public void setCallback(Callback callback) {
         mCallback = callback;
     }

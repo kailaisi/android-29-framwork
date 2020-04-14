@@ -417,6 +417,7 @@ public final class ViewRootImpl implements ViewParent,
      */
     boolean mIsInTraversal;
     boolean mApplyInsetsRequested;
+	//是否请求进行绘制（包括重绘）
     boolean mLayoutRequested;
     boolean mFirst;
 
@@ -572,6 +573,7 @@ public final class ViewRootImpl implements ViewParent,
 
     private boolean mInLayout = false;
     ArrayList<View> mLayoutRequesters = new ArrayList<View>();
+	//当前是否处于Layout过程
     boolean mHandlingLayoutInLayoutRequest = false;
 
     private int mViewLayoutDirectionInitial;
@@ -869,6 +871,7 @@ public final class ViewRootImpl implements ViewParent,
                 // manager, to make sure we do the relayout before receiving
                 // any other events from the system.
                 // 这里调用异步刷新请求，最终会调用performTraversals方法来完成View的绘制
+                //重点方法  这里面会进行view的 测量，layout，以及绘制工作
                 requestLayout();
                 if ((mWindowAttributes.inputFeatures & WindowManager.LayoutParams.INPUT_FEATURE_NO_INPUT_CHANNEL) == 0) {
                     mInputChannel = new InputChannel();
@@ -1436,9 +1439,14 @@ public final class ViewRootImpl implements ViewParent,
 
     @Override
     public void requestLayout() {
+    	//该boolean变量会在ViewRootImpl.performLayout()开始时置为ture，结束置false
+        //表示当前不处于Layout过程
         if (!mHandlingLayoutInLayoutRequest) {
+			//检测线程安全，只有创建这个view的线程才能操作这个线程(也就是主线程)。
             checkThread();
+			//标记请求进行绘制
             mLayoutRequested = true;
+			//重点方法       进行调度绘制工作
             scheduleTraversals();
         }
     }
@@ -1708,10 +1716,14 @@ public final class ViewRootImpl implements ViewParent,
     @UnsupportedAppUsage
     void scheduleTraversals() {
         if (!mTraversalScheduled) {
+			///表示在排好这次绘制请求前，不再排其它的绘制请求
             mTraversalScheduled = true;
+			//Handler 的同步屏障,拦截 Looper 对同步消息的获取和分发,只能处理异步消息
+			//也就是说，对View的绘制渲染操作优先处理
             mTraversalBarrier = mHandler.getLooper().getQueue().postSyncBarrier();
-            mChoreographer.postCallback(
-                    Choreographer.CALLBACK_TRAVERSAL, mTraversalRunnable, null);
+			//mChoreographer能够接收系统的时间脉冲，统一动画、输入和绘制时机,实现了按帧进行绘制的机制
+			//这里增加了一个事件回调的类型。在绘制时，会调用mTraversalRunnable方法
+            mChoreographer.postCallback(Choreographer.CALLBACK_TRAVERSAL, mTraversalRunnable, null);
             if (!mUnbufferedInputDispatch) {
                 scheduleConsumeBatchedInput();
             }
@@ -1732,12 +1744,13 @@ public final class ViewRootImpl implements ViewParent,
     void doTraversal() {
         if (mTraversalScheduled) {
             mTraversalScheduled = false;
+			//移除同步屏障
             mHandler.getLooper().getQueue().removeSyncBarrier(mTraversalBarrier);
 
             if (mProfile) {
                 Debug.startMethodTracing("ViewAncestor");
             }
-
+			//执行绘制工作
             performTraversals();
 
             if (mProfile) {
@@ -1990,8 +2003,7 @@ public final class ViewRootImpl implements ViewParent,
                 // viewVisibility value equal to mViewVisibility and we may miss it.
                 || mAppVisibilityChanged);
         mAppVisibilityChanged = false;
-        final boolean viewUserVisibilityChanged = !mFirst &&
-                ((mViewVisibility == View.VISIBLE) != (viewVisibility == View.VISIBLE));
+        final boolean viewUserVisibilityChanged = !mFirst &&((mViewVisibility == View.VISIBLE) != (viewVisibility == View.VISIBLE));
 
         WindowManager.LayoutParams params = null;
         if (mWindowAttributesChanged) {
@@ -1999,8 +2011,7 @@ public final class ViewRootImpl implements ViewParent,
             surfaceChanged = true;
             params = lp;
         }
-        CompatibilityInfo compatibilityInfo =
-                mDisplay.getDisplayAdjustments().getCompatibilityInfo();
+        CompatibilityInfo compatibilityInfo =mDisplay.getDisplayAdjustments().getCompatibilityInfo();
         if (compatibilityInfo.supportsScreen() == mLastInCompatMode) {
             params = lp;
             mFullRedrawNeeded = true;
@@ -2014,7 +2025,7 @@ public final class ViewRootImpl implements ViewParent,
             }
         }
 
-        mWindowAttributesChangesFlag = 0;
+        requestLayout = 0;
 
         Rect frame = mWinFrame;
         if (mFirst) {
