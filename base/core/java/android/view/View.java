@@ -24510,7 +24510,9 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
      *
      * @see #onMeasure(int, int)
      */
+     //测量view使用的具体的宽高，参数是父类的宽高信息
     public final void measure(int widthMeasureSpec, int heightMeasureSpec) {
+        //判断当前View是否是有光学边界的ViewGroup
         boolean optical = isLayoutModeOptical(this);
         if (optical != isLayoutModeOptical(mParent)) {
             Insets insets = getOpticalInsets();
@@ -24529,17 +24531,18 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
         // Optimize layout by avoiding an extra EXACTLY pass when the view is
         // already measured as the correct size. In API 23 and below, this
         // extra pass is required to make LinearLayout re-distribute weight.
-        final boolean specChanged = widthMeasureSpec != mOldWidthMeasureSpec
-                || heightMeasureSpec != mOldHeightMeasureSpec;
-        final boolean isSpecExactly = MeasureSpec.getMode(widthMeasureSpec) == MeasureSpec.EXACTLY
-                && MeasureSpec.getMode(heightMeasureSpec) == MeasureSpec.EXACTLY;
-        final boolean matchesSpecSize = getMeasuredWidth() == MeasureSpec.getSize(widthMeasureSpec)
-                && getMeasuredHeight() == MeasureSpec.getSize(heightMeasureSpec);
-        final boolean needsLayout = specChanged
-                && (sAlwaysRemeasureExactly || !isSpecExactly || !matchesSpecSize);
-
+        //观察spec是否发生了变化
+        final boolean specChanged = widthMeasureSpec != mOldWidthMeasureSpec|| heightMeasureSpec != mOldHeightMeasureSpec;
+        //是否是固定宽高
+        final boolean isSpecExactly = MeasureSpec.getMode(widthMeasureSpec) == MeasureSpec.EXACTLY && MeasureSpec.getMode(heightMeasureSpec) == MeasureSpec.EXACTLY;
+        //上次测量的高度和现在的最大高度相同
+        final boolean matchesSpecSize = getMeasuredWidth() == MeasureSpec.getSize(widthMeasureSpec)&& getMeasuredHeight() == MeasureSpec.getSize(heightMeasureSpec);
+        //是否需要layout
+        final boolean needsLayout = specChanged&& (sAlwaysRemeasureExactly || !isSpecExactly || !matchesSpecSize);
+        //如果需要绘制或者设置了强制layout
         if (forceLayout || needsLayout) {
             // first clears the measured dimension flag
+            // 先清除测量尺寸标记
             mPrivateFlags &= ~PFLAG_MEASURED_DIMENSION_SET;
 
             resolveRtlPropertiesIfNeeded();
@@ -24547,6 +24550,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
             int cacheIndex = forceLayout ? -1 : mMeasureCache.indexOfKey(key);
             if (cacheIndex < 0 || sIgnoreMeasureCache) {
                 // measure ourselves, this should set the measured dimension flag back
+                //测量我们自己，这应该设置测量的尺寸标志回来
                 onMeasure(widthMeasureSpec, heightMeasureSpec);
                 mPrivateFlags3 &= ~PFLAG3_MEASURE_NEEDED_BEFORE_LAYOUT;
             } else {
@@ -24558,21 +24562,20 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
 
             // flag not set, setMeasuredDimension() was not invoked, we raise
             // an exception to warn the developer
+            //如果开发者自己设置了onMeasure，但是里面没有调用setMeasuredDimension()方法，这时候就会报错
+            //setMeasuredDimension()方法会将PFLAG_MEASURED_DIMENSION_SET设置进mPrivateFlags
             if ((mPrivateFlags & PFLAG_MEASURED_DIMENSION_SET) != PFLAG_MEASURED_DIMENSION_SET) {
-                throw new IllegalStateException("View with id " + getId() + ": "
-                        + getClass().getName() + "#onMeasure() did not set the"
-                        + " measured dimension by calling"
-                        + " setMeasuredDimension()");
+                throw new IllegalStateException("View with id " + getId() + ": "+ getClass().getName() + "#onMeasure() did not set the" + " measured dimension by calling"+ " setMeasuredDimension()");
             }
-
+            //设置请求layout标志位，为了进行下一步的layout工作
             mPrivateFlags |= PFLAG_LAYOUT_REQUIRED;
         }
 
+        //记录父控件给予的MeasureSpec值，便于以后判断父控件是否变化了
         mOldWidthMeasureSpec = widthMeasureSpec;
         mOldHeightMeasureSpec = heightMeasureSpec;
-
-        mMeasureCache.put(key, ((long) mMeasuredWidth) << 32 |
-                (long) mMeasuredHeight & 0xffffffffL); // suppress sign extension
+        //缓存起来
+        mMeasureCache.put(key, ((long) mMeasuredWidth) << 32 |(long) mMeasuredHeight & 0xffffffffL); // suppress sign extension
     }
 
     /**
@@ -24621,9 +24624,10 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
      * @see android.view.View.MeasureSpec#getMode(int)
      * @see android.view.View.MeasureSpec#getSize(int)
      */
+    //onMeasure方法的具体的实现应该是由子类去重写的，提供更加合理、高效的实现
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        setMeasuredDimension(getDefaultSize(getSuggestedMinimumWidth(), widthMeasureSpec),
-                getDefaultSize(getSuggestedMinimumHeight(), heightMeasureSpec));
+        //保存测量结果。
+        setMeasuredDimension(getDefaultSize(getSuggestedMinimumWidth(), widthMeasureSpec),getDefaultSize(getSuggestedMinimumHeight(), heightMeasureSpec));
     }
 
     /**
@@ -24638,6 +24642,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
      * bit mask as defined by {@link #MEASURED_SIZE_MASK} and
      * {@link #MEASURED_STATE_TOO_SMALL}.
      */
+    //onMeasue方法必须调用这个方法来进行测量数据的保存
     protected final void setMeasuredDimension(int measuredWidth, int measuredHeight) {
         boolean optical = isLayoutModeOptical(this);
         if (optical != isLayoutModeOptical(mParent)) {
@@ -24664,9 +24669,10 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
      * {@link #MEASURED_STATE_TOO_SMALL}.
      */
     private void setMeasuredDimensionRaw(int measuredWidth, int measuredHeight) {
+        //保存测量的宽高信息
         mMeasuredWidth = measuredWidth;
         mMeasuredHeight = measuredHeight;
-
+        //向mPrivateFlags中添加PFALG_MEASURED_DIMENSION_SET，以此证明onMeasure()保存了测量结果
         mPrivateFlags |= PFLAG_MEASURED_DIMENSION_SET;
     }
 
