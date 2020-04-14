@@ -17368,8 +17368,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
      * @return true if the animation is played, false otherwise.
      */
     private boolean initialAwakenScrollBars() {
-        return mScrollCache != null &&
-                awakenScrollBars(mScrollCache.scrollBarDefaultDelayBeforeFade * 4, true);
+        return mScrollCache != null && awakenScrollBars(mScrollCache.scrollBarDefaultDelayBeforeFade * 4, true);
     }
 
     /**
@@ -27778,9 +27777,9 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
     }
 
     /**
-     * A set of information given to a view when it is attached to its parent
-     * window.
+     * A set of information given to a view when it is attached to its parent window.
      */
+    //视图附加到其父窗口时所得到的一组信息。
     final static class AttachInfo {
         interface Callbacks {
             void playSoundEffect(int effectId);
