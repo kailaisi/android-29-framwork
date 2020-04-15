@@ -20256,6 +20256,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
      * Gets the RenderNode for the view, and updates its DisplayList (if needed and supported)
      * @hide
      */
+    //更新显示的列表
     @NonNull
     @UnsupportedAppUsage
     public RenderNode updateDisplayListIfDirty() {
@@ -20265,17 +20266,14 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
             return renderNode;
         }
 
-        if ((mPrivateFlags & PFLAG_DRAWING_CACHE_VALID) == 0
-                || !renderNode.hasDisplayList()
-                || (mRecreateDisplayList)) {
+        if ((mPrivateFlags & PFLAG_DRAWING_CACHE_VALID) == 0|| !renderNode.hasDisplayList()|| (mRecreateDisplayList)) {
             // Don't need to recreate the display list, just need to tell our
             // children to restore/recreate theirs
-            if (renderNode.hasDisplayList()
-                    && !mRecreateDisplayList) {
+            if (renderNode.hasDisplayList()&& !mRecreateDisplayList) {
                 mPrivateFlags |= PFLAG_DRAWN | PFLAG_DRAWING_CACHE_VALID;
                 mPrivateFlags &= ~PFLAG_DIRTY_MASK;
                 dispatchGetDisplayList();
-
+                //不需要进行重绘工作
                 return renderNode; // no work needed
             }
 
@@ -20286,7 +20284,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
             int width = mRight - mLeft;
             int height = mBottom - mTop;
             int layerType = getLayerType();
-
+            //获取一个画布
             final RecordingCanvas canvas = renderNode.beginRecording(width, height);
 
             try {
@@ -20314,6 +20312,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
                             debugDrawFocus(canvas);
                         }
                     } else {
+                        //重点方法**  在canvas画布上进行绘制
                         draw(canvas);
                     }
                 }
@@ -21428,18 +21427,20 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
 
         // Step 1, draw the background, if needed
         int saveCount;
-
+        //步骤1  绘制背景
         drawBackground(canvas);
-
+        //一般情况下跳过步骤2和步骤5
         // skip step 2 & 5 if possible (common case)
         final int viewFlags = mViewFlags;
         boolean horizontalEdges = (viewFlags & FADING_EDGE_HORIZONTAL) != 0;
         boolean verticalEdges = (viewFlags & FADING_EDGE_VERTICAL) != 0;
         if (!verticalEdges && !horizontalEdges) {
             // Step 3, draw the content
+            //步骤3 绘制内容
             onDraw(canvas);
 
             // Step 4, draw the children
+            //步骤4 绘制children
             dispatchDraw(canvas);
 
             drawAutofilledHighlight(canvas);
@@ -21450,9 +21451,11 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
             }
 
             // Step 6, draw decorations (foreground, scrollbars)
+            //步骤6 绘制装饰(前景，滚动条)
             onDrawForeground(canvas);
 
             // Step 7, draw the default focus highlight
+            //步骤7，绘制默认的焦点突出显示
             drawDefaultFocusHighlight(canvas);
 
             if (debugDraw()) {
@@ -21481,13 +21484,14 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
         float rightFadeStrength = 0.0f;
 
         // Step 2, save the canvas' layers
+        //步骤2  保存canvas视图
         int paddingLeft = mPaddingLeft;
 
         final boolean offsetRequired = isPaddingOffsetRequired();
         if (offsetRequired) {
             paddingLeft += getLeftPaddingOffset();
         }
-
+        //获取绘制的四个顶点的位置
         int left = mScrollX + paddingLeft;
         int right = left + mRight - mLeft - mPaddingRight - paddingLeft;
         int top = mScrollY + getFadeTop(offsetRequired);
@@ -24543,7 +24547,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
             // first clears the measured dimension flag
             // 先清除测量尺寸标记
             mPrivateFlags &= ~PFLAG_MEASURED_DIMENSION_SET;
-
+            //解析所有与RTL相关的属性，比如背景，字体，padding等属性设置
             resolveRtlPropertiesIfNeeded();
 
             int cacheIndex = forceLayout ? -1 : mMeasureCache.indexOfKey(key);
@@ -24624,8 +24628,9 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
      * @see android.view.View.MeasureSpec#getSize(int)
      */
     //onMeasure方法的具体的实现应该是由子类去重写的，提供更加合理、高效的实现
+    //该方法主要是用来确定 View 测量宽和测量高的，该方法应该被子类进行覆盖，以提供更加准确的测量值，并且当重写此方法时，必须调用 #setMeasuredDimension(int, int) 来存储该视图的测量宽度和高度，而且如果不这样做将会抛出 IllegalStateException 异常，建议我们调用父类的 #onMeasure(int, int) 方法
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        //保存测量结果。
+        //保存测量结果。getSuggestedMinimumWidth()方法会获取包裹当前控件的最小宽度(考虑到背景)。而getDefaultSize则会根据父类的设置信息来确定最终的宽高信息
         setMeasuredDimension(getDefaultSize(getSuggestedMinimumWidth(), widthMeasureSpec),getDefaultSize(getSuggestedMinimumHeight(), heightMeasureSpec));
     }
 
@@ -24644,6 +24649,7 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
     //onMeasue方法必须调用这个方法来进行测量数据的保存
     protected final void setMeasuredDimension(int measuredWidth, int measuredHeight) {
         boolean optical = isLayoutModeOptical(this);
+        //有光学边界，则对光学边界做一些处理
         if (optical != isLayoutModeOptical(mParent)) {
             Insets insets = getOpticalInsets();
             int opticalWidth  = insets.left + insets.right;
@@ -24742,17 +24748,18 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
      * @param measureSpec Constraints imposed by the parent
      * @return The size this view should be.
      */
+    //根据建议的size和当前控件的模式返回最终确定的宽高信息
     public static int getDefaultSize(int size, int measureSpec) {
         int result = size;
         int specMode = MeasureSpec.getMode(measureSpec);
         int specSize = MeasureSpec.getSize(measureSpec);
 
         switch (specMode) {
-        case MeasureSpec.UNSPECIFIED:
+        case MeasureSpec.UNSPECIFIED://未指明(wrap_content)的情况下，使用建议的size值
             result = size;
             break;
-        case MeasureSpec.AT_MOST:
-        case MeasureSpec.EXACTLY:
+        case MeasureSpec.AT_MOST://设置使用最大值(match_parent)
+        case MeasureSpec.EXACTLY://设置了确定的宽高信息(width="20dp")的情况下，使用父类传入的大小值
             result = specSize;
             break;
         }
@@ -24786,7 +24793,9 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
      *
      * @return The suggested minimum width of the view.
      */
+    //返回建议的视图应该使用的最小宽度。
     protected int getSuggestedMinimumWidth() {
+        //如果没有背景，直接返回最小宽度，如果有背景，那么使用mMinWidth和背景的最小宽度，二者的最大值
         return (mBackground == null) ? mMinWidth : max(mMinWidth, mBackground.getMinimumWidth());
     }
 

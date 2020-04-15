@@ -569,15 +569,17 @@ public final class ThreadedRenderer extends HardwareRenderer {
 
     private void updateViewTreeDisplayList(View view) {
         view.mPrivateFlags |= View.PFLAG_DRAWN;
-        view.mRecreateDisplayList = (view.mPrivateFlags & View.PFLAG_INVALIDATED)
-                == View.PFLAG_INVALIDATED;
+        view.mRecreateDisplayList = (view.mPrivateFlags & View.PFLAG_INVALIDATED)== View.PFLAG_INVALIDATED;
         view.mPrivateFlags &= ~View.PFLAG_INVALIDATED;
+        //这里调用了 View 的 updateDisplayListIfDirty 方法
+        //这个view其实就是DecorView的跟布局。在ViewRootImpl中保存着
         view.updateDisplayListIfDirty();
         view.mRecreateDisplayList = false;
     }
 
     private void updateRootDisplayList(View view, DrawCallbacks callbacks) {
         Trace.traceBegin(Trace.TRACE_TAG_VIEW, "Record View#draw()");
+        //重点方法
         updateViewTreeDisplayList(view);
 
         // Consume and set the frame callback after we dispatch draw to the view above, but before
@@ -650,7 +652,7 @@ public final class ThreadedRenderer extends HardwareRenderer {
     void draw(View view, AttachInfo attachInfo, DrawCallbacks callbacks) {
         final Choreographer choreographer = attachInfo.mViewRootImpl.mChoreographer;
         choreographer.mFrameInfo.markDrawStart();
-
+        //重点方法 **  进行根布局的的显示列表，也就是绘制整个View树
         updateRootDisplayList(view, callbacks);
 
         // register animating rendernodes which started animating prior to renderer

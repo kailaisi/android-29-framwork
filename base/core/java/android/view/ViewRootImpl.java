@@ -2262,6 +2262,8 @@ public final class ViewRootImpl implements ViewParent,
             //layout pass.
             mLayoutRequested = false;
         }
+        //第三阶段    测量
+
         //用来确定窗口是否需要更改。
         //layoutRequested 为true，说明view正在调用自身的requestLayout。
         // windowSizeMayChange：说明View树所需大小与窗口大小不一致
@@ -2483,22 +2485,15 @@ public final class ViewRootImpl implements ViewParent,
                     }
                 }
 
-                final boolean freeformResizing = (relayoutResult
-                        & WindowManagerGlobal.RELAYOUT_RES_DRAG_RESIZING_FREEFORM) != 0;
-                final boolean dockedResizing = (relayoutResult
-                        & WindowManagerGlobal.RELAYOUT_RES_DRAG_RESIZING_DOCKED) != 0;
+                final boolean freeformResizing = (relayoutResult& WindowManagerGlobal.RELAYOUT_RES_DRAG_RESIZING_FREEFORM) != 0;
+                final boolean dockedResizing = (relayoutResult& WindowManagerGlobal.RELAYOUT_RES_DRAG_RESIZING_DOCKED) != 0;
                 final boolean dragResizing = freeformResizing || dockedResizing;
                 if (mDragResizing != dragResizing) {
                     if (dragResizing) {
-                        mResizeMode = freeformResizing
-                                ? RESIZE_MODE_FREEFORM
-                                : RESIZE_MODE_DOCKED_DIVIDER;
-                        final boolean backdropSizeMatchesFrame =
-                                mWinFrame.width() == mPendingBackDropFrame.width()
-                                        && mWinFrame.height() == mPendingBackDropFrame.height();
+                        mResizeMode = freeformResizing? RESIZE_MODE_FREEFORM: RESIZE_MODE_DOCKED_DIVIDER;
+                        final boolean backdropSizeMatchesFrame =mWinFrame.width() == mPendingBackDropFrame.width()&& mWinFrame.height() == mPendingBackDropFrame.height();
                         // TODO: Need cutout?
-                        startDragResizing(mPendingBackDropFrame, !backdropSizeMatchesFrame,
-                                mPendingVisibleInsets, mPendingStableInsets, mResizeMode);
+                        startDragResizing(mPendingBackDropFrame, !backdropSizeMatchesFrame,mPendingVisibleInsets, mPendingStableInsets, mResizeMode);
                     } else {
                         // We shouldn't come here, but if we come we should end the resize.
                         endDragResizing();
@@ -2526,6 +2521,8 @@ public final class ViewRootImpl implements ViewParent,
             // the window session beforehand.
             //从window session获取最大size作为当前窗口大小
             if (mWidth != frame.width() || mHeight != frame.height()) {
+                ////这个mWidth和mHeight也是用来描述Activity窗口当前宽度和高度的.它们的值是由应用程序进程上一次主动请求WindowManagerService服务计算得到的，并且会一直保持不变到应用程序进程下一次再请求WindowManagerService服务来重新计算为止
+                //			//desiredWindowWidth和desiredWindowHeight代表着Activity窗口的当前宽度
                 mWidth = frame.width();
                 mHeight = frame.height();
             }
@@ -2590,7 +2587,10 @@ public final class ViewRootImpl implements ViewParent,
 				//获取焦点
                 boolean focusChangedDueToTouchMode = ensureTouchModeLocally((relayoutResult & WindowManagerGlobal.RELAYOUT_RES_IN_TOUCH_MODE) != 0);
 				//宽高有变化了
+                // mWidth != host.getMeasuredWidth() 表示frame的宽不等于初始DecorView宽．
+                //getMeasuredWidth()方法可以获取View测量后的宽高，host上面说过为DecorView根布局．
                 if (focusChangedDueToTouchMode || mWidth != host.getMeasuredWidth()|| mHeight != host.getMeasuredHeight() || contentInsetsChanged ||updatedConfiguration) {
+                    //获得view宽高的测量规格，lp.width和lp.height表示DecorView根布局宽和高
                     int childWidthMeasureSpec = getRootMeasureSpec(mWidth, lp.width);
                     int childHeightMeasureSpec = getRootMeasureSpec(mHeight, lp.height);
 
@@ -2611,7 +2611,8 @@ public final class ViewRootImpl implements ViewParent,
                     int height = host.getMeasuredHeight();
                     //需要重新测量标记
                     boolean measureAgain = false;
-                    //如果测量出来的水平宽度需要拉伸（设置了weight） 需要重新测量
+                    //lp.horizontalWeight表示将多少额外空间水平地(在水平方向上)分配给与这些LayoutParam关联的视图。如果
+                    //视图不应被拉伸，请指定0。否则，将在所有权重大于0的视图中分配额外的像素。
                     if (lp.horizontalWeight > 0.0f) {
                         width += (int) ((mWidth - width) * lp.horizontalWeight);
                         childWidthMeasureSpec = MeasureSpec.makeMeasureSpec(width,MeasureSpec.EXACTLY);
@@ -2622,7 +2623,7 @@ public final class ViewRootImpl implements ViewParent,
                         childHeightMeasureSpec = MeasureSpec.makeMeasureSpec(height,MeasureSpec.EXACTLY);
                         measureAgain = true;
                     }
-
+                    //有变化了，就再次执行测量
                     if (measureAgain) {
                         if (DEBUG_LAYOUT) Log.v(mTag,"And hey let's measure once more: width=" + width + " height=" + height);
                         performMeasure(childWidthMeasureSpec, childHeightMeasureSpec);
@@ -2647,6 +2648,7 @@ public final class ViewRootImpl implements ViewParent,
         //非暂停状态或者请求绘制，而且设置了请求layout标志位
         final boolean didLayout = layoutRequested && (!mStopped || mReportNextDraw);
         boolean triggerGlobalLayoutListener = didLayout || mAttachInfo.mRecomputeGlobalAttributes;
+        //需要进行layout布局操作
         if (didLayout) {
             //执行layout,内部会调用View的layout方法，从而调用onLayout方法来实现布局
             performLayout(lp, mWidth, mHeight);
@@ -2658,10 +2660,7 @@ public final class ViewRootImpl implements ViewParent,
                 // start out transparent
                 // TODO: AVOID THAT CALL BY CACHING THE RESULT?
                 host.getLocationInWindow(mTmpLocation);
-                mTransparentRegion.set(mTmpLocation[0], mTmpLocation[1],
-                        mTmpLocation[0] + host.mRight - host.mLeft,
-                        mTmpLocation[1] + host.mBottom - host.mTop);
-
+                mTransparentRegion.set(mTmpLocation[0], mTmpLocation[1],mTmpLocation[0] + host.mRight - host.mLeft,mTmpLocation[1] + host.mBottom - host.mTop);
                 host.gatherTransparentRegion(mTransparentRegion);
                 if (mTranslator != null) {
                     mTranslator.translateRegionInWindowToScreen(mTransparentRegion);
@@ -2751,9 +2750,7 @@ public final class ViewRootImpl implements ViewParent,
                 // case where the child has a size prior to layout and thus won't trigger
                 // focusableViewAvailable).
                 View focused = mView.findFocus();
-                if (focused instanceof ViewGroup
-                        && ((ViewGroup) focused).getDescendantFocusability()
-                        == ViewGroup.FOCUS_AFTER_DESCENDANTS) {
+                if (focused instanceof ViewGroup && ((ViewGroup) focused).getDescendantFocusability() == ViewGroup.FOCUS_AFTER_DESCENDANTS) {
                     focused.restoreDefaultFocus();
                 }
             }
@@ -2791,9 +2788,7 @@ public final class ViewRootImpl implements ViewParent,
                 InputMethodManager imm = mContext.getSystemService(InputMethodManager.class);
                 if (imm != null && imTarget) {
                     imm.onPreWindowFocus(mView, hasWindowFocus);
-                    imm.onPostWindowFocus(mView, mView.findFocus(),
-                            mWindowAttributes.softInputMode,
-                            !mHasHadWindowFocus, mWindowAttributes.flags);
+                    imm.onPostWindowFocus(mView, mView.findFocus(), mWindowAttributes.softInputMode,!mHasHadWindowFocus, mWindowAttributes.flags);
                 }
             }
         }
@@ -2813,7 +2808,7 @@ public final class ViewRootImpl implements ViewParent,
                 }
                 mPendingTransitions.clear();
             }
-			//执行绘制工作
+			//重点方法*** 执行绘制工作
             performDraw();
         } else {//取消了绘制工作。
             if (isViewVisible) {
@@ -2828,7 +2823,7 @@ public final class ViewRootImpl implements ViewParent,
                 mPendingTransitions.clear();
             }
         }
-
+        //清除正在遍历标志位
         mIsInTraversal = false;
     }
 
@@ -3127,6 +3122,7 @@ public final class ViewRootImpl implements ViewParent,
     private void performLayout(WindowManager.LayoutParams lp, int desiredWindowWidth,int desiredWindowHeight) {
         mLayoutRequested = false;
         mScrollMayChange = true;
+        //设置正在进行layout标志位
         mInLayout = true;
 
         final View host = mView;
@@ -3139,8 +3135,9 @@ public final class ViewRootImpl implements ViewParent,
 
         Trace.traceBegin(Trace.TRACE_TAG_VIEW, "layout");
         try {
+            //host是mDecorView中的顶层布局，调用layout方法。也就是view的layout方法
             host.layout(0, 0, host.getMeasuredWidth(), host.getMeasuredHeight());
-
+            //删除正在 layout标志位
             mInLayout = false;
             int numViewsRequestingLayout = mLayoutRequesters.size();
             if (numViewsRequestingLayout > 0) {
@@ -3445,11 +3442,11 @@ public final class ViewRootImpl implements ViewParent,
 
         boolean usingAsyncReport = false;
         if (mAttachInfo.mThreadedRenderer != null && mAttachInfo.mThreadedRenderer.isEnabled()) {
-            ArrayList<Runnable> commitCallbacks = mAttachInfo.mTreeObserver
-                    .captureFrameCommitCallbacks();
+            ArrayList<Runnable> commitCallbacks = mAttachInfo.mTreeObserver.captureFrameCommitCallbacks();
             if (mReportNextDraw) {
                 usingAsyncReport = true;
                 final Handler handler = mAttachInfo.mHandler;
+                //线程渲染器来进行渲染
                 mAttachInfo.mThreadedRenderer.setFrameCompleteCallback((long frameNr) ->
                         handler.postAtFrontOfQueue(() -> {
                             // TODO: Use the frame number
@@ -3472,6 +3469,7 @@ public final class ViewRootImpl implements ViewParent,
         }
 
         try {
+            //重点方法**
             boolean canUseAsync = draw(fullRedrawNeeded);
             if (usingAsyncReport && !canUseAsync) {
                 mAttachInfo.mThreadedRenderer.setFrameCompleteCallback(null);
@@ -3571,7 +3569,7 @@ public final class ViewRootImpl implements ViewParent,
 
         final float appScale = mAttachInfo.mApplicationScale;
         final boolean scalingRequired = mAttachInfo.mScalingRequired;
-
+        //获取mDirty，该值表示需要重绘的区域
         final Rect dirty = mDirty;
         if (mSurfaceHolder != null) {
             // The app owns the surface, we won't draw.
@@ -3581,7 +3579,8 @@ public final class ViewRootImpl implements ViewParent,
             }
             return false;
         }
-
+        //如果fullRedrawNeeded为真，则把dirty区域置为整个屏幕，表示整个视图都需要绘制
+        //第一次绘制流程，需要绘制所有视图
         if (fullRedrawNeeded) {
             dirty.set(0, 0, (int) (mWidth * appScale + 0.5f), (int) (mHeight * appScale + 0.5f));
         }
@@ -3622,8 +3621,7 @@ public final class ViewRootImpl implements ViewParent,
             }
         }
 
-        mAttachInfo.mDrawingTime =
-                mChoreographer.getFrameTimeNanos() / TimeUtils.NANOS_PER_MS;
+        mAttachInfo.mDrawingTime =mChoreographer.getFrameTimeNanos() / TimeUtils.NANOS_PER_MS;
 
         boolean useAsyncReport = false;
         if (!dirty.isEmpty() || mIsAnimating || accessibilityFocusDirty) {
@@ -3663,7 +3661,7 @@ public final class ViewRootImpl implements ViewParent,
                 }
 
                 useAsyncReport = true;
-
+                //重点方法** 调用线程渲染器来进行View的渲染工作
                 mAttachInfo.mThreadedRenderer.draw(mView, mAttachInfo, this);
             } else {
                 // If we get here with a disabled & requested hardware renderer, something went
