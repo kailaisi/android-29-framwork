@@ -134,6 +134,7 @@ import java.util.List;
  * When writing a {@link LayoutManager} you almost always want to use layout positions whereas when
  * writing an {@link Adapter}, you probably want to use adapter positions.
  */
+//一种灵活的视图，用于为大型数据集提供有限的窗口。
 public class RecyclerView extends ViewGroup implements ScrollingView, NestedScrollingChild {
 
     static final String TAG = "RecyclerView";
@@ -342,6 +343,7 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
     @VisibleForTesting boolean mFirstLayoutComplete;
 
     // Counting lock to control whether we should ignore requestLayout calls from children or not.
+    //计数锁来控制我们是否应该忽略来自子元素的requestLayout调用。
     private int mEatRequestLayout = 0;
 
     boolean mLayoutRequestEaten;
@@ -967,8 +969,12 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
      */
     public void setAdapter(Adapter adapter) {
         // bail out if layout is frozen
+        //设置页面不冻结，能够刷新UI
         setLayoutFrozen(false);
+        //对adapter进行内部处理。
+        // 当我们设置的数据有变化时，UI界面能够及时刷新。要实现这样的逻辑，就必须存在数据变更观察者和被观察者，就是RecyclerView要观察Adapter的数据变化。
         setAdapterInternal(adapter, false, true);
+        //请求进行绘制
         requestLayout();
     }
 
@@ -1003,23 +1009,26 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
      */
     private void setAdapterInternal(Adapter adapter, boolean compatibleWithPrevious,
             boolean removeAndRecycleViews) {
-        if (mAdapter != null) {
+        if (mAdapter != null) {//移除原来的adapter的监听
             mAdapter.unregisterAdapterDataObserver(mObserver);
             mAdapter.onDetachedFromRecyclerView(this);
         }
+        //如果没有使用原来的viewholder，需要 移除原来的控件
         if (!compatibleWithPrevious || removeAndRecycleViews) {
             removeAndRecycleViews();
         }
         mAdapterHelper.reset();
         final Adapter oldAdapter = mAdapter;
         mAdapter = adapter;
-        if (adapter != null) {
+        if (adapter != null) {//注册对于数据的监听
             adapter.registerAdapterDataObserver(mObserver);
             adapter.onAttachedToRecyclerView(this);
         }
         if (mLayout != null) {
+            //通知LayoutManager adapter发生了变化
             mLayout.onAdapterChanged(oldAdapter, mAdapter);
         }
+        //通知回收复用管理者Recycler Adapter发生了变化
         mRecycler.onAdapterChanged(oldAdapter, mAdapter, compatibleWithPrevious);
         mState.mStructureChanged = true;
         markKnownViewsInvalid();
@@ -1843,13 +1852,6 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
     }
 
 
-    void eatRequestLayout() {
-        mEatRequestLayout++;
-        if (mEatRequestLayout == 1 && !mLayoutFrozen) {
-            mLayoutRequestEaten = false;
-        }
-    }
-
     void resumeRequestLayout(boolean performLayoutChildren) {
         if (mEatRequestLayout < 1) {
             //noinspection PointlessBooleanExpression
@@ -1880,6 +1882,13 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
             }
         }
         mEatRequestLayout--;
+    }
+
+    void eatRequestLayout() {
+        mEatRequestLayout++;
+        if (mEatRequestLayout == 1 && !mLayoutFrozen) {
+            mLayoutRequestEaten = false;
+        }
     }
 
     /**
@@ -2949,49 +2958,61 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
 
     @Override
     protected void onMeasure(int widthSpec, int heightSpec) {
-        if (mLayout == null) {
+        //dispatchLayoutStep1,dispatchLayoutStep2,dispatchLayoutStep3肯定会执行，但是会根据具体的情况来区分是在onMeasure还是onLayout中执行。
+        if (mLayout == null) {//LayoutManager为空，那么就使用默认的测量策略
             defaultOnMeasure(widthSpec, heightSpec);
             return;
         }
         if (mLayout.mAutoMeasure) {
+            //有LayoutManager，开启了自动测量
             final int widthMode = MeasureSpec.getMode(widthSpec);
             final int heightMode = MeasureSpec.getMode(heightSpec);
-            final boolean skipMeasure = widthMode == MeasureSpec.EXACTLY
-                    && heightMode == MeasureSpec.EXACTLY;
+            final boolean skipMeasure = widthMode == MeasureSpec.EXACTLY && heightMode == MeasureSpec.EXACTLY;
+            //步骤1  调用LayoutManager的onMeasure方法来进行测量工作
             mLayout.onMeasure(mRecycler, mState, widthSpec, heightSpec);
+            //如果width和height都已经是精确值，那么就不用再根据内容进行测量，后面步骤不再处理
             if (skipMeasure || mAdapter == null) {
                 return;
             }
+            //如果测量过程后的宽或者高都没有精确，那么就需要根据child来进行布局，从而来确定其宽和高。
+            // 当前的布局状态是start
             if (mState.mLayoutStep == State.STEP_START) {
+                //布局的第一部  开启布局流程计算出所有Child的边界
                 dispatchLayoutStep1();
             }
             // set dimensions in 2nd step. Pre-layout should happen with old dimensions for
             // consistency
             mLayout.setMeasureSpecs(widthSpec, heightSpec);
             mState.mIsMeasuring = true;
+            //执行布局第二步。真正对子类进行布局的地方
             dispatchLayoutStep2();
 
             // now we can get the width and height from the children.
+            // 布局过程结束，根据Children中的边界信息计算并设置RecyclerView长宽的测量值
             mLayout.setMeasuredDimensionFromChildren(widthSpec, heightSpec);
 
             // if RecyclerView has non-exact width and height and if there is at least one child
             // which also has non-exact width & height, we have to re-measure.
+            //检查是否需要再此测量。如果RecyclerView仍然有非精确的宽和高，或者这里还有至少一个Child还有非精确的宽和高，我们就需要再次测量。
             if (mLayout.shouldMeasureTwice()) {
-                mLayout.setMeasureSpecs(
-                        MeasureSpec.makeMeasureSpec(getMeasuredWidth(), MeasureSpec.EXACTLY),
-                        MeasureSpec.makeMeasureSpec(getMeasuredHeight(), MeasureSpec.EXACTLY));
+                mLayout.setMeasureSpecs(MeasureSpec.makeMeasureSpec(getMeasuredWidth(), MeasureSpec.EXACTLY),MeasureSpec.makeMeasureSpec(getMeasuredHeight(), MeasureSpec.EXACTLY));
                 mState.mIsMeasuring = true;
                 dispatchLayoutStep2();
                 // now we can get the width and height from the children.
                 mLayout.setMeasuredDimensionFromChildren(widthSpec, heightSpec);
             }
         } else {
+            //有LayoutManager，没有开启自动测量。一般系统的三个LayoutManager都是自动测量，
+            // 如果是我们自定义的LayoutManager的话，可以通过setAutoMeasureEnabled关闭自动测量功能
+            //RecyclerView已经设置了固定的Size，直接使用固定值即可
             if (mHasFixedSize) {
                 mLayout.onMeasure(mRecycler, mState, widthSpec, heightSpec);
                 return;
             }
             // custom onMeasure
+            //如果在测量过程中数据发生变化，需要先对数据进行处理
             if (mAdapterUpdateDuringMeasure) {
+
                 eatRequestLayout();
                 onEnterLayoutOrScroll();
                 processAdapterUpdatesAndSetAnimationFlags();
@@ -3007,7 +3028,7 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
                 mAdapterUpdateDuringMeasure = false;
                 resumeRequestLayout(false);
             }
-
+            // 处理完新更新的数据，然后执行自定义测量操作。
             if (mAdapter != null) {
                 mState.mItemCount = mAdapter.getItemCount();
             } else {
@@ -3023,15 +3044,12 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
     /**
      * Used when onMeasure is called before layout manager is set
      */
+    //在设置布局管理器之前调用onMeasure时使用
     void defaultOnMeasure(int widthSpec, int heightSpec) {
         // calling LayoutManager here is not pretty but that API is already public and it is better
         // than creating another method since this is internal.
-        final int width = LayoutManager.chooseSize(widthSpec,
-                getPaddingLeft() + getPaddingRight(),
-                getMinimumWidth());
-        final int height = LayoutManager.chooseSize(heightSpec,
-                getPaddingTop() + getPaddingBottom(),
-                getMinimumHeight());
+        final int width = LayoutManager.chooseSize(widthSpec,getPaddingLeft() + getPaddingRight(),getMinimumWidth());
+        final int height = LayoutManager.chooseSize(heightSpec,getPaddingTop() + getPaddingBottom(),getMinimumHeight());
 
         setMeasuredDimension(width, height);
     }
@@ -3253,12 +3271,15 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
             return;
         }
         mState.mIsMeasuring = false;
+        //在onMeasure阶段，如果宽高是固定的，那么mLayoutStep == State.STEP_START
+        // 而且dispatchLayoutStep1和dispatchLayoutStep2不会调用
+        //所以这里就会调用一下
         if (mState.mLayoutStep == State.STEP_START) {
             dispatchLayoutStep1();
             mLayout.setExactMeasureSpecsFrom(this);
             dispatchLayoutStep2();
-        } else if (mAdapterHelper.hasUpdates() || mLayout.getWidth() != getWidth()
-                || mLayout.getHeight() != getHeight()) {
+        } else if (mAdapterHelper.hasUpdates() || mLayout.getWidth() != getWidth()|| mLayout.getHeight() != getHeight()) {
+            //在onMeasure阶段，如果执行了dispatchLayoutStep1，但是没有执行dispatchLayoutStep2,就会执行dispatchLayoutStep2
             // First 2 steps are done in onMeasure but looks like we have to run again due to
             // changed size.
             mLayout.setExactMeasureSpecsFrom(this);
@@ -3267,6 +3288,7 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
             // always make sure we sync them (to ensure mode is exact)
             mLayout.setExactMeasureSpecsFrom(this);
         }
+        //最终调用dispatchLayoutStep3
         dispatchLayoutStep3();
     }
 
@@ -3426,10 +3448,17 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
      * - save information about current views
      * - If necessary, run predictive layout and save its information
      */
+    ///布局的第一步
+    // -进程适配器更新
+    // -决定哪个动画应该运行
+    // -保存关于当前视图的信息
+    // -如果需要，运行预测布局并保存其信息
     private void dispatchLayoutStep1() {
         mState.assertLayoutStep(State.STEP_START);
         mState.mIsMeasuring = false;
+        //禁止布局请求
         eatRequestLayout();
+        //清空itemView信息保存类（保存有关视图的数据以用于动画）
         mViewInfoStore.clear();
         onEnterLayoutOrScroll();
         processAdapterUpdatesAndSetAnimationFlags();
@@ -3437,24 +3466,26 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
         mState.mTrackOldChangeHolders = mState.mRunSimpleAnimations && mItemsChanged;
         mItemsAddedOrRemoved = mItemsChanged = false;
         mState.mInPreLayout = mState.mRunPredictiveAnimations;
+        //将我们的数据个数保存到状态
         mState.mItemCount = mAdapter.getItemCount();
+        //找到屏幕上可以绘制的最小position和最大position
         findMinMaxChildLayoutPositions(mMinMaxLayoutPositions);
 
         if (mState.mRunSimpleAnimations) {
             // Step 0: Find out where all non-removed items are, pre-layout
+            //获得界面上所以显示的itemView的个数
             int count = mChildHelper.getChildCount();
             for (int i = 0; i < count; ++i) {
+                //获取对应位置所使用的viewholder
                 final ViewHolder holder = getChildViewHolderInt(mChildHelper.getChildAt(i));
                 if (holder.shouldIgnore() || (holder.isInvalid() && !mAdapter.hasStableIds())) {
                     continue;
                 }
-                final ItemHolderInfo animationInfo = mItemAnimator
-                        .recordPreLayoutInformation(mState, holder,
-                                ItemAnimator.buildAdapterChangeFlagsForAnimations(holder),
-                                holder.getUnmodifiedPayloads());
+                final ItemHolderInfo animationInfo = mItemAnimator.recordPreLayoutInformation(mState, holder,
+                                ItemAnimator.buildAdapterChangeFlagsForAnimations(holder),holder.getUnmodifiedPayloads());
+                //保存所有ViewHolser的动画信息
                 mViewInfoStore.addToPreLayout(holder, animationInfo);
-                if (mState.mTrackOldChangeHolders && holder.isUpdated() && !holder.isRemoved()
-                        && !holder.shouldIgnore() && !holder.isInvalid()) {
+                if (mState.mTrackOldChangeHolders && holder.isUpdated() && !holder.isRemoved() && !holder.shouldIgnore() && !holder.isInvalid()) {
                     long key = getChangedHolderKey(holder);
                     // This is NOT the only place where a ViewHolder is added to old change holders
                     // list. There is another case where:
@@ -3463,6 +3494,7 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
                     //    * Layout manager decides to layout the item in the pre-Layout pass (step1)
                     // When this case is detected, RV will un-hide that view and add to the old
                     // change holders list.
+                    //如果ViewHolder有变更就保存起来
                     mViewInfoStore.addToOldChangeHolders(key, holder);
                 }
             }
@@ -3478,6 +3510,7 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
             final boolean didStructureChange = mState.mStructureChanged;
             mState.mStructureChanged = false;
             // temporarily disable flag because we are asking for previous layout
+            //通过LayoutManager布局所有的itemview
             mLayout.onLayoutChildren(mRecycler, mState);
             mState.mStructureChanged = didStructureChange;
 
@@ -3489,13 +3522,11 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
                 }
                 if (!mViewInfoStore.isInPreLayout(viewHolder)) {
                     int flags = ItemAnimator.buildAdapterChangeFlagsForAnimations(viewHolder);
-                    boolean wasHidden = viewHolder
-                            .hasAnyOfTheFlags(ViewHolder.FLAG_BOUNCED_FROM_HIDDEN_LIST);
+                    boolean wasHidden = viewHolder.hasAnyOfTheFlags(ViewHolder.FLAG_BOUNCED_FROM_HIDDEN_LIST);
                     if (!wasHidden) {
                         flags |= ItemAnimator.FLAG_APPEARED_IN_PRE_LAYOUT;
                     }
-                    final ItemHolderInfo animationInfo = mItemAnimator.recordPreLayoutInformation(
-                            mState, viewHolder, flags, viewHolder.getUnmodifiedPayloads());
+                    final ItemHolderInfo animationInfo = mItemAnimator.recordPreLayoutInformation(mState, viewHolder, flags, viewHolder.getUnmodifiedPayloads());
                     if (wasHidden) {
                         recordAnimationInfoIfBouncedHiddenView(viewHolder, animationInfo);
                     } else {
@@ -3509,6 +3540,7 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
             clearOldPositions();
         }
         onExitLayoutOrScroll();
+        //清除绘制锁定标志位
         resumeRequestLayout(false);
         mState.mLayoutStep = State.STEP_LAYOUT;
     }
@@ -3518,6 +3550,7 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
      * This step might be run multiple times if necessary (e.g. measure).
      */
     private void dispatchLayoutStep2() {
+        //禁止布局请求
         eatRequestLayout();
         onEnterLayoutOrScroll();
         mState.assertLayoutStep(State.STEP_LAYOUT | State.STEP_ANIMATIONS);
@@ -3527,6 +3560,7 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
 
         // Step 2: Run layout
         mState.mInPreLayout = false;
+        //调用LayoutManager的layoutChildren方法来布局
         mLayout.onLayoutChildren(mRecycler, mState);
 
         mState.mStructureChanged = false;
@@ -3543,6 +3577,7 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
      * The final step of the layout where we save the information about views for animations,
      * trigger animations and do any necessary cleanup.
      */
+    //布局的最后一步，我们保存关于动画视图的信息，
     private void dispatchLayoutStep3() {
         mState.assertLayoutStep(State.STEP_ANIMATIONS);
         eatRequestLayout();
@@ -3558,8 +3593,7 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
                     continue;
                 }
                 long key = getChangedHolderKey(holder);
-                final ItemHolderInfo animationInfo = mItemAnimator
-                        .recordPostLayoutInformation(mState, holder);
+                final ItemHolderInfo animationInfo = mItemAnimator.recordPostLayoutInformation(mState, holder);
                 ViewHolder oldChangeViewHolder = mViewInfoStore.getFromOldChangeHolders(key);
                 if (oldChangeViewHolder != null && !oldChangeViewHolder.shouldIgnore()) {
                     // run a change animation
@@ -3579,16 +3613,14 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
                         // run disappear animation instead of change
                         mViewInfoStore.addToPostLayout(holder, animationInfo);
                     } else {
-                        final ItemHolderInfo preInfo = mViewInfoStore.popFromPreLayout(
-                                oldChangeViewHolder);
+                        final ItemHolderInfo preInfo = mViewInfoStore.popFromPreLayout(oldChangeViewHolder);
                         // we add and remove so that any post info is merged.
                         mViewInfoStore.addToPostLayout(holder, animationInfo);
                         ItemHolderInfo postInfo = mViewInfoStore.popFromPostLayout(holder);
                         if (preInfo == null) {
                             handleMissingPreInfoForChangeError(key, holder, oldChangeViewHolder);
                         } else {
-                            animateChange(oldChangeViewHolder, holder, preInfo, postInfo,
-                                    oldDisappearing, newDisappearing);
+                            animateChange(oldChangeViewHolder, holder, preInfo, postInfo,oldDisappearing, newDisappearing);
                         }
                     }
                 } else {
