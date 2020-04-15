@@ -1044,9 +1044,9 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements I
     /**
      * {@inheritDoc}
      */
+    //滚动时候调用
     @Override
-    public int scrollHorizontallyBy(int dx, RecyclerView.Recycler recycler,
-            RecyclerView.State state) {
+    public int scrollHorizontallyBy(int dx, RecyclerView.Recycler recycler,RecyclerView.State state) {
         if (mOrientation == VERTICAL) {
             return 0;
         }
@@ -1160,8 +1160,7 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements I
         return mSmoothScrollbarEnabled;
     }
 
-    private void updateLayoutState(int layoutDirection, int requiredSpace,
-            boolean canUseExistingSpace, RecyclerView.State state) {
+    private void updateLayoutState(int layoutDirection, int requiredSpace,boolean canUseExistingSpace, RecyclerView.State state) {
         // If parent provides a hint, don't measure unlimited.
         mLayoutState.mInfinite = resolveIsInfinite();
         mLayoutState.mExtra = getExtraLayoutSpace(state);
@@ -1306,28 +1305,34 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements I
         collectPrefetchPositionsForLayoutState(state, mLayoutState, layoutPrefetchRegistry);
     }
 
+    //进行滚动
     int scrollBy(int dy, RecyclerView.Recycler recycler, RecyclerView.State state) {
         if (getChildCount() == 0 || dy == 0) {
             return 0;
         }
+        //标记正在滚动
         mLayoutState.mRecycle = true;
         ensureLayoutState();
+        //确认滚动方向
         final int layoutDirection = dy > 0 ? LayoutState.LAYOUT_END : LayoutState.LAYOUT_START;
         final int absDy = Math.abs(dy);
+        //更新layoutState，会更新其展示的屏幕区域
         updateLayoutState(layoutDirection, absDy, true, state);
-        final int consumed = mLayoutState.mScrollingOffset
-                + fill(recycler, mLayoutState, state, false);
+        //调用fill进行填充展示在客户面前的view
+        final int consumed = mLayoutState.mScrollingOffset + fill(recycler, mLayoutState, state, false);
         if (consumed < 0) {
             if (DEBUG) {
                 Log.d(TAG, "Don't have any more elements to scroll");
             }
             return 0;
         }
+        //计算滚动的距离
         final int scrolled = absDy > consumed ? layoutDirection * consumed : dy;
         mOrientationHelper.offsetChildren(-scrolled);
         if (DEBUG) {
             Log.d(TAG, "scroll req: " + dy + " scrolled: " + scrolled);
         }
+        //记录本次滚动的距离
         mLayoutState.mLastScrollDelta = scrolled;
         return scrolled;
     }
@@ -1467,8 +1472,10 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements I
             return;
         }
         if (layoutState.mLayoutDirection == LayoutState.LAYOUT_START) {
+            //从End端开始回收视图
             recycleViewsFromEnd(recycler, layoutState.mScrollingOffset);
         } else {
+            //从Start端开始回收视图
             recycleViewsFromStart(recycler, layoutState.mScrollingOffset);
         }
     }
@@ -1493,6 +1500,7 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements I
             if (layoutState.mAvailable < 0) {
                 layoutState.mScrollingOffset += layoutState.mAvailable;
             }
+            //重点方法  ** 判断是否需要回收
             recycleByLayoutState(recycler, layoutState);
         }
         //剩余空间=可用区域+扩展空间。
@@ -1502,12 +1510,12 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements I
         while ((layoutState.mInfinite || remainingSpace > 0) && layoutState.hasMore(state)) {
             //初始化layoutChunkResult
             layoutChunkResult.resetInternal();
-            //添加一个child
+            //**重点方法  添加一个child
             layoutChunk(recycler, state, layoutState, layoutChunkResult);
             if (layoutChunkResult.mFinished) {//如果布局结束了(没有view了)，退出循环
                 break;
             }
-            //根据所添加的child消费的高度更新layoutState的偏移量
+            //根据所添加的child消费的高度更新layoutState的偏移量。mLayoutDirection为+1或者-1，通过*来处理是从底部往上布局，还是从上往底部开始布局
             layoutState.mOffset += layoutChunkResult.mConsumed * layoutState.mLayoutDirection;
             /**
              * Consume the available space if:
@@ -1515,10 +1523,10 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements I
              * * OR we are laying out scrap children
              * * OR we are not doing pre-layout
              */
-            if (!layoutChunkResult.mIgnoreConsumed || mLayoutState.mScrapList != null
-                    || !state.isPreLayout()) {
+            if (!layoutChunkResult.mIgnoreConsumed || mLayoutState.mScrapList != null || !state.isPreLayout()) {
                 layoutState.mAvailable -= layoutChunkResult.mConsumed;
                 // we keep a separate remaining space because mAvailable is important for recycling
+                //消费剩余可用空间
                 remainingSpace -= layoutChunkResult.mConsumed;
             }
 
@@ -1536,11 +1544,12 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements I
         if (DEBUG) {
             validateChildOrder();
         }
+        //返回本次布局所填充的区域
         return start - layoutState.mAvailable;
     }
-
-    void layoutChunk(RecyclerView.Recycler recycler, RecyclerView.State state,
-            LayoutState layoutState, LayoutChunkResult result) {
+    //布局一个条目
+    void layoutChunk(RecyclerView.Recycler recycler, RecyclerView.State state,LayoutState layoutState, LayoutChunkResult result) {
+        //获取当前position所需要展示的ViewHolder的View
         View view = layoutState.next(recycler);
         if (view == null) {
             if (DEBUG && layoutState.mScrapList == null) {
@@ -1548,24 +1557,27 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements I
             }
             // if we are laying out views in scrap, this may return null which means there is
             // no more items to layout.
+            //如果我们将视图放置在废弃视图中，这可能会返回null，这意味着没有更多的项需要布局。
             result.mFinished = true;
             return;
         }
         LayoutParams params = (LayoutParams) view.getLayoutParams();
         if (layoutState.mScrapList == null) {
-            if (mShouldReverseLayout == (layoutState.mLayoutDirection
-                    == LayoutState.LAYOUT_START)) {
+            //根据方向调用addView方法添加子View
+            if (mShouldReverseLayout == (layoutState.mLayoutDirection == LayoutState.LAYOUT_START)) {
                 addView(view);
             } else {
                 addView(view, 0);
             }
         } else {
             if (mShouldReverseLayout == (layoutState.mLayoutDirection == LayoutState.LAYOUT_START)) {
+                //重点方法 **
                 addDisappearingView(view);
             } else {
                 addDisappearingView(view, 0);
             }
         }
+        //调用measure测量view。这里会考虑到父类的padding
         measureChildWithMargins(view, 0, 0);
         //获取view的宽(或者高)
         result.mConsumed = mOrientationHelper.getDecoratedMeasurement(view);
@@ -1600,6 +1612,7 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements I
         }
         // We calculate everything with View's bounding box (which includes decor and margins)
         // To calculate correct layout position, we subtract margins.
+        //调用child.layout方法进行布局(这里会考虑到view的margig等信息)
         layoutDecoratedWithMargins(view, left, top, right, bottom);
         if (DEBUG) {
             Log.d(TAG, "laid out child at position " + getPosition(view) + ", with l:"
@@ -1607,6 +1620,7 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements I
                     + (right - params.rightMargin) + ", b:" + (bottom - params.bottomMargin));
         }
         // Consume the available space if the view is not removed OR changed
+        //如果视图未被删除或更改，则使用可用空间
         if (params.isItemRemoved() || params.isItemChanged()) {
             result.mIgnoreConsumed = true;
         }
@@ -2158,6 +2172,7 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements I
                 return nextViewFromScrapList();
             }
             final View view = recycler.getViewForPosition(mCurrentPosition);
+            //根据方向，position会+1或者-1
             mCurrentPosition += mItemDirection;
             return view;
         }

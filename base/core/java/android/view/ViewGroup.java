@@ -6845,18 +6845,12 @@ public abstract class ViewGroup extends View implements ViewParent, ViewManager 
      * @param heightUsed              Extra space that has been used up by the parent
      *                                vertically (possibly by other children of the parent)
      */
-    protected void measureChildWithMargins(View child,
-                                           int parentWidthMeasureSpec, int widthUsed,
-                                           int parentHeightMeasureSpec, int heightUsed) {
+    protected void measureChildWithMargins(View child,int parentWidthMeasureSpec, int widthUsed,int parentHeightMeasureSpec, int heightUsed) {
         final MarginLayoutParams lp = (MarginLayoutParams) child.getLayoutParams();
-
-        final int childWidthMeasureSpec = getChildMeasureSpec(parentWidthMeasureSpec,
-                mPaddingLeft + mPaddingRight + lp.leftMargin + lp.rightMargin
-                        + widthUsed, lp.width);
-        final int childHeightMeasureSpec = getChildMeasureSpec(parentHeightMeasureSpec,
-                mPaddingTop + mPaddingBottom + lp.topMargin + lp.bottomMargin
-                        + heightUsed, lp.height);
-
+        //根据自身的参数获取子元素的MeasureSpec
+        final int childWidthMeasureSpec = getChildMeasureSpec(parentWidthMeasureSpec,mPaddingLeft + mPaddingRight + lp.leftMargin + lp.rightMargin + widthUsed, lp.width);
+        final int childHeightMeasureSpec = getChildMeasureSpec(parentHeightMeasureSpec,mPaddingTop + mPaddingBottom + lp.topMargin + lp.bottomMargin + heightUsed, lp.height);
+        //调用子类进行测量
         child.measure(childWidthMeasureSpec, childHeightMeasureSpec);
     }
 
@@ -6879,6 +6873,7 @@ public abstract class ViewGroup extends View implements ViewParent, ViewManager 
      *                       dimension
      * @return a MeasureSpec integer for the child
      */
+    //根据父容器的MeasureSpec 和子控件的LayoutParam来确定子控件的MeasureSpec
     public static int getChildMeasureSpec(int spec, int padding, int childDimension) {
         int specMode = MeasureSpec.getMode(spec);
         int specSize = MeasureSpec.getSize(spec);

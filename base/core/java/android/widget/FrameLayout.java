@@ -179,9 +179,7 @@ public class FrameLayout extends ViewGroup {
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         int count = getChildCount();
 
-        final boolean measureMatchParentChildren =
-                MeasureSpec.getMode(widthMeasureSpec) != MeasureSpec.EXACTLY ||
-                MeasureSpec.getMode(heightMeasureSpec) != MeasureSpec.EXACTLY;
+        final boolean measureMatchParentChildren =MeasureSpec.getMode(widthMeasureSpec) != MeasureSpec.EXACTLY || MeasureSpec.getMode(heightMeasureSpec) != MeasureSpec.EXACTLY;
         mMatchParentChildren.clear();
 
         int maxHeight = 0;
@@ -193,14 +191,11 @@ public class FrameLayout extends ViewGroup {
             if (mMeasureAllChildren || child.getVisibility() != GONE) {
                 measureChildWithMargins(child, widthMeasureSpec, 0, heightMeasureSpec, 0);
                 final LayoutParams lp = (LayoutParams) child.getLayoutParams();
-                maxWidth = Math.max(maxWidth,
-                        child.getMeasuredWidth() + lp.leftMargin + lp.rightMargin);
-                maxHeight = Math.max(maxHeight,
-                        child.getMeasuredHeight() + lp.topMargin + lp.bottomMargin);
+                maxWidth = Math.max(maxWidth,child.getMeasuredWidth() + lp.leftMargin + lp.rightMargin);
+                maxHeight = Math.max(maxHeight,child.getMeasuredHeight() + lp.topMargin + lp.bottomMargin);
                 childState = combineMeasuredStates(childState, child.getMeasuredState());
                 if (measureMatchParentChildren) {
-                    if (lp.width == LayoutParams.MATCH_PARENT ||
-                            lp.height == LayoutParams.MATCH_PARENT) {
+                    if (lp.width == LayoutParams.MATCH_PARENT ||lp.height == LayoutParams.MATCH_PARENT) {
                         mMatchParentChildren.add(child);
                     }
                 }
@@ -222,9 +217,7 @@ public class FrameLayout extends ViewGroup {
             maxWidth = Math.max(maxWidth, drawable.getMinimumWidth());
         }
 
-        setMeasuredDimension(resolveSizeAndState(maxWidth, widthMeasureSpec, childState),
-                resolveSizeAndState(maxHeight, heightMeasureSpec,
-                        childState << MEASURED_HEIGHT_STATE_SHIFT));
+        setMeasuredDimension(resolveSizeAndState(maxWidth, widthMeasureSpec, childState),resolveSizeAndState(maxHeight, heightMeasureSpec,childState << MEASURED_HEIGHT_STATE_SHIFT));
 
         count = mMatchParentChildren.size();
         if (count > 1) {

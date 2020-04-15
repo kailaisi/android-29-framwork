@@ -776,6 +776,7 @@ public class LinearLayout extends ViewGroup {
         int alternativeMaxWidth = 0;
         int weightedMaxWidth = 0;
         boolean allFillParent = true;
+        //布局中我们设置的weight值的总和
         float totalWeight = 0;
 
         final int count = getVirtualChildCount();
@@ -791,7 +792,7 @@ public class LinearLayout extends ViewGroup {
 
         int largestChildHeight = Integer.MIN_VALUE;
         int consumedExcessSpace = 0;
-
+        //未忽略的子控件的数量(Gone的忽略，child==null的忽略)
         int nonSkippedChildCount = 0;
 
         // See how tall everyone is. Also remember max width.
@@ -1057,8 +1058,7 @@ public class LinearLayout extends ViewGroup {
         // Check against our minimum width
         maxWidth = Math.max(maxWidth, getSuggestedMinimumWidth());
 
-        setMeasuredDimension(resolveSizeAndState(maxWidth, widthMeasureSpec, childState),
-                heightSizeAndState);
+        setMeasuredDimension(resolveSizeAndState(maxWidth, widthMeasureSpec, childState),heightSizeAndState);
 
         if (matchWidth) {
             forceUniformWidth(count, heightMeasureSpec);

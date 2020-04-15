@@ -37,6 +37,7 @@ import com.android.internal.annotations.VisibleForTesting;
 /**
  * This class abstracts all tracking for Views to run animations.
  */
+//该类跟踪了所有执行动画的View视图
 class ViewInfoStore {
 
     private static final boolean DEBUG = false;

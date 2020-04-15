@@ -3062,7 +3062,7 @@ public final class ViewRootImpl implements ViewParent,
         }
         Trace.traceBegin(Trace.TRACE_TAG_VIEW, "measure");
         try {
-            //调用measure方法
+            //调用measure方法。mView是顶层的mDecorView。也就是我们之前分析的Framelayout
             mView.measure(childWidthMeasureSpec, childHeightMeasureSpec);
         } finally {
             Trace.traceEnd(Trace.TRACE_TAG_VIEW);
