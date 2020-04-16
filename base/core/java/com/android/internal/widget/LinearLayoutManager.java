@@ -459,8 +459,7 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements I
     @Override
     public void onLayoutChildren(RecyclerView.Recycler recycler, RecyclerView.State state) {
         // layout algorithm:
-        // 1) by checking children and other variables, find an anchor coordinate and an anchor
-        //  item position.
+        // 1) by checking children and other variables, find an anchor coordinate and an anchor item position.
         // 2) fill towards start, stacking from bottom
         // 3) fill towards end, stacking from top
         // 4) scroll to fulfill requirements like stack from bottom.
@@ -494,7 +493,7 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements I
         if (!mAnchorInfo.mValid || mPendingScrollPosition != NO_POSITION || mPendingSavedState != null) {
             //重置锚点信息
             mAnchorInfo.reset();
-            //是否从end开始进行布局
+            //是否从end开始进行布局。因为mShouldReverseLayout和mStackFromEnd默认都是false，那么我们这里可以考虑按照默认的情况来进行分析，也就是mLayoutFromEnd也是false
             mAnchorInfo.mLayoutFromEnd = mShouldReverseLayout ^ mStackFromEnd;
             // calculate anchor position and coordinate
             //计算锚点的位置和坐标
@@ -746,7 +745,7 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements I
             }
             return;
         }
-        //从子View来确定锚点信息（这里会尝试从有焦点的子View或者列表第一个位置的View或者最后一个位置的View来确定）
+        //**重点方法 从子View来确定锚点信息（这里会尝试从有焦点的子View或者列表第一个位置的View或者最后一个位置的View来确定）
         if (updateAnchorFromChildren(recycler, state, anchorInfo)) {
             if (DEBUG) {
                 Log.d(TAG, "updated anchor info from existing children");
@@ -756,7 +755,7 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements I
         if (DEBUG) {
             Log.d(TAG, "deciding anchor info for fresh state");
         }
-        //进入这里说明现在都没有（比如设置Data后还没有绘制View的情况下，就直接设置RecyclerView的顶部或者底部位置为锚点）
+        //进入这里说明现在都没有确定锚点（比如设置Data后还没有绘制View的情况下），就直接设置RecyclerView的顶部或者底部位置为锚点）
         anchorInfo.assignCoordinateFromPadding();
         anchorInfo.mPosition = mStackFromEnd ? state.getItemCount() - 1 : 0;
     }
@@ -766,7 +765,7 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements I
      * <p>
      * If a child has focus, it is given priority.
      */
-    //从现有视图中确定锚定。大多数情况下，这是最接近开始或结束的视图，它有一个有效的位置(例如，未删除)。
+    //从现有子View中确定锚定。大多数情况下，是起始或者末尾的有效子View(一般是未移除，即展示在我们面前的View)。
     private boolean updateAnchorFromChildren(RecyclerView.Recycler recycler, RecyclerView.State state, AnchorInfo anchorInfo) {
         //没有数据，直接返回false
         if (getChildCount() == 0) {
@@ -2310,9 +2309,9 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements I
      */
     //简单的数据类来保存锚点信息
     class AnchorInfo {
-        //锚点位置
+        //锚点参考View在整个数据中的position信息，即它是第几个View
         int mPosition;
-        //
+        //锚点的具体坐标信息，填充子View的起始坐标。当positon=0的时候，如果只有一半View可见，那么这个数据可能为负数
         int mCoordinate;
         //是否从底部开始布局
         boolean mLayoutFromEnd;
@@ -2405,10 +2404,10 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements I
                 //如果是从底部布局，那么获取child的底部的位置设置为锚点
                 mCoordinate = mOrientationHelper.getDecoratedEnd(child) + mOrientationHelper.getTotalSpaceChange();
             } else {
-                //如果是从顶部开始布局，那么获取child的顶部的位置设置为锚点(这里要考虑ItemDecorator的情况)
+                //如果是从顶部开始布局，那么获取child的顶部的位置设置为锚点坐标(这里要考虑ItemDecorator的情况)
                 mCoordinate = mOrientationHelper.getDecoratedStart(child);
             }
-
+            //mPosition赋值为参考View的position
             mPosition = getPosition(child);
         }
     }
