@@ -2254,21 +2254,15 @@ public class NotificationManagerService extends SystemService {
             }
 
             final int callingUid = Binder.getCallingUid();
-            final boolean isSystemToast = isCallerSystemOrPhone()
-                    || PackageManagerService.PLATFORM_PACKAGE_NAME.equals(pkg);
+            final boolean isSystemToast = isCallerSystemOrPhone() || PackageManagerService.PLATFORM_PACKAGE_NAME.equals(pkg);
             final boolean isPackageSuspended = isPackageSuspendedForUser(pkg, callingUid);
-            final boolean notificationsDisabledForPackage = !areNotificationsEnabledForPackage(pkg,
-                    callingUid);
+            final boolean notificationsDisabledForPackage = !areNotificationsEnabledForPackage(pkg, callingUid);
 
             long callingIdentity = Binder.clearCallingIdentity();
             try {
-                final boolean appIsForeground = mActivityManager.getUidImportance(callingUid)
-                        == IMPORTANCE_FOREGROUND;
-                if (ENABLE_BLOCKED_TOASTS && !isSystemToast && ((notificationsDisabledForPackage
-                        && !appIsForeground) || isPackageSuspended)) {
-                    Slog.e(TAG, "Suppressing toast from package " + pkg
-                            + (isPackageSuspended ? " due to package suspended."
-                            : " by user request."));
+                final boolean appIsForeground = mActivityManager.getUidImportance(callingUid) == IMPORTANCE_FOREGROUND;
+                if (ENABLE_BLOCKED_TOASTS && !isSystemToast && ((notificationsDisabledForPackage && !appIsForeground) || isPackageSuspended)) {
+                    Slog.e(TAG, "Suppressing toast from package " + pkg + (isPackageSuspended ? " due to package suspended." : " by user request."));
                     return;
                 }
             } finally {
@@ -2307,8 +2301,7 @@ public class NotificationManagerService extends SystemService {
 
                         Binder token = new Binder();
                         mWindowManagerInternal.addWindowToken(token, TYPE_TOAST, displayId);
-                        record = new ToastRecord(callingPid, pkg, callback, duration, token,
-                                displayId);
+                        record = new ToastRecord(callingPid, pkg, callback, duration, token, displayId);
                         mToastQueue.add(record);
                         index = mToastQueue.size() - 1;
                         keepProcessAliveIfNeededLocked(callingPid);

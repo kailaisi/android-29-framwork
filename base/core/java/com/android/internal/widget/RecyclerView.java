@@ -2978,14 +2978,14 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
             //如果测量过程后的宽或者高都没有精确，那么就需要根据child来进行布局，从而来确定其宽和高。
             // 当前的布局状态是start
             if (mState.mLayoutStep == State.STEP_START) {
-                //布局的第一部  开启布局流程计算出所有Child的边界
+                //布局的第一部 主要进行一些初始化的工作
                 dispatchLayoutStep1();
             }
             // set dimensions in 2nd step. Pre-layout should happen with old dimensions for
             // consistency
             mLayout.setMeasureSpecs(widthSpec, heightSpec);
             mState.mIsMeasuring = true;
-            //执行布局第二步。真正对子类进行布局的地方
+            //执行布局第二步。先确认子View的大小与布局
             dispatchLayoutStep2();
 
             // now we can get the width and height from the children.
@@ -2995,6 +2995,7 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
             // if RecyclerView has non-exact width and height and if there is at least one child
             // which also has non-exact width & height, we have to re-measure.
             //检查是否需要再此测量。如果RecyclerView仍然有非精确的宽和高，或者这里还有至少一个Child还有非精确的宽和高，我们就需要再次测量。
+            // 比如父子尺寸属性互相依赖的情况，要改变参数重新进行一次
             if (mLayout.shouldMeasureTwice()) {
                 mLayout.setMeasureSpecs(MeasureSpec.makeMeasureSpec(getMeasuredWidth(), MeasureSpec.EXACTLY),MeasureSpec.makeMeasureSpec(getMeasuredHeight(), MeasureSpec.EXACTLY));
                 mState.mIsMeasuring = true;
@@ -3036,6 +3037,7 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
                 mState.mItemCount = 0;
             }
             eatRequestLayout();
+            //没有设置固定的宽高，则需要进行测量
             mLayout.onMeasure(mRecycler, mState, widthSpec, heightSpec);
             resumeRequestLayout(false);
             mState.mInPreLayout = false; // clear
@@ -3261,21 +3263,19 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
      * {@link ItemAnimator#animateChange(ViewHolder, ViewHolder, ItemHolderInfo, ItemHolderInfo)}.
      */
     void dispatchLayout() {
-        if (mAdapter == null) {
+        if (mAdapter == null) {//没有设置adapter，返回
             Log.e(TAG, "No adapter attached; skipping layout");
             // leave the state in START
             return;
         }
-        if (mLayout == null) {
+        if (mLayout == null) {//没有设置LayoutManager，返回
             Log.e(TAG, "No layout manager attached; skipping layout");
             // leave the state in START
             return;
         }
         mState.mIsMeasuring = false;
-        //在onMeasure阶段，如果宽高是固定的，那么mLayoutStep == State.STEP_START
-        // 而且dispatchLayoutStep1和dispatchLayoutStep2不会调用
-        //所以这里就会调用一下
         if (mState.mLayoutStep == State.STEP_START) {
+            //在onMeasure阶段，如果宽高是固定的，那么mLayoutStep == State.STEP_START 而且dispatchLayoutStep1和dispatchLayoutStep2不会调用
             dispatchLayoutStep1();
             mLayout.setExactMeasureSpecsFrom(this);
             dispatchLayoutStep2();
@@ -3482,8 +3482,7 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
                 if (holder.shouldIgnore() || (holder.isInvalid() && !mAdapter.hasStableIds())) {
                     continue;
                 }
-                final ItemHolderInfo animationInfo = mItemAnimator.recordPreLayoutInformation(mState, holder,
-                                ItemAnimator.buildAdapterChangeFlagsForAnimations(holder),holder.getUnmodifiedPayloads());
+                final ItemHolderInfo animationInfo = mItemAnimator.recordPreLayoutInformation(mState, holder, ItemAnimator.buildAdapterChangeFlagsForAnimations(holder),holder.getUnmodifiedPayloads());
                 //保存所有ViewHolser的动画信息
                 mViewInfoStore.addToPreLayout(holder, animationInfo);
                 if (mState.mTrackOldChangeHolders && holder.isUpdated() && !holder.isRemoved() && !holder.shouldIgnore() && !holder.isInvalid()) {
@@ -5206,11 +5205,15 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
      */
     //Recycler负责管理已经废弃的View或者已经分离等待重新使用的View。是缓存的核心工具类
     public final class Recycler {
-        //未脱离，但是已经废弃的ViewHolder集合
+        //Scrap是RecyclerView中最轻量的缓存，它不参与滑动时的回收复用，只是作为重新布局(notifiychanged)时的一种临时缓存。它的目的是，缓存当界面重新布局的前后都出现在屏幕上的ViewHolder，以此《省去不必要的重新加载与绑定》工作。
+        //在RecyclerView重新布局的时候（不包括RecyclerView初始的那次布局，因为初始化的时候屏幕上本来并没有任何View），先调用detachAndScrapAttachedViews()将所有当前屏幕上正在显示的View以ViewHolder为单位标记并记录在列表中，在之后的fill()填充屏幕过程中，会优先从Scrap列表里面寻找对应的ViewHolder填充。从Scrap中直接返回的ViewHolder内容没有任何的变化，不会进行重新创建和绑定的过程。
+        //这里注意使用notifyDataSetChanged的，会标记所有屏幕上的View为FLAG_INVALID，，会直接扔进RecycledViewPool而不会在Scrap进行缓存
+        //mAttachedScrap负责保存将会原封不动的ViewHolder集合（notifyItemRemoved之后，位置不变的）
         final ArrayList<ViewHolder> mAttachedScrap = new ArrayList<>();
-        //脱离，而且已经废弃的ViewHolder集合
+        //mChangedScrap负责保存位置会发生移动的ViewHolder集合（removepostion之后，下面的ViewHolder上移这种）
         ArrayList<ViewHolder> mChangedScrap = null;
-        //缓存的ViewHolder
+        //缓存的ViewHolder，负责在RecyclerView列表位置产生变动的时候，对刚刚《移除》屏幕的View进行回收复用的缓存列表
+        //有一个最大的缓存个数限制，默认是mViewCacheMax（2）个。如果超过2个，就会将ViewHolder放入到RecycledViewPool中
         final ArrayList<ViewHolder> mCachedViews = new ArrayList<ViewHolder>();
         //	不可修改的，未脱离的，废弃的ViewHolder
         private final List<ViewHolder> mUnmodifiableAttachedScrap = Collections.unmodifiableList(mAttachedScrap);
@@ -5738,23 +5741,16 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
                         + " should first call stopIgnoringView(view) before calling recycle.");
             }
             //noinspection unchecked
-            final boolean transientStatePreventsRecycling = holder
-                    .doesTransientStatePreventRecycling();
-            final boolean forceRecycle = mAdapter != null
-                    && transientStatePreventsRecycling
-                    && mAdapter.onFailedToRecycleView(holder);
+            final boolean transientStatePreventsRecycling = holder .doesTransientStatePreventRecycling();
+            final boolean forceRecycle = mAdapter != null && transientStatePreventsRecycling && mAdapter.onFailedToRecycleView(holder);
             boolean cached = false;
             boolean recycled = false;
             if (DEBUG && mCachedViews.contains(holder)) {
-                throw new IllegalArgumentException("cached view received recycle internal? "
-                        + holder);
+                throw new IllegalArgumentException("cached view received recycle internal? " + holder);
             }
             if (forceRecycle || holder.isRecyclable()) {
                 if (mViewCacheMax > 0
-                        && !holder.hasAnyOfTheFlags(ViewHolder.FLAG_INVALID
-                                | ViewHolder.FLAG_REMOVED
-                                | ViewHolder.FLAG_UPDATE
-                                | ViewHolder.FLAG_ADAPTER_POSITION_UNKNOWN)) {
+                        && !holder.hasAnyOfTheFlags(ViewHolder.FLAG_INVALID | ViewHolder.FLAG_REMOVED | ViewHolder.FLAG_UPDATE | ViewHolder.FLAG_ADAPTER_POSITION_UNKNOWN)) {
                     // Retire oldest cached view
                     int cachedViewSize = mCachedViews.size();
                     if (cachedViewSize >= mViewCacheMax && cachedViewSize > 0) {
@@ -5763,9 +5759,7 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
                     }
 
                     int targetCacheIndex = cachedViewSize;
-                    if (ALLOW_THREAD_GAP_WORK
-                            && cachedViewSize > 0
-                            && !mPrefetchRegistry.lastPrefetchIncludedPosition(holder.mPosition)) {
+                    if (ALLOW_THREAD_GAP_WORK && cachedViewSize > 0  && !mPrefetchRegistry.lastPrefetchIncludedPosition(holder.mPosition)) {
                         // when adding the view, skip past most recently prefetched views
                         int cacheIndex = cachedViewSize - 1;
                         while (cacheIndex >= 0) {
@@ -9949,6 +9943,7 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
      * to <code>ViewHolder</code> objects and that <code>RecyclerView</code> instances may hold
      * strong references to extra off-screen item views for caching purposes</p>
      */
+    //ViewHolder描述RecyclerView中一个项目视图和元数据。
     public abstract static class ViewHolder {
         public final View itemView;
         WeakReference<RecyclerView> mNestedRecyclerView;
@@ -11184,6 +11179,7 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
      * <p>If you implement custom components, you can use State's put/get/remove methods to pass
      * data between your components without needing to manage their lifecycles.</p>
      */
+    //包含当前的有用信息，如目标滚动位置或视图焦点。状态对象还可以保存由资源id标识的任意数据
     public static class State {
         static final int STEP_START = 1;
         static final int STEP_LAYOUT = 1 << 1;

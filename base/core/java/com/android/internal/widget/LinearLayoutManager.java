@@ -89,6 +89,7 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements I
      *
      * @see #mShouldReverseLayout
      */
+    //定义布局是否应该从头计算到尾。
     private boolean mReverseLayout = false;
 
     /**
@@ -487,7 +488,7 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements I
         //禁止回收
         mLayoutState.mRecycle = false;
         // resolve layout direction
-        //计算是否需要颠倒绘制。是从底部到顶部绘制，还是从顶部到底部绘制
+        //计算是否需要颠倒绘制。是从底部到顶部绘制，还是从顶部到底部绘制（在LLM的构造函数中，其实可以设置反向绘制）
         resolveShouldLayoutReverse();
         //如果当前锚点信息非法，滑动到的位置不可用或者有需要恢复的存储的SaveState
         if (!mAnchorInfo.mValid || mPendingScrollPosition != NO_POSITION || mPendingSavedState != null) {
@@ -736,14 +737,16 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements I
         mLayoutState.mScrapList = null;
     }
 
+    //根据回收期，但钱状态更新锚点信息
     private void updateAnchorInfoForLayout(RecyclerView.Recycler recycler, RecyclerView.State state, AnchorInfo anchorInfo) {
+        //从挂起的数据更新锚  这个方法一般不会调用到
         if (updateAnchorFromPendingData(state, anchorInfo)) {
             if (DEBUG) {
                 Log.d(TAG, "updated anchor info from pending information");
             }
             return;
         }
-
+        //从子View来确定锚点信息（这里会尝试从有焦点的子View或者列表第一个位置的View或者最后一个位置的View来确定）
         if (updateAnchorFromChildren(recycler, state, anchorInfo)) {
             if (DEBUG) {
                 Log.d(TAG, "updated anchor info from existing children");
@@ -753,40 +756,41 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements I
         if (DEBUG) {
             Log.d(TAG, "deciding anchor info for fresh state");
         }
+        //进入这里说明现在都没有（比如设置Data后还没有绘制View的情况下，就直接设置RecyclerView的顶部或者底部位置为锚点）
         anchorInfo.assignCoordinateFromPadding();
         anchorInfo.mPosition = mStackFromEnd ? state.getItemCount() - 1 : 0;
     }
 
     /**
-     * Finds an anchor child from existing Views. Most of the time, this is the view closest to
-     * start or end that has a valid position (e.g. not removed).
+     * Finds an anchor child from existing Views. Most of the time, this is the view closest to start or end that has a valid position (e.g. not removed).
      * <p>
      * If a child has focus, it is given priority.
      */
-    private boolean updateAnchorFromChildren(RecyclerView.Recycler recycler,
-            RecyclerView.State state, AnchorInfo anchorInfo) {
+    //从现有视图中确定锚定。大多数情况下，这是最接近开始或结束的视图，它有一个有效的位置(例如，未删除)。
+    private boolean updateAnchorFromChildren(RecyclerView.Recycler recycler, RecyclerView.State state, AnchorInfo anchorInfo) {
+        //没有数据，直接返回false
         if (getChildCount() == 0) {
             return false;
         }
         final View focused = getFocusedChild();
+        //优先选取获得焦点的子View作为锚点
         if (focused != null && anchorInfo.isViewValidAsAnchor(focused, state)) {
+            //保持获取焦点的子view的位置信息
             anchorInfo.assignFromViewAndKeepVisibleRect(focused);
             return true;
         }
         if (mLastStackFromEnd != mStackFromEnd) {
             return false;
         }
-        View referenceChild = anchorInfo.mLayoutFromEnd
-                ? findReferenceChildClosestToEnd(recycler, state)
-                : findReferenceChildClosestToStart(recycler, state);
+        //根据锚点的设置信息，从底部或者顶部获取子View信息
+        View referenceChild = anchorInfo.mLayoutFromEnd ? findReferenceChildClosestToEnd(recycler, state) : findReferenceChildClosestToStart(recycler, state);
         if (referenceChild != null) {
             anchorInfo.assignFromView(referenceChild);
             // If all visible views are removed in 1 pass, reference child might be out of bounds.
             // If that is the case, offset it back to 0 so that we use these pre-layout children.
             if (!state.isPreLayout() && supportsPredictiveItemAnimations()) {
                 // validate this child is at least partially visible. if not, offset it to start
-                final boolean notVisible =
-                        mOrientationHelper.getDecoratedStart(referenceChild) >= mOrientationHelper
+                final boolean notVisible = mOrientationHelper.getDecoratedStart(referenceChild) >= mOrientationHelper
                                 .getEndAfterPadding()
                                 || mOrientationHelper.getDecoratedEnd(referenceChild)
                                 < mOrientationHelper.getStartAfterPadding();
@@ -802,8 +806,7 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements I
     }
 
     /**
-     * If there is a pending scroll position or saved states, updates the anchor info from that
-     * data and returns true
+     * If there is a pending scroll position or saved states, updates the anchor info from that data and returns true
      */
     private boolean updateAnchorFromPendingData(RecyclerView.State state, AnchorInfo anchorInfo) {
         if (state.isPreLayout() || mPendingScrollPosition == NO_POSITION) {
@@ -958,8 +961,7 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements I
     private void updateLayoutStateToFillStart(int itemPosition, int offset) {
         mLayoutState.mAvailable = offset - mOrientationHelper.getStartAfterPadding();
         mLayoutState.mCurrentPosition = itemPosition;
-        mLayoutState.mItemDirection = mShouldReverseLayout ? LayoutState.ITEM_DIRECTION_TAIL :
-                LayoutState.ITEM_DIRECTION_HEAD;
+        mLayoutState.mItemDirection = mShouldReverseLayout ? LayoutState.ITEM_DIRECTION_TAIL : LayoutState.ITEM_DIRECTION_HEAD;
         mLayoutState.mLayoutDirection = LayoutState.LAYOUT_START;
         mLayoutState.mOffset = offset;
         mLayoutState.mScrollingOffset = LayoutState.SCROLLING_OFFSET_NaN;
@@ -1392,8 +1394,7 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements I
         if (mShouldReverseLayout) {
             for (int i = childCount - 1; i >= 0; i--) {
                 View child = getChildAt(i);
-                if (mOrientationHelper.getDecoratedEnd(child) > limit
-                        || mOrientationHelper.getTransformedEndWithDecoration(child) > limit) {
+                if (mOrientationHelper.getDecoratedEnd(child) > limit || mOrientationHelper.getTransformedEndWithDecoration(child) > limit) {
                     // stop here
                     recycleChildren(recycler, childCount - 1, i);
                     return;
@@ -1491,6 +1492,7 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements I
      * @param stopOnFocusable 如果为真，则在第一个可聚焦的新子元素中停止填充 If true, filling stops in the first focusable new child
      * @return  它添加的像素数   Number of pixels that it added. Useful for scroll functions.
      */
+    //在LinearLayoutManager中，进行界面重绘和进行滑动两种情况下，往屏幕上填充子View的工作都是调用fill()进行
     int fill(RecyclerView.Recycler recycler, LayoutState layoutState, RecyclerView.State state, boolean stopOnFocusable) {
         // max offset we should set is mFastScroll + available
         //可用区域的像素数
@@ -1500,7 +1502,7 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements I
             if (layoutState.mAvailable < 0) {
                 layoutState.mScrollingOffset += layoutState.mAvailable;
             }
-            //重点方法  ** 判断是否需要回收
+            //重点方法  ** 将滑出屏幕的View回收掉
             recycleByLayoutState(recycler, layoutState);
         }
         //剩余空间=可用区域+扩展空间。
@@ -1549,7 +1551,7 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements I
     }
     //布局一个条目
     void layoutChunk(RecyclerView.Recycler recycler, RecyclerView.State state,LayoutState layoutState, LayoutChunkResult result) {
-        //获取当前position所需要展示的ViewHolder的View
+        //通过缓存获取当前position所需要展示的ViewHolder的View
         View view = layoutState.next(recycler);
         if (view == null) {
             if (DEBUG && layoutState.mScrapList == null) {
@@ -1571,7 +1573,7 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements I
             }
         } else {
             if (mShouldReverseLayout == (layoutState.mLayoutDirection == LayoutState.LAYOUT_START)) {
-                //重点方法 **
+                //重点方法 **这里是即将消失的View，但是需要设置对应的移除动画
                 addDisappearingView(view);
             } else {
                 addDisappearingView(view, 0);
@@ -1612,7 +1614,7 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements I
         }
         // We calculate everything with View's bounding box (which includes decor and margins)
         // To calculate correct layout position, we subtract margins.
-        //调用child.layout方法进行布局(这里会考虑到view的margig等信息)
+        //调用child.layout方法进行布局(这里会考虑到view的ItemDecorator等信息)
         layoutDecoratedWithMargins(view, left, top, right, bottom);
         if (DEBUG) {
             Log.d(TAG, "laid out child at position " + getPosition(view) + ", with l:"
@@ -1629,9 +1631,7 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements I
 
     @Override
     boolean shouldMeasureTwice() {
-        return getHeightMode() != View.MeasureSpec.EXACTLY
-                && getWidthMode() != View.MeasureSpec.EXACTLY
-                && hasFlexibleChildInBothOrientations();
+        return getHeightMode() != View.MeasureSpec.EXACTLY && getWidthMode() != View.MeasureSpec.EXACTLY && hasFlexibleChildInBothOrientations();
     }
 
     /**
@@ -1741,8 +1741,7 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements I
 
 
     /**
-     * Among the children that are suitable to be considered as an anchor child, returns the one
-     * closest to the end of the layout.
+     * Among the children that are suitable to be considered as an anchor child, returns the one closest to the end of the layout.
      * <p>
      * Due to ambiguous adapter updates or children being removed, some children's positions may be
      * invalid. This method is a best effort to find a position within adapter bounds if possible.
@@ -1750,10 +1749,9 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements I
      * It also prioritizes children that are within the visible bounds.
      * @return A View that can be used an an anchor View.
      */
-    private View findReferenceChildClosestToEnd(RecyclerView.Recycler recycler,
-            RecyclerView.State state) {
-        return mShouldReverseLayout ? findFirstReferenceChild(recycler, state) :
-                findLastReferenceChild(recycler, state);
+    //从接近末尾的位置寻找能够使用的子View
+    private View findReferenceChildClosestToEnd(RecyclerView.Recycler recycler, RecyclerView.State state) {
+        return mShouldReverseLayout ? findFirstReferenceChild(recycler, state) : findLastReferenceChild(recycler, state);
     }
 
     /**
@@ -1767,10 +1765,8 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements I
      *
      * @return A View that can be used an an anchor View.
      */
-    private View findReferenceChildClosestToStart(RecyclerView.Recycler recycler,
-            RecyclerView.State state) {
-        return mShouldReverseLayout ? findLastReferenceChild(recycler, state) :
-                findFirstReferenceChild(recycler, state);
+    private View findReferenceChildClosestToStart(RecyclerView.Recycler recycler, RecyclerView.State state) {
+        return mShouldReverseLayout ? findLastReferenceChild(recycler, state) : findFirstReferenceChild(recycler, state);
     }
 
     private View findFirstReferenceChild(RecyclerView.Recycler recycler, RecyclerView.State state) {
@@ -1782,8 +1778,7 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements I
     }
 
     // overridden by GridLayoutManager
-    View findReferenceChild(RecyclerView.Recycler recycler, RecyclerView.State state,
-            int start, int end, int itemCount) {
+    View findReferenceChild(RecyclerView.Recycler recycler, RecyclerView.State state, int start, int end, int itemCount) {
         ensureLayoutState();
         View invalidMatch = null;
         View outOfBoundsMatch = null;
@@ -2313,10 +2308,15 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements I
     /**
      * Simple data class to keep Anchor information
      */
+    //简单的数据类来保存锚点信息
     class AnchorInfo {
+        //锚点位置
         int mPosition;
+        //
         int mCoordinate;
+        //是否从底部开始布局
         boolean mLayoutFromEnd;
+        //是否有效
         boolean mValid;
 
         AnchorInfo() {
@@ -2335,9 +2335,7 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements I
          * layoutFromEnd value
          */
         void assignCoordinateFromPadding() {
-            mCoordinate = mLayoutFromEnd
-                    ? mOrientationHelper.getEndAfterPadding()
-                    : mOrientationHelper.getStartAfterPadding();
+            mCoordinate = mLayoutFromEnd ? mOrientationHelper.getEndAfterPadding() : mOrientationHelper.getStartAfterPadding();
         }
 
         @Override
@@ -2352,8 +2350,7 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements I
 
         boolean isViewValidAsAnchor(View child, RecyclerView.State state) {
             LayoutParams lp = (LayoutParams) child.getLayoutParams();
-            return !lp.isItemRemoved() && lp.getViewLayoutPosition() >= 0
-                    && lp.getViewLayoutPosition() < state.getItemCount();
+            return !lp.isItemRemoved() && lp.getViewLayoutPosition() >= 0 && lp.getViewLayoutPosition() < state.getItemCount();
         }
 
         public void assignFromViewAndKeepVisibleRect(View child) {
@@ -2405,9 +2402,10 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements I
 
         public void assignFromView(View child) {
             if (mLayoutFromEnd) {
-                mCoordinate = mOrientationHelper.getDecoratedEnd(child)
-                        + mOrientationHelper.getTotalSpaceChange();
+                //如果是从底部布局，那么获取child的底部的位置设置为锚点
+                mCoordinate = mOrientationHelper.getDecoratedEnd(child) + mOrientationHelper.getTotalSpaceChange();
             } else {
+                //如果是从顶部开始布局，那么获取child的顶部的位置设置为锚点(这里要考虑ItemDecorator的情况)
                 mCoordinate = mOrientationHelper.getDecoratedStart(child);
             }
 

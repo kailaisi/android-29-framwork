@@ -30,6 +30,7 @@ import android.widget.LinearLayout;
  * @see #createHorizontalHelper(RecyclerView.LayoutManager)
  * @see #createVerticalHelper(RecyclerView.LayoutManager)
  */
+//LayoutManager的辅助类，能够基于View的方向进行测量工作
 public abstract class OrientationHelper {
 
     private static final int INVALID_SIZE = Integer.MIN_VALUE;
@@ -81,6 +82,7 @@ public abstract class OrientationHelper {
      * @return The first pixel of the element
      * @see #getDecoratedEnd(android.view.View)
      */
+    //返回View的开始部分，包括其装饰和边距。比如水平布局，如果View的左像素为20，左装饰(ItemDecorator)2px，左边框3px，返回值为15px，
     public abstract int getDecoratedStart(View view);
 
     /**
