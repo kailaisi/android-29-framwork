@@ -521,8 +521,7 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements I
         }
         extraForStart += mOrientationHelper.getStartAfterPadding();
         extraForEnd += mOrientationHelper.getEndPadding();
-        if (state.isPreLayout() && mPendingScrollPosition != NO_POSITION
-                && mPendingScrollPositionOffset != INVALID_OFFSET) {
+        if (state.isPreLayout() && mPendingScrollPosition != NO_POSITION && mPendingScrollPositionOffset != INVALID_OFFSET) {
             // if the child is visible and we are going to move it around, we should layout
             // extra items in the opposite direction to make sure new items animate nicely
             // instead of just fading in
@@ -565,6 +564,8 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements I
         mLayoutState.mIsPreLayout = state.isPreLayout();
         if (mAnchorInfo.mLayoutFromEnd) {//从end开始布局
             // fill towards start
+            //倒着绘制的话，先从锚点往上，绘制完在从锚点往下
+            //设置绘制方向信息为从锚点往上
             updateLayoutStateToFillStart(mAnchorInfo);
             mLayoutState.mExtra = extraForStart;
             fill(recycler, mLayoutState, state, false);
@@ -589,7 +590,7 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements I
                 startOffset = mLayoutState.mOffset;
             }
         } else {//从起始位置开始布局
-            // 更新layoutState，设置布局方向为从end到start
+            // 更新layoutState，设置布局方向朝下
             updateLayoutStateToFillEnd(mAnchorInfo);
             mLayoutState.mExtra = extraForEnd;
             //开始填充布局
@@ -602,13 +603,13 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements I
                 extraForStart += mLayoutState.mAvailable;
             }
             // fill towards start
-            //更新layoutState，设置布局方向为从start到end
+            //更新layoutState，设置布局方向朝上
             updateLayoutStateToFillStart(mAnchorInfo);
             mLayoutState.mExtra = extraForStart;
             mLayoutState.mCurrentPosition += mLayoutState.mItemDirection;
             //再次填充布局
             fill(recycler, mLayoutState, state, false);
-            //起始位置的便宜
+            //起始位置的偏移
             startOffset = mLayoutState.mOffset;
 
             if (mLayoutState.mAvailable > 0) {
@@ -945,8 +946,7 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements I
 
     private void updateLayoutStateToFillEnd(int itemPosition, int offset) {
         mLayoutState.mAvailable = mOrientationHelper.getEndAfterPadding() - offset;
-        mLayoutState.mItemDirection = mShouldReverseLayout ? LayoutState.ITEM_DIRECTION_HEAD :
-                LayoutState.ITEM_DIRECTION_TAIL;
+        mLayoutState.mItemDirection = mShouldReverseLayout ? LayoutState.ITEM_DIRECTION_HEAD : LayoutState.ITEM_DIRECTION_TAIL;
         mLayoutState.mCurrentPosition = itemPosition;
         mLayoutState.mLayoutDirection = LayoutState.LAYOUT_END;
         mLayoutState.mOffset = offset;
@@ -976,6 +976,7 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements I
             mLayoutState = createLayoutState();
         }
         if (mOrientationHelper == null) {
+            //初始化，会根据方向来创建不同的辅助类
             mOrientationHelper = OrientationHelper.createOrientationHelper(this, mOrientation);
         }
     }
@@ -1170,25 +1171,25 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements I
         if (layoutDirection == LayoutState.LAYOUT_END) {
             mLayoutState.mExtra += mOrientationHelper.getEndPadding();
             // get the first child in the direction we are going
+            //获取当前显示的最底部的View
             final View child = getChildClosestToEnd();
             // the direction in which we are traversing children
-            mLayoutState.mItemDirection = mShouldReverseLayout ? LayoutState.ITEM_DIRECTION_HEAD
-                    : LayoutState.ITEM_DIRECTION_TAIL;
+            mLayoutState.mItemDirection = mShouldReverseLayout ? LayoutState.ITEM_DIRECTION_HEAD : LayoutState.ITEM_DIRECTION_TAIL;
+            //设置当前显示的子View的index+1
             mLayoutState.mCurrentPosition = getPosition(child) + mLayoutState.mItemDirection;
+            //设置当前显示的子View的底部的偏移量（包括了Decor的高度）
             mLayoutState.mOffset = mOrientationHelper.getDecoratedEnd(child);
             // calculate how much we can scroll without adding new children (independent of layout)
-            scrollingOffset = mOrientationHelper.getDecoratedEnd(child)
-                    - mOrientationHelper.getEndAfterPadding();
-
+            //底部锚点位置减去RecyclerView的高度的话，剩下的就是我们滚动多远(scrollingOffset)，不会绘制新的View
+            //getEndAfterPadding=RecyclerView的高度-padding的高度
+            scrollingOffset = mOrientationHelper.getDecoratedEnd(child) - mOrientationHelper.getEndAfterPadding();
         } else {
             final View child = getChildClosestToStart();
             mLayoutState.mExtra += mOrientationHelper.getStartAfterPadding();
-            mLayoutState.mItemDirection = mShouldReverseLayout ? LayoutState.ITEM_DIRECTION_TAIL
-                    : LayoutState.ITEM_DIRECTION_HEAD;
+            mLayoutState.mItemDirection = mShouldReverseLayout ? LayoutState.ITEM_DIRECTION_TAIL : LayoutState.ITEM_DIRECTION_HEAD;
             mLayoutState.mCurrentPosition = getPosition(child) + mLayoutState.mItemDirection;
             mLayoutState.mOffset = mOrientationHelper.getDecoratedStart(child);
-            scrollingOffset = -mOrientationHelper.getDecoratedStart(child)
-                    + mOrientationHelper.getStartAfterPadding();
+            scrollingOffset = -mOrientationHelper.getDecoratedStart(child) + mOrientationHelper.getStartAfterPadding();
         }
         mLayoutState.mAvailable = requiredSpace;
         if (canUseExistingSpace) {
@@ -1317,7 +1318,7 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements I
         //确认滚动方向
         final int layoutDirection = dy > 0 ? LayoutState.LAYOUT_END : LayoutState.LAYOUT_START;
         final int absDy = Math.abs(dy);
-        //更新layoutState，会更新其展示的屏幕区域
+        //更新layoutState，会更新其展示的屏幕区域，偏移量等。比如说当往上滑动的时候，底部会有dy距离的空白区域，这时候，需要调用fill来填充这个dy距离的区域
         updateLayoutState(layoutDirection, absDy, true, state);
         //调用fill进行填充展示在客户面前的view
         final int consumed = mLayoutState.mScrollingOffset + fill(recycler, mLayoutState, state, false);
@@ -1379,6 +1380,7 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements I
      *                 to detect children that will go out of bounds after scrolling, without
      *                 actually moving them.
      */
+    //从头部回收View
     private void recycleViewsFromStart(RecyclerView.Recycler recycler, int dt) {
         if (dt < 0) {
             if (DEBUG) {
@@ -1388,7 +1390,9 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements I
             return;
         }
         // ignore padding, ViewGroup may not clip children.
+        //limit表示滑动多少以内不会绘制
         final int limit = dt;
+        //返回附加到父视图的当前子View的数量
         final int childCount = getChildCount();
         if (mShouldReverseLayout) {
             for (int i = childCount - 1; i >= 0; i--) {
@@ -1400,10 +1404,13 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements I
                 }
             }
         } else {
+            //遍历子View
             for (int i = 0; i < childCount; i++) {
+                //获取到显示的view
                 View child = getChildAt(i);
-                if (mOrientationHelper.getDecoratedEnd(child) > limit
-                        || mOrientationHelper.getTransformedEndWithDecoration(child) > limit) {
+                //如果当前的View的底部位置>limit，那么也就是会有View需要绘制，顶部的View也就需要回收了
+                //这里有个逻辑，就是如果底部的View不需要绘制，那么顶部的View就不会进行回收
+                if (mOrientationHelper.getDecoratedEnd(child) > limit || mOrientationHelper.getTransformedEndWithDecoration(child) > limit) {
                     // stop here
                     recycleChildren(recycler, 0, i);
                     return;
@@ -1504,19 +1511,19 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements I
             //重点方法  ** 将滑出屏幕的View回收掉
             recycleByLayoutState(recycler, layoutState);
         }
-        //剩余空间=可用区域+扩展空间。
+        //剩余绘制空间=可用区域+扩展空间。
         int remainingSpace = layoutState.mAvailable + layoutState.mExtra;
         LayoutChunkResult layoutChunkResult = mLayoutChunkResult;
         //循环布局直到没有剩余空间了或者没有剩余数据了
         while ((layoutState.mInfinite || remainingSpace > 0) && layoutState.hasMore(state)) {
             //初始化layoutChunkResult
             layoutChunkResult.resetInternal();
-            //**重点方法  添加一个child
+            //**重点方法  添加一个child，然后将绘制的相关信息保存到layoutChunkResult
             layoutChunk(recycler, state, layoutState, layoutChunkResult);
             if (layoutChunkResult.mFinished) {//如果布局结束了(没有view了)，退出循环
                 break;
             }
-            //根据所添加的child消费的高度更新layoutState的偏移量。mLayoutDirection为+1或者-1，通过*来处理是从底部往上布局，还是从上往底部开始布局
+            //根据所添加的child消费的高度更新layoutState的偏移量。mLayoutDirection为+1或者-1，通过乘法来处理是从底部往上布局，还是从上往底部开始布局
             layoutState.mOffset += layoutChunkResult.mConsumed * layoutState.mLayoutDirection;
             /**
              * Consume the available space if:
@@ -1567,7 +1574,7 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements I
             //根据方向调用addView方法添加子View
             if (mShouldReverseLayout == (layoutState.mLayoutDirection == LayoutState.LAYOUT_START)) {
                 addView(view);
-            } else {
+            } else {//按默认的话，会调用者方法
                 addView(view, 0);
             }
         } else {
@@ -1580,7 +1587,7 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements I
         }
         //调用measure测量view。这里会考虑到父类的padding
         measureChildWithMargins(view, 0, 0);
-        //获取view的宽(或者高)
+        //将本次子View消费的区域设置为子view的高(或者宽)
         result.mConsumed = mOrientationHelper.getDecoratedMeasurement(view);
         //找到view的四个边角位置
         int left, top, right, bottom;
@@ -2059,9 +2066,9 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements I
     }
 
     /**
-     * Helper class that keeps temporary state while {LayoutManager} is filling out the empty
-     * space.
+     * Helper class that keeps temporary state while {LayoutManager} is filling out the empty space.
      */
+    //在{LayoutManager}填充空白空间时保持临时状态的辅助类
     static class LayoutState {
 
         static final String TAG = "LLM#LayoutState";
@@ -2086,16 +2093,19 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements I
         /**
          * Pixel offset where layout should start
          */
+        //布局起始位置的偏移量(应该是锚点里面设置的mCoordinate?)
         int mOffset;
 
         /**
          * Number of pixels that we should fill, in the layout direction.
          */
+        //在布局方向上的应该填充的像素值
         int mAvailable;
 
         /**
          * Current position on the adapter to get the next item.
          */
+        //适配器上获取下一项的位置
         int mCurrentPosition;
 
         /**
@@ -2115,13 +2125,17 @@ public class LinearLayoutManager extends RecyclerView.LayoutManager implements I
          * It should be set the amount of scrolling we can make without creating a new view.
          * Settings this is required for efficient view recycling.
          */
+        //当RecyclerView进行滚动的时候的状态，它应该设置我们可以在不创建新视图的情况下进行滚动的距离
+        // 比如说我某个View低上半部分显示了一半，那么这时候我往上滑动一半距离的话以内，是不需要创建新的子View的。
+        // 这个mScrollingOffset就是我在不创建视图的前提下可以滑动的最大距离
         int mScrollingOffset;
 
         /**
          * Used if you want to pre-layout items that are not yet visible.
-         * The difference with {@link #mAvailable} is that, when recycling, distance laid out for
-         * {@link #mExtra} is not considered to avoid recycling visible children.
+         * The difference with {@link #mAvailable} is that, when recycling, distance laid out for  {@link #mExtra} is not considered to avoid recycling visible children.
          */
+        //如果您想要预先布局还不可见的项，请使用。
+        //与{@link #mAvailable}的不同之处在于，在回收时，为{@link #mExtra}设置的距离不被认为是为了避免回收可见的儿童。
         int mExtra = 0;
 
         /**
