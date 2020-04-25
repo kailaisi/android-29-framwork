@@ -213,6 +213,7 @@ class TaskRecord extends ConfigurationContainer {
     String rootAffinity;    // Initial base affinity, or null; does not change from initial root.
     final IVoiceInteractionSession voiceSession;    // Voice interaction session driving task
     final IVoiceInteractor voiceInteractor;         // Associated interactor to provide to app
+    //启动当前任务栈的最原始的intent信息。可能为空
     Intent intent;          // The original intent that started the task. Note that this value can
                             // be null.
     Intent affinityIntent;  // Intent of affinity-moved activity that started this task.

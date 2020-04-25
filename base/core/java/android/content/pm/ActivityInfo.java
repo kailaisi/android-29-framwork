@@ -75,6 +75,7 @@ public class ActivityInfo extends ComponentInfo implements Parcelable {
      * {@link #LAUNCH_SINGLE_TOP}, {@link #LAUNCH_SINGLE_TASK}, or
      * {@link #LAUNCH_SINGLE_INSTANCE}.
      */
+    //设置的启动模式
     public int launchMode;
 
     /**
@@ -144,6 +145,7 @@ public class ActivityInfo extends ComponentInfo implements Parcelable {
      * Optional name of a permission required to be able to access this
      * Activity.  From the "permission" attribute.
      */
+    //启动当前Activity需要的权限信息
     public String permission;
 
     /**
@@ -158,6 +160,7 @@ public class ActivityInfo extends ComponentInfo implements Parcelable {
      * If this is an activity alias, this is the real activity class to run
      * for it.  Otherwise, this is null.
      */
+    //如果当前activity是一个别名，那么这个就是实际要启动的activity类
     public String targetActivity;
 
     /**

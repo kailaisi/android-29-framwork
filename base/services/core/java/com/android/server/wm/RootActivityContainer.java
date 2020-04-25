@@ -2248,7 +2248,7 @@ class RootActivityContainer extends ConfigurationContainer implements DisplayMan
             for (int stackNdx = display.getChildCount() - 1; stackNdx >= 0; --stackNdx) {
                 //stack就是我们通常所说的activity栈
                 final ActivityStack stack = display.getChildAt(stackNdx);
-                //判断token适合当当前activity在同一个栈中
+                //判断IBinder对象token适合当当前activity在同一个栈中
                 final ActivityRecord r = stack.isInStackLocked(token);
                 if (r != null) {
                     return r;

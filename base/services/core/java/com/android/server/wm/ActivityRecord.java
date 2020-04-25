@@ -236,6 +236,7 @@ import java.util.Objects;
 /**
  * An entry in the history stack, representing an activity.
  */
+//历史堆栈中的一个条目，代表一个Activity
 final class ActivityRecord extends ConfigurationContainer {
     private static final String TAG = TAG_WITH_CLASS_NAME ? "ActivityRecord" : TAG_ATM;
     private static final String TAG_CONFIGURATION = TAG + POSTFIX_CONFIGURATION;
@@ -263,22 +264,29 @@ final class ActivityRecord extends ConfigurationContainer {
     final IApplicationToken.Stub appToken; // window manager token
     // TODO: Remove after unification
     AppWindowToken mAppWindowToken;
-
+	//Activity的信息
     final ActivityInfo info; // all about me
     // TODO: This is duplicated state already contained in info.applicationInfo - remove
+    //Application的信息
     ApplicationInfo appInfo; // information about activity's app
+    //启动当前activity的pid，也就是processId，进程ID
     final int launchedFromPid; // always the pid who started the activity.
+    //启动当前activity的uid，也就是User Identifier，即用户ID，Android 上，一个应用程序只有一个UID，当然多个应用程序也可以共享一个UID
     final int launchedFromUid; // always the uid who started the activity.
+
     final String launchedFromPackage; // always the package who started the activity.
     final int mUserId;          // Which user is this running for?
     final Intent intent;    // the original intent that generated us
     final ComponentName mActivityComponent;  // the intent component, or target of an alias.
     final String shortComponentName; // the short component name of the intent
     final String resolvedType; // as per original caller;
+    //当前Activity的包名
     final String packageName; // the package implementing intent's component
+    //当前Activity运行的进程名称
     final String processName; // process where this component wants to run
     final String taskAffinity; // as per ActivityInfo.taskAffinity
     final boolean stateNotNeeded; // As per ActivityInfo.flags
+    //是否全屏显示
     boolean fullscreen; // The activity is opaque and fills the entire space of this task.
     // TODO: See if it possible to combine this with the fullscreen field.
     final boolean hasWallpaper; // Has a wallpaper window as a background.
@@ -291,11 +299,15 @@ final class ActivityRecord extends ConfigurationContainer {
 
     private CharSequence nonLocalizedLabel;  // the label information from the package mgr.
     private int labelRes;           // the label information from the package mgr.
+    //activity对应的icon的资源标识
     private int icon;               // resource identifier of activity's icon.
+    //activity对应的logo的资源标识
     private int logo;               // resource identifier of activity's logo.
+    //activity对应的主题
     private int theme;              // resource identifier of activity's theme.
     private int realTheme;          // actual theme resource we will use, never 0.
     private int windowFlags;        // custom window flags for preview window.
+    //当前activity所处的任务栈
     private TaskRecord task;        // the task this is in.
     private long createTime = System.currentTimeMillis();
     long lastVisibleTime;         // last time this activity became visible
@@ -309,8 +321,10 @@ final class ActivityRecord extends ConfigurationContainer {
     private boolean mLastReportedMultiWindowMode;
     private boolean mLastReportedPictureInPictureMode;
     CompatibilityInfo compat;// last used compatibility mode
+    //启动当前ActivityRecord的activityrecord，通过它能够返回信息（比如说onActivityResult？）。如果是newTask启动模式，resutltTo是null
     ActivityRecord resultTo; // who started this entry, so will get our reply
     final String resultWho; // additional identifier for use by resultTo.
+    //启动时使用的requestCode
     final int requestCode;  // code given by requester (resultTo)
     ArrayList<ResultInfo> results; // pending ActivityResult objs we have received
     HashSet<WeakReference<PendingIntentRecord>> pendingResults; // all pending intents for this act
@@ -336,6 +350,7 @@ final class ActivityRecord extends ConfigurationContainer {
     boolean preserveWindowOnDeferredRelaunch; // activity windows are preserved on deferred relaunch
     int configChangeFlags;  // which config values have changed
     private boolean keysPaused;     // has key dispatching been paused for it?
+    //当前activity的启动模式
     int launchMode;         // the launch mode activity attribute.
     int lockTaskLaunchMode; // the lockTaskMode manifest attribute, subject to override
     boolean visible;        // does this activity's window need to be shown?
@@ -363,7 +378,9 @@ final class ActivityRecord extends ConfigurationContainer {
     String stringName;      // for caching of toString().
 
     private boolean inHistory;  // are we in the history stack?
+    //当前activity所处的ActivityStackSupervisor
     final ActivityStackSupervisor mStackSupervisor;
+    //当前activity所处的RootActivityContainer。这个类是10.0中新增的一个类，暂时用来分担ActivityStackSupervisor的部分职责的，主要目的是使ActivityContainer的结构和WindowContainer的结构保持一致
     final RootActivityContainer mRootActivityContainer;
 
     static final int STARTING_WINDOW_NOT_SHOWN = 0;
