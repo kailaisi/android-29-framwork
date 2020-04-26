@@ -4023,11 +4023,11 @@ class ActivityStack extends ConfigurationContainer {
 
         mWindowManager.deferSurfaceLayout();
         try {
+            //标记开始进行finish操作
             r.makeFinishingLocked();
+            //
             final TaskRecord task = r.getTaskRecord();
-            EventLog.writeEvent(EventLogTags.AM_FINISH_ACTIVITY,
-                    r.mUserId, System.identityHashCode(r),
-                    task.taskId, r.shortComponentName, reason);
+            EventLog.writeEvent(EventLogTags.AM_FINISH_ACTIVITY, r.mUserId, System.identityHashCode(r), task.taskId, r.shortComponentName, reason);
             final ArrayList<ActivityRecord> activities = task.mActivities;
             final int index = activities.indexOf(r);
             if (index < (activities.size() - 1)) {
@@ -4040,21 +4040,20 @@ class ActivityStack extends ConfigurationContainer {
                     next.intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
                 }
             }
-
+            //停止键盘分发
             r.pauseKeyDispatchingLocked();
-
+            //
             adjustFocusedActivityStack(r, "finishActivity");
 
             finishActivityResultsLocked(r, resultCode, resultData);
-
+            //任务栈中如果没有要结束的activity
             final boolean endTask = index <= 0 && !task.isClearingToReuseTask();
             final int transit = endTask ? TRANSIT_TASK_CLOSE : TRANSIT_ACTIVITY_CLOSE;
-            if (mResumedActivity == r) {
+            if (mResumedActivity == r) {//如果当前正在显示的activity就是要结束的activity
                 if (DEBUG_VISIBILITY || DEBUG_TRANSITION) Slog.v(TAG_TRANSITION,
                         "Prepare close transition: finishing " + r);
                 if (endTask) {
-                    mService.getTaskChangeNotificationController().notifyTaskRemovalStarted(
-                            task.getTaskInfo());
+                    mService.getTaskChangeNotificationController().notifyTaskRemovalStarted( task.getTaskInfo());
                 }
                 getDisplay().mDisplayContent.prepareAppTransition(transit, false);
 
@@ -4063,8 +4062,8 @@ class ActivityStack extends ConfigurationContainer {
 
                 if (mPausingActivity == null) {
                     if (DEBUG_PAUSE) Slog.v(TAG_PAUSE, "Finish needs to pause: " + r);
-                    if (DEBUG_USER_LEAVING) Slog.v(TAG_USER_LEAVING,
-                            "finish() => pause with userLeaving=false");
+                    if (DEBUG_USER_LEAVING) Slog.v(TAG_USER_LEAVING, "finish() => pause with userLeaving=false");
+                    //暂停activity
                     startPausingLocked(false, false, null, pauseImmediately);
                 }
 
@@ -4079,10 +4078,8 @@ class ActivityStack extends ConfigurationContainer {
                     prepareActivityHideTransitionAnimation(r, transit);
                 }
 
-                final int finishMode = (r.visible || r.nowVisible) ? FINISH_AFTER_VISIBLE
-                        : FINISH_AFTER_PAUSE;
-                final boolean removedActivity = finishCurrentActivityLocked(r, finishMode, oomAdj,
-                        "finishActivityLocked") == null;
+                final int finishMode = (r.visible || r.nowVisible) ? FINISH_AFTER_VISIBLE : FINISH_AFTER_PAUSE;
+                final boolean removedActivity = finishCurrentActivityLocked(r, finishMode, oomAdj, "finishActivityLocked") == null;
 
                 // The following code is an optimization. When the last non-task overlay activity
                 // is removed from the task, we remove the entire task from the stack. However,

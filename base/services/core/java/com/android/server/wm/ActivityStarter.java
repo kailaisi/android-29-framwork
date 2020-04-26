@@ -1490,7 +1490,8 @@ class ActivityStarter {
                 // In this situation we want to remove all activities from the task up to the one
                 // being started. In most cases this means we are resetting the task to its initial
                 // state.
-                //执行清除目标activity上面所有的activitys的操作。
+                //***重点方法*****
+                // 执行清除目标activity上面所有的activitys的操作。
                 //函数内部如果和mStartActivity相同compoentname的activity的启动模式是默认的ret.launchMode == ActivityInfo.LAUNCH_MULTIPLE，则也会将这个activity销毁
 				//对于SingleInstance || SingleTask|| singleTop启动模式的则不会被销毁。
 				//对于要启动的activity的启动模式为LAUNCH_MULTIPLE的，performClearTaskForReuseLocked返回值top肯定是空的
@@ -2062,20 +2063,21 @@ class ActivityStarter {
      * @return {@link ActivityRecord} brought to front.
      */
     private ActivityRecord setTargetStackAndMoveToFrontIfNeeded(ActivityRecord intentActivity) {
+        //获取到其所在的ActivityStack
         mTargetStack = intentActivity.getActivityStack();
         mTargetStack.mLastPausedActivity = null;
         // If the target task is not in the front, then we need to bring it to the front...
         // except...  well, with SINGLE_TASK_LAUNCH it's not entirely clear. We'd like to have
         // the same behavior as if a new instance was being started, which means not bringing it
         // to the front if the caller is not itself in the front.
-        //如果目标task没有位于前台显示，那么我们将其在前台显示。
+        //标记位，标记当前顶部的栈是否与我们所复用的activity所在的栈不同
         final boolean differentTopTask;
         if (mPreferredDisplayId == mTargetStack.mDisplayId) {
-			//获取栈顶的ActivityStack信息
+			//获取当前屏幕栈顶的ActivityStack
             final ActivityStack focusStack = mTargetStack.getDisplay().getFocusedStack();
 			//获取当前正在显示的activityRecord
             final ActivityRecord curTop = (focusStack == null)? null : focusStack.topRunningNonDelayedActivityLocked(mNotTop);
-			//顶部的栈
+			//当前正在显示的ActivityRecord所属的TaskRecord
             final TaskRecord topTask = curTop != null ? curTop.getTaskRecord() : null;
 			//判断顶部的栈是否符合要求(即判断现在栈顶的栈是否为能够复用的activityrecord所在的栈)
             differentTopTask = topTask != intentActivity.getTaskRecord()|| (focusStack != null && topTask != focusStack.topTask());
@@ -2084,13 +2086,13 @@ class ActivityStarter {
             //表明要复用的task与正在显示的信息不在同一个栈中
             differentTopTask = true;
         }
-
+        //如果当前栈顶的任务栈并不是我们可以复用的activity所在的任务栈，那么就需要将activity所在的任务栈移动到顶部（前面）
         if (differentTopTask && !mAvoidMoveToFront) {
 			//增加一个标记，标识这个task是从任务栈的后面移动上来的
             mStartActivity.intent.addFlags(Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT);
+            //判断合法性
             if (mSourceRecord == null || (mSourceStack.getTopActivity() != null &&mSourceStack.getTopActivity().getTaskRecord()== mSourceRecord.getTaskRecord())) {
                 // We really do want to push this one into the user's face, right now.
-                //我们将
                 if (mLaunchTaskBehind && mSourceRecord != null) {
                     intentActivity.setTaskToAffiliateWith(mSourceRecord.getTaskRecord());
                 }
@@ -2104,8 +2106,9 @@ class ActivityStarter {
                 //willclearTask表明是否同时使用了 NEW_TASK 和 CLEAR_TASK的flag
                 final boolean willClearTask =(mLaunchFlags & (FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK))== (FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK);
                 if (!willClearTask) {//不需要清空，那么就需要将复用的task移至栈顶
-                	//获取当前要启动的栈
+                	//****重点方法****获取当前要启动activity所属的ActivityStack栈
                     final ActivityStack launchStack = getLaunchStack(mStartActivity, mLaunchFlags, mStartActivity.getTaskRecord(), mOptions);
+                    //获取当前要启动activity所属的任务栈
                     final TaskRecord intentTask = intentActivity.getTaskRecord();
                     if (launchStack == null || launchStack == mTargetStack) {
                         // We only want to move to the front, if we aren't going to launch on a
@@ -2151,14 +2154,13 @@ class ActivityStarter {
                 }
             }
         }
-        // Need to update mTargetStack because if task was moved out of it, the original stack may
-        // be destroyed.
+        // Need to update mTargetStack because if task was moved out of it, the original stack may  be destroyed.
         mTargetStack = intentActivity.getActivityStack();
         if (!mMovedToFront && mDoResume) {
             if (DEBUG_TASKS) Slog.d(TAG_TASKS, "Bring to front target: " + mTargetStack+ " from " + intentActivity);
             mTargetStack.moveToFront("intentActivityFound");
         }
-
+        //在将TaskRecord移动到顶部以后，需要将其所在的ActivityStack也移动到顶部
         mSupervisor.handleNonResizableTaskIfNeeded(intentActivity.getTaskRecord(),WINDOWING_MODE_UNDEFINED, DEFAULT_DISPLAY, mTargetStack);
 
         // If the caller has requested that the target task be reset, then do so.

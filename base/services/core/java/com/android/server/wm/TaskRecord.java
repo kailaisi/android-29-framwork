@@ -1464,6 +1464,7 @@ class TaskRecord extends ConfigurationContainer {
 
     ActivityRecord performClearTaskForReuseLocked(ActivityRecord newR, int launchFlags) {
         mReuseTask = true;
+        //真正的执行代码
         final ActivityRecord result = performClearTaskLocked(newR, launchFlags);
         mReuseTask = false;
         return result;
@@ -1482,6 +1483,7 @@ class TaskRecord extends ConfigurationContainer {
      */
     final ActivityRecord performClearTaskLocked(ActivityRecord newR, int launchFlags) {
         int numActivities = mActivities.size();
+        //从顶部开始遍历
         for (int activityNdx = numActivities - 1; activityNdx >= 0; --activityNdx) {
             ActivityRecord r = mActivities.get(activityNdx);
             if (r.finishing) {
@@ -1491,7 +1493,7 @@ class TaskRecord extends ConfigurationContainer {
 				//获取到了目标activity，那么所有位于它上面的目标都需要结束
                 // Here it is!  Now finish everything in front...
                 final ActivityRecord ret = r;
-
+                //查找到以后从当前位置开始朝顶部开始遍历关闭
                 for (++activityNdx; activityNdx < numActivities; ++activityNdx) {
                     r = mActivities.get(activityNdx);
                     if (r.finishing) {
