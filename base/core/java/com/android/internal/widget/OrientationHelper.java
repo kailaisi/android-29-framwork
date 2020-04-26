@@ -296,8 +296,8 @@ public abstract class OrientationHelper {
 
             @Override
             public int getDecoratedStart(View view) {
-                final RecyclerView.LayoutParams params = (RecyclerView.LayoutParams)
-                        view.getLayoutParams();
+                final RecyclerView.LayoutParams params = (RecyclerView.LayoutParams)view.getLayoutParams();
+                //child.getLeft() - getLeftDecorationWidth(child)-params.leftMargin
                 return mLayoutManager.getDecoratedLeft(view) - params.leftMargin;
             }
 
@@ -351,6 +351,7 @@ public abstract class OrientationHelper {
         return new OrientationHelper(layoutManager) {
             @Override
             public int getEndAfterPadding() {
+                //RecyclerView的高度-padding的高度
                 return mLayoutManager.getHeight() - mLayoutManager.getPaddingBottom();
             }
 
@@ -387,15 +388,15 @@ public abstract class OrientationHelper {
 
             @Override
             public int getDecoratedEnd(View view) {
-                final RecyclerView.LayoutParams params = (RecyclerView.LayoutParams)
-                        view.getLayoutParams();
+                final RecyclerView.LayoutParams params = (RecyclerView.LayoutParams) view.getLayoutParams();
+                //child.getBottom() + getBottomDecorationHeight(child)+ params.bottomMargin;
                 return mLayoutManager.getDecoratedBottom(view) + params.bottomMargin;
             }
 
             @Override
             public int getDecoratedStart(View view) {
-                final RecyclerView.LayoutParams params = (RecyclerView.LayoutParams)
-                        view.getLayoutParams();
+                final RecyclerView.LayoutParams params = (RecyclerView.LayoutParams)view.getLayoutParams();
+                //child.getTop() - getTopDecorationHeight(child)-params.topMargin
                 return mLayoutManager.getDecoratedTop(view) - params.topMargin;
             }
 

@@ -289,6 +289,7 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
     /**
      * Handles abstraction between LayoutManager children and RecyclerView children
      */
+    //处理LayoutManager子元素和clerview子元素之间的抽象
     ChildHelper mChildHelper;
 
     /**
@@ -725,13 +726,11 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
             }
 
             @Override
-            public void attachViewToParent(View child, int index,
-                    ViewGroup.LayoutParams layoutParams) {
+            public void attachViewToParent(View child, int index, ViewGroup.LayoutParams layoutParams) {
                 final ViewHolder vh = getChildViewHolderInt(child);
                 if (vh != null) {
                     if (!vh.isTmpDetached() && !vh.shouldIgnore()) {
-                        throw new IllegalArgumentException("Called attach on a child which is not"
-                                + " detached: " + vh);
+                        throw new IllegalArgumentException("Called attach on a child which is not" + " detached: " + vh);
                     }
                     if (DEBUG) {
                         Log.d(TAG, "reAttach " + vh);
@@ -7714,7 +7713,7 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
         public void addView(View child, int index) {
             addViewInt(child, index, false);
         }
-        //不管addView还是addDisappearingView都会调用这个方法，只是最后的参数不一样
+        //不管addView还是addDisappearingView都会调用这个方法，只是最后的disappearing参数不一样
         private void addViewInt(View child, int index, boolean disappearing) {
             //获取View对应的holder
             final ViewHolder holder = getChildViewHolderInt(child);
@@ -8725,8 +8724,7 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
         }
 
         /**
-         * Calculates the bounding box of the View while taking into account its matrix changes
-         * (translation, scale etc) with respect to the RecyclerView.
+         * Calculates the bounding box of the View while taking into account its matrix changes (translation, scale etc) with respect to the RecyclerView.
          * <p>
          * If {@code includeDecorInsets} is {@code true}, they are applied first before applying
          * the View's matrix so that the decor offsets also go through the same transformation.
@@ -8738,8 +8736,7 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
         public void getTransformedBoundingBox(View child, boolean includeDecorInsets, Rect out) {
             if (includeDecorInsets) {
                 Rect insets = ((LayoutParams) child.getLayoutParams()).mDecorInsets;
-                out.set(-insets.left, -insets.top,
-                        child.getWidth() + insets.right, child.getHeight() + insets.bottom);
+                out.set(-insets.left, -insets.top, child.getWidth() + insets.right, child.getHeight() + insets.bottom);
             } else {
                 out.set(0, 0, child.getWidth(), child.getHeight());
             }
@@ -8750,11 +8747,7 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
                     final RectF tempRectF = mRecyclerView.mTempRectF;
                     tempRectF.set(out);
                     childMatrix.mapRect(tempRectF);
-                    out.set(
-                            (int) Math.floor(tempRectF.left),
-                            (int) Math.floor(tempRectF.top),
-                            (int) Math.ceil(tempRectF.right),
-                            (int) Math.ceil(tempRectF.bottom)
+                    out.set( (int) Math.floor(tempRectF.left), (int) Math.floor(tempRectF.top), (int) Math.ceil(tempRectF.right), (int) Math.ceil(tempRectF.bottom)
                     );
                 }
             }
@@ -8781,6 +8774,7 @@ public class RecyclerView extends ViewGroup implements ScrollingView, NestedScro
          * @see #getLeftDecorationWidth(View)
          */
         public int getDecoratedLeft(View child) {
+            //getLeft()返回相对于父控件(RecyclerView)的位置。getLeftDecorationWidth返回的是View左侧的Decoration的宽度
             return child.getLeft() - getLeftDecorationWidth(child);
         }
 
