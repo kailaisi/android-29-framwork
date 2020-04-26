@@ -120,8 +120,8 @@ class ActivityStarter {
     private ActivityInfo mNewTaskInfo;
     private Intent mNewTaskIntent;
     private ActivityStack mSourceStack;
-    private ActivityStack mTargetStack;
     private boolean mMovedToFront;
+    private ActivityStack mTargetStack;
     private boolean mNoAnimation;
     private boolean mKeepCurTransition;
     private boolean mAvoidMoveToFront;
@@ -1541,7 +1541,7 @@ class ActivityStarter {
             }
 
             if (reusedActivity != null) {
-				//根据复用情况设置task
+				//****重点关注方法******根据复用情况设置task
                 setTaskFromIntentActivity(reusedActivity);
 				//mAddingToTask为true表示要新建，mReuseTask为空表示task被清除了
                 if (!mAddingToTask && mReuseTask == null) {
@@ -1559,7 +1559,7 @@ class ActivityStarter {
                     return mMovedToFront ? START_TASK_TO_FRONT : START_DELIVERED_TO_TOP;
                 }
             }
-        }
+        }i
 
         //这里对packageName为空做处理，直接返回调用出错
         if (mStartActivity.packageName == null) {
@@ -1579,12 +1579,9 @@ class ActivityStarter {
         final ActivityRecord topFocused = topStack.getTopActivity();
         final ActivityRecord top = topStack.topRunningNonDelayedActivityLocked(mNotTop);
         //是否需要启动新的标记为
-        final boolean dontStart = top != null && mStartActivity.resultTo == null
-                && top.mActivityComponent.equals(mStartActivity.mActivityComponent)
-                && top.mUserId == mStartActivity.mUserId
-                && top.attachedToProcess()
-                && ((mLaunchFlags & FLAG_ACTIVITY_SINGLE_TOP) != 0
-                || isLaunchModeOneOf(LAUNCH_SINGLE_TOP, LAUNCH_SINGLE_TASK))
+        final boolean dontStart = top != null && mStartActivity.resultTo == null && top.mActivityComponent.equals(mStartActivity.mActivityComponent)
+                && top.mUserId == mStartActivity.mUserId && top.attachedToProcess()
+                && ((mLaunchFlags & FLAG_ACTIVITY_SINGLE_TOP) != 0 || isLaunchModeOneOf(LAUNCH_SINGLE_TOP, LAUNCH_SINGLE_TASK))
                 // This allows home activity to automatically launch on secondary display when
                 // display added, if home was the top activity on default display, instead of
                 // sending new intent to the home activity on default display.
@@ -2062,6 +2059,7 @@ class ActivityStarter {
      * @param intentActivity Existing matching activity.
      * @return {@link ActivityRecord} brought to front.
      */
+    //intentActivity其实是我们的可复用的ActivityRecord
     private ActivityRecord setTargetStackAndMoveToFrontIfNeeded(ActivityRecord intentActivity) {
         //获取到其所在的ActivityStack
         mTargetStack = intentActivity.getActivityStack();
@@ -2120,8 +2118,7 @@ class ActivityStarter {
                     } else if (launchStack.inSplitScreenWindowingMode()) {
 						//分屏模式下，
                         if ((mLaunchFlags & FLAG_ACTIVITY_LAUNCH_ADJACENT) != 0) {
-                            // If we want to launch adjacent and mTargetStack is not the computed
-                            // launch stack - move task to top of computed stack.
+                            // If we want to launch adjacent and mTargetStack is not the computed launch stack - move task to top of computed stack.
                             intentTask.reparent(launchStack, ON_TOP,REPARENT_MOVE_STACK_TO_FRONT, ANIMATE, DEFER_RESUME,"launchToSide");
                         } else {
                             // TODO: This should be reevaluated in MW v2.
@@ -2132,13 +2129,13 @@ class ActivityStarter {
                         }
                         mMovedToFront = launchStack != launchStack.getDisplay().getTopStackInWindowingMode(launchStack.getWindowingMode());
                     } else if (launchStack.mDisplayId != mTargetStack.mDisplayId) {
+                        //要启动的栈displayId和目标栈的ActivityRecord不一致
                         // Target and computed stacks are on different displays and we've
                         // found a matching task - move the existing instance to that display and
                         // move it to front.
                         intentActivity.getTaskRecord().reparent(launchStack, ON_TOP,REPARENT_MOVE_STACK_TO_FRONT, ANIMATE, DEFER_RESUME,"reparentToDisplay");
                         mMovedToFront = true;
-                    } else if (launchStack.isActivityTypeHome()
-                            && !mTargetStack.isActivityTypeHome()) {
+                    } else if (launchStack.isActivityTypeHome() && !mTargetStack.isActivityTypeHome()) {
                         // It is possible for the home activity to be in another stack initially.
                         // For example, the activity may have been initially started with an intent
                         // which placed it in the fullscreen stack. To ensure the proper handling of
@@ -2172,7 +2169,7 @@ class ActivityStarter {
 
     private void setTaskFromIntentActivity(ActivityRecord intentActivity) {
         if ((mLaunchFlags & (FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK))== (FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK)) {
-            //设置了FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK标志位，那么mReuseTask设置为可以复用的intentActivity栈
+            //设置了FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK标志位，那么mReuseTask设置为可以复用的intentActivity的任务栈
             // The caller has requested to completely replace any existing task with its new
             // activity. Well that should not be too hard...
             // Note: we must persist the {@link TaskRecord} first as intentActivity could be
@@ -2197,9 +2194,8 @@ class ActivityStarter {
                 mAddingToTask = true;
                 // We are no longer placing the activity in the task we previously thought we were.
                 mStartActivity.setTask(null);
-                // Now pretend like this activity is being started by the top of its task, so it
-                // is put in the right place.
-                //现在假设activity是有栈顶的任务启动的。
+                // Now pretend like this activity is being started by the top of its task, so it is put in the right place.
+                //现在假设activity是由栈顶的任务启动的。
                 mSourceRecord = intentActivity;
                 final TaskRecord task = mSourceRecord.getTaskRecord();
                 if (task != null && task.getStack() == null) {
@@ -2209,7 +2205,7 @@ class ActivityStarter {
                     mTargetStack.addTask(task,!mLaunchTaskBehind /* toTop */, "startActivityUnchecked");
                 }
             }
-        } else if (mStartActivity.mActivityComponent.equals(intentActivity.getTaskRecord().realActivity)) {//任务栈顶部的activtity和要启动的activity是同一个。
+        } else if (mStartActivity.mActivityComponent.equals(intentActivity.getTaskRecord().realActivity)) {//任务栈顶部的activity和要启动的activity是同一个。
             // In this case the top activity on the task is the same as the one being launched,
             // so we take that as a request to bring the task to the foreground. If the top
             // activity in the task is the root activity, deliver this new intent to it if it
@@ -2639,14 +2635,15 @@ class ActivityStarter {
         if (mReuseTask != null) {
             return mReuseTask.getStack();
         }
-		//如果是分屏模式或者当前显示器id和主屏显示器id不一致
+		//如果是分屏模式或者当前显示器id和主屏显示器id不一致。那么直接返回分屏所使用的ActivityStack
         if (((launchFlags & FLAG_ACTIVITY_LAUNCH_ADJACENT) == 0)|| mPreferredDisplayId != DEFAULT_DISPLAY) {
             final boolean onTop = aOptions == null || !aOptions.getAvoidMoveToFront();
+            //****重点方法****
             final ActivityStack stack =mRootActivityContainer.getLaunchStack(r, aOptions, task, onTop, mLaunchParams);
             return stack;
         }
         // Otherwise handle adjacent launch.
-
+        //获取持有焦点的ActivityStack。
         final ActivityStack focusedStack = mRootActivityContainer.getTopDisplayFocusedStack();
         // The parent activity doesn't want to launch the activity on top of itself, but
         // instead tries to put it onto other side in side-by-side mode.

@@ -4890,12 +4890,12 @@ class ActivityStack extends ConfigurationContainer {
         }
         mRootActivityContainer.invalidateTaskLayers();
     }
-
-    final void moveTaskToFrontLocked(TaskRecord tr, boolean noAnimation, ActivityOptions options,
-                                     AppTimeTracker timeTracker, String reason) {
+    //将任务栈（TaskRecord）移动到当前ActivityStack的栈顶位置
+    final void moveTaskToFrontLocked(TaskRecord tr, boolean noAnimation, ActivityOptions options, AppTimeTracker timeTracker, String reason) {
         if (DEBUG_SWITCH) Slog.v(TAG_SWITCH, "moveTaskToFront: " + tr);
 
         final ActivityStack topStack = getDisplay().getTopStack();
+        //获取到ActivityStack的栈顶activity
         final ActivityRecord topActivity = topStack != null ? topStack.getTopActivity() : null;
         //从taskHistory中查找到要移动到用户交互栈顶的TaskRecord（tr）
         final int numTasks = mTaskHistory.size();
@@ -4926,13 +4926,14 @@ class ActivityStack extends ConfigurationContainer {
 
             // Shift all activities with this task up to the top
             // of the stack, keeping them in the same internal order.
-            //将tr插入到mTaskHistory顶部
+            //***重点关注**  将tr插入到mTaskHistory顶部
             insertTaskAtTop(tr, null);
 
             // Don't refocus if invisible to current user
+
             final ActivityRecord top = tr.getTopActivity();
             if (top == null || !top.okToShowLocked()) {
-                //top为空或者不可见
+                //任务栈的栈顶Activity为空或者不可见。那么将TaskRecord添加到mRecentTasks中，相当于进行了调用
                 if (top != null) {
                     mStackSupervisor.mRecentTasks.add(top.getTaskRecord());
                 }
@@ -4941,9 +4942,10 @@ class ActivityStack extends ConfigurationContainer {
             }
 
             // Set focus to the top running activity of this stack.
+            //获取到ActivityStack中顶部正在运行的Activity
             final ActivityRecord r = topRunningActivityLocked();
             if (r != null) {
-                //将ActivityRecord移动到栈顶，并且设置可见，而且为FocusedStacks
+                //**重点关注**   将ActivityRecord移动到栈顶，并且设置可见，而且为FocusedStacks
                 r.moveFocusableActivityToTop(reason);
             }
 
@@ -4963,11 +4965,10 @@ class ActivityStack extends ConfigurationContainer {
             // picture-in-picture while paused only if the task would not be considered an oerlay
             // on top
             // of the current activity (eg. not fullscreen, or the assistant)
-            if (canEnterPipOnTaskSwitch(topActivity, tr, null /* toFrontActivity */,
-                    options)) {
+            if (canEnterPipOnTaskSwitch(topActivity, tr, null /* toFrontActivity */, options)) {
                 topActivity.supportsEnterPipOnTaskSwitch = true;
             }
-
+            //调用持有焦点的任务栈的顶部Activity的onResume()方法
             mRootActivityContainer.resumeFocusedStacksTopActivities();
             EventLog.writeEvent(EventLogTags.AM_TASK_TO_FRONT, tr.userId, tr.taskId);
             mService.getTaskChangeNotificationController().notifyTaskMovedToFront(tr.getTaskInfo());

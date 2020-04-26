@@ -1514,6 +1514,7 @@ final class ActivityRecord extends ConfigurationContainer {
     }
 
     /** Move activity with its stack to front and make the stack focused. */
+    //将当前Activity和其所处的任务栈移动到前台，并使其持有焦点
     boolean moveFocusableActivityToTop(String reason) {
         if (!isFocusable()) {
             if (DEBUG_FOCUS) {

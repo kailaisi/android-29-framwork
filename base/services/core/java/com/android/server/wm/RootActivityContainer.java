@@ -1157,7 +1157,7 @@ class RootActivityContainer extends ConfigurationContainer implements DisplayMan
 
         boolean result = false;
         if (targetStack != null && (targetStack.isTopStackOnDisplay()|| getTopDisplayFocusedStack() == targetStack)) {
-			//如果当前的activitystack正好处于屏幕的顶住，那么直接调用将target设置到顶部显示
+			//如果当前的activitystack正好处于屏幕的顶部，那么直接调用将target设置到顶部显示
             result = targetStack.resumeTopActivityUncheckedLocked(target, targetOptions);
         }
 
