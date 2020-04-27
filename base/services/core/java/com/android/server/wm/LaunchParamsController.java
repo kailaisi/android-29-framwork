@@ -74,6 +74,7 @@ class LaunchParamsController {
      * @param options   The {@link ActivityOptions} specified for the activity.
      * @param result    The resulting params.
      */
+    //根据注册的修饰符来计算LaunchParams
     void calculate(TaskRecord task, WindowLayout layout, ActivityRecord activity,ActivityRecord source, ActivityOptions options, int phase, LaunchParams result) {
         result.reset();
 
@@ -179,6 +180,7 @@ class LaunchParamsController {
     /**
      * A container for holding launch related fields.
      */
+    //用来存放启动的相关信息的类，包括屏幕ID，容器的边界，启动模式
     static class LaunchParams {
         /** The bounds within the parent container. */
         final Rect mBounds = new Rect();

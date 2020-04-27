@@ -4023,11 +4023,11 @@ class ActivityStack extends ConfigurationContainer {
 
         mWindowManager.deferSurfaceLayout();
         try {
+            //标记开始进行finish操作
             r.makeFinishingLocked();
+            //
             final TaskRecord task = r.getTaskRecord();
-            EventLog.writeEvent(EventLogTags.AM_FINISH_ACTIVITY,
-                    r.mUserId, System.identityHashCode(r),
-                    task.taskId, r.shortComponentName, reason);
+            EventLog.writeEvent(EventLogTags.AM_FINISH_ACTIVITY, r.mUserId, System.identityHashCode(r), task.taskId, r.shortComponentName, reason);
             final ArrayList<ActivityRecord> activities = task.mActivities;
             final int index = activities.indexOf(r);
             if (index < (activities.size() - 1)) {
@@ -4040,21 +4040,20 @@ class ActivityStack extends ConfigurationContainer {
                     next.intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
                 }
             }
-
+            //停止键盘分发
             r.pauseKeyDispatchingLocked();
-
+            //
             adjustFocusedActivityStack(r, "finishActivity");
 
             finishActivityResultsLocked(r, resultCode, resultData);
-
+            //任务栈中如果没有要结束的activity
             final boolean endTask = index <= 0 && !task.isClearingToReuseTask();
             final int transit = endTask ? TRANSIT_TASK_CLOSE : TRANSIT_ACTIVITY_CLOSE;
-            if (mResumedActivity == r) {
+            if (mResumedActivity == r) {//如果当前正在显示的activity就是要结束的activity
                 if (DEBUG_VISIBILITY || DEBUG_TRANSITION) Slog.v(TAG_TRANSITION,
                         "Prepare close transition: finishing " + r);
                 if (endTask) {
-                    mService.getTaskChangeNotificationController().notifyTaskRemovalStarted(
-                            task.getTaskInfo());
+                    mService.getTaskChangeNotificationController().notifyTaskRemovalStarted( task.getTaskInfo());
                 }
                 getDisplay().mDisplayContent.prepareAppTransition(transit, false);
 
@@ -4063,8 +4062,8 @@ class ActivityStack extends ConfigurationContainer {
 
                 if (mPausingActivity == null) {
                     if (DEBUG_PAUSE) Slog.v(TAG_PAUSE, "Finish needs to pause: " + r);
-                    if (DEBUG_USER_LEAVING) Slog.v(TAG_USER_LEAVING,
-                            "finish() => pause with userLeaving=false");
+                    if (DEBUG_USER_LEAVING) Slog.v(TAG_USER_LEAVING, "finish() => pause with userLeaving=false");
+                    //暂停activity
                     startPausingLocked(false, false, null, pauseImmediately);
                 }
 
@@ -4079,10 +4078,8 @@ class ActivityStack extends ConfigurationContainer {
                     prepareActivityHideTransitionAnimation(r, transit);
                 }
 
-                final int finishMode = (r.visible || r.nowVisible) ? FINISH_AFTER_VISIBLE
-                        : FINISH_AFTER_PAUSE;
-                final boolean removedActivity = finishCurrentActivityLocked(r, finishMode, oomAdj,
-                        "finishActivityLocked") == null;
+                final int finishMode = (r.visible || r.nowVisible) ? FINISH_AFTER_VISIBLE : FINISH_AFTER_PAUSE;
+                final boolean removedActivity = finishCurrentActivityLocked(r, finishMode, oomAdj, "finishActivityLocked") == null;
 
                 // The following code is an optimization. When the last non-task overlay activity
                 // is removed from the task, we remove the entire task from the stack. However,
@@ -4893,12 +4890,12 @@ class ActivityStack extends ConfigurationContainer {
         }
         mRootActivityContainer.invalidateTaskLayers();
     }
-
-    final void moveTaskToFrontLocked(TaskRecord tr, boolean noAnimation, ActivityOptions options,
-                                     AppTimeTracker timeTracker, String reason) {
+    //将任务栈（TaskRecord）移动到当前ActivityStack的栈顶位置
+    final void moveTaskToFrontLocked(TaskRecord tr, boolean noAnimation, ActivityOptions options, AppTimeTracker timeTracker, String reason) {
         if (DEBUG_SWITCH) Slog.v(TAG_SWITCH, "moveTaskToFront: " + tr);
 
         final ActivityStack topStack = getDisplay().getTopStack();
+        //获取到ActivityStack的栈顶activity
         final ActivityRecord topActivity = topStack != null ? topStack.getTopActivity() : null;
         //从taskHistory中查找到要移动到用户交互栈顶的TaskRecord（tr）
         final int numTasks = mTaskHistory.size();
@@ -4929,13 +4926,14 @@ class ActivityStack extends ConfigurationContainer {
 
             // Shift all activities with this task up to the top
             // of the stack, keeping them in the same internal order.
-            //将tr插入到mTaskHistory顶部
+            //***重点关注**  将tr插入到mTaskHistory顶部
             insertTaskAtTop(tr, null);
 
             // Don't refocus if invisible to current user
+
             final ActivityRecord top = tr.getTopActivity();
             if (top == null || !top.okToShowLocked()) {
-                //top为空或者不可见
+                //任务栈的栈顶Activity为空或者不可见。那么将TaskRecord添加到mRecentTasks中，相当于进行了调用
                 if (top != null) {
                     mStackSupervisor.mRecentTasks.add(top.getTaskRecord());
                 }
@@ -4944,9 +4942,10 @@ class ActivityStack extends ConfigurationContainer {
             }
 
             // Set focus to the top running activity of this stack.
+            //获取到ActivityStack中顶部正在运行的Activity
             final ActivityRecord r = topRunningActivityLocked();
             if (r != null) {
-                //将ActivityRecord移动到栈顶，并且设置可见，而且为FocusedStacks
+                //**重点关注**   将ActivityRecord移动到栈顶，并且设置可见，而且为FocusedStacks
                 r.moveFocusableActivityToTop(reason);
             }
 
@@ -4966,11 +4965,10 @@ class ActivityStack extends ConfigurationContainer {
             // picture-in-picture while paused only if the task would not be considered an oerlay
             // on top
             // of the current activity (eg. not fullscreen, or the assistant)
-            if (canEnterPipOnTaskSwitch(topActivity, tr, null /* toFrontActivity */,
-                    options)) {
+            if (canEnterPipOnTaskSwitch(topActivity, tr, null /* toFrontActivity */, options)) {
                 topActivity.supportsEnterPipOnTaskSwitch = true;
             }
-
+            //调用持有焦点的任务栈的顶部Activity的onResume()方法
             mRootActivityContainer.resumeFocusedStacksTopActivities();
             EventLog.writeEvent(EventLogTags.AM_TASK_TO_FRONT, tr.userId, tr.taskId);
             mService.getTaskChangeNotificationController().notifyTaskMovedToFront(tr.getTaskInfo());
