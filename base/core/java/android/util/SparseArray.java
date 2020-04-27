@@ -55,19 +55,21 @@ import libcore.util.EmptyArray;
  */
 public class SparseArray<E> implements Cloneable {
     private static final Object DELETED = new Object();
+    //是否需要进行回收，也就是进行key，value的整理
     private boolean mGarbage = false;
 
     @UnsupportedAppUsage(maxTargetSdk = 28) // Use keyAt(int)
-    private int[] mKeys;
+    private int[] mKeys;//存储的key值
     @UnsupportedAppUsage(maxTargetSdk = 28) // Use valueAt(int), setValueAt(int, E)
-    private Object[] mValues;
+    private Object[] mValues;//存储的value值
     @UnsupportedAppUsage(maxTargetSdk = 28) // Use size()
-    private int mSize;
+    private int mSize;//实际的占用的数据的大小
 
     /**
      * Creates a new SparseArray containing no mappings.
      */
     public SparseArray() {
+        //默认数组的大小是10
         this(10);
     }
 
@@ -112,13 +114,14 @@ public class SparseArray<E> implements Cloneable {
     }
 
     /**
-     * Gets the Object mapped from the specified key, or the specified Object
-     * if no such mapping has been made.
+     * Gets the Object mapped from the specified key, or the specified Object if no such mapping has been made.
      */
+    //获取指定key的值，如果获取不到，则返回指定对象。
     @SuppressWarnings("unchecked")
     public E get(int key, E valueIfKeyNotFound) {
+        //获取key对应的index位置
         int i = ContainerHelpers.binarySearch(mKeys, mSize, key);
-
+        //如果不存在，或者i位置的数据已经回收了，则直接返回
         if (i < 0 || mValues[i] == DELETED) {
             return valueIfKeyNotFound;
         } else {
@@ -130,9 +133,10 @@ public class SparseArray<E> implements Cloneable {
      * Removes the mapping from the specified key, if there was any.
      */
     public void delete(int key) {
+        //通过二分查找，获取key所在位置
         int i = ContainerHelpers.binarySearch(mKeys, mSize, key);
-
         if (i >= 0) {
+            //将所在位置的value设置为DELETED,然后标记需要进行整理。
             if (mValues[i] != DELETED) {
                 mValues[i] = DELETED;
                 mGarbage = true;
@@ -146,8 +150,8 @@ public class SparseArray<E> implements Cloneable {
      */
     public E removeReturnOld(int key) {
         int i = ContainerHelpers.binarySearch(mKeys, mSize, key);
-
         if (i >= 0) {
+            //如果key所在的index的值不为DELETED，则返回数据，并标记对应index的值为DELETED，
             if (mValues[i] != DELETED) {
                 final E old = (E) mValues[i];
                 mValues[i] = DELETED;
@@ -173,6 +177,7 @@ public class SparseArray<E> implements Cloneable {
      * earlier, and an {@link ArrayIndexOutOfBoundsException} is thrown for apps targeting
      * {@link android.os.Build.VERSION_CODES#Q} and later.</p>
      */
+    //删除指定索引对应的元素值
     public void removeAt(int index) {
         if (index >= mSize && UtilConfig.sThrowExceptionForUpperArrayOutOfBounds) {
             // The array might be slightly bigger than mSize, in which case, indexing won't fail.
@@ -200,29 +205,29 @@ public class SparseArray<E> implements Cloneable {
             removeAt(i);
         }
     }
-
+    //用于移除无用的引用，通过移动，将现在所有的key和value连续保存到数组中，而不会使某个位置的value为空
+    //而且会将mSize赋值为实际使用的大小
     private void gc() {
         // Log.e("SparseArray", "gc start with " + mSize);
 
         int n = mSize;
+        //o 值用于表示 GC 后的元素个数
         int o = 0;
         int[] keys = mKeys;
         Object[] values = mValues;
 
         for (int i = 0; i < n; i++) {
             Object val = values[i];
-
+            //如果value不是DELETED，证明当前的位置数据是可用的
             if (val != DELETED) {
                 if (i != o) {
                     keys[o] = keys[i];
                     values[o] = val;
                     values[i] = null;
                 }
-
                 o++;
             }
         }
-
         mGarbage = false;
         mSize = o;
 
@@ -235,26 +240,36 @@ public class SparseArray<E> implements Cloneable {
      * was one.
      */
     public void put(int key, E value) {
+        //通过ContainerHelpers进行二分查找。如果存在则返回key的位置
+        // 如果不存在则返回key在数组中可以存储的位置i的负值。
         int i = ContainerHelpers.binarySearch(mKeys, mSize, key);
-
+        //如果key已经存在，则直接赋值
         if (i >= 0) {
             mValues[i] = value;
         } else {
+            //binarySearch 方法的返回值分为两种情况：
+            //1、如果存在对应的 key，则直接返回对应的索引值
+            //2、如果不存在对应的 key
+            //  2.1、假设 mKeys 中存在"值比 key 大且大小与 key 最接近的值的索引"为 presentIndex，则此方法的返回值为 ~presentIndex
+            //  2.2、如果 mKeys 中不存在比 key 还要大的值的话，则返回值为 ~mKeys.length
+            //可以看到，即使在 mKeys 中不存在目标 key，但其返回值也指向了应该让 key 存入的位置
+            //通过将计算出的索引值进行 ~ 运算，则返回值一定是 0 或者负数，从而与“找得到目标key的情况（返回值大于0）”的情况区分开
+            //且通过这种方式来存放数据，可以使得 mKeys 的内部值一直是按照值递增的方式来排序的
             i = ~i;
-
+            //如果搜索到的i位置可以使用，并且没有数据，则将对应的key，value存入到i位置
             if (i < mSize && mValues[i] == DELETED) {
                 mKeys[i] = key;
                 mValues[i] = value;
                 return;
             }
-
+            //如果可以进行数组的整理，并且当前的数组大小能够进行存储，则进行数据的整理，然后再进行位置的查找
             if (mGarbage && mSize >= mKeys.length) {
                 gc();
-
                 // Search again because indices may have changed.
+                //GC 后再次进行查找，因为值可能已经发生变化了
                 i = ~ContainerHelpers.binarySearch(mKeys, mSize, key);
             }
-
+            //通过复制或者扩容数组，将数据存放到数组中
             mKeys = GrowingArrayUtils.insert(mKeys, mSize, i, key);
             mValues = GrowingArrayUtils.insert(mValues, mSize, i, value);
             mSize++;
@@ -317,6 +332,7 @@ public class SparseArray<E> implements Cloneable {
      * earlier, and an {@link ArrayIndexOutOfBoundsException} is thrown for apps targeting
      * {@link android.os.Build.VERSION_CODES#Q} and later.</p>
      */
+    //因为数据remove以后，可能mValues中的数据并不连续，所以先进行一次数据的整理，然后再返回index位置的数据
     @SuppressWarnings("unchecked")
     public E valueAt(int index) {
         if (index >= mSize && UtilConfig.sThrowExceptionForUpperArrayOutOfBounds) {
@@ -377,17 +393,16 @@ public class SparseArray<E> implements Cloneable {
      * <p>Note also that unlike most collections' {@code indexOf} methods,
      * this method compares values using {@code ==} rather than {@code equals}.
      */
+    //根据value值，获取其对应的index信息
     public int indexOfValue(E value) {
         if (mGarbage) {
             gc();
         }
-
         for (int i = 0; i < mSize; i++) {
             if (mValues[i] == value) {
                 return i;
             }
         }
-
         return -1;
     }
 

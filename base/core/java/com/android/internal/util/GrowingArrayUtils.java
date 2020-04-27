@@ -116,8 +116,7 @@ public final class GrowingArrayUtils {
     }
 
     /**
-     * Inserts an element into the array at the specified index, growing the array if there is no
-     * more room.
+     * Inserts an element into the array at the specified index, growing the array if there is no more room.
      *
      * @param array The array to which to append the element. Must NOT be null.
      * @param currentSize The number of elements in the array. Must be less than or equal to
@@ -126,15 +125,18 @@ public final class GrowingArrayUtils {
      * @return the array to which the element was appended. This may be different than the given
      *         array.
      */
+    //将元素插入到指定索引处的数组中，如果没有更多空间，则将数组增长。
     public static <T> T[] insert(T[] array, int currentSize, int index, T element) {
         assert currentSize <= array.length;
 
         if (currentSize + 1 <= array.length) {
+            //空间足够，那么就移动index后面的数据，然后将数据插入
             System.arraycopy(array, index, array, index + 1, currentSize - index);
             array[index] = element;
             return array;
         }
 
+        //空间不足了，那么就需要进行新的空间申请，然后进行数据的拷贝
         @SuppressWarnings("unchecked")
         T[] newArray = ArrayUtils.newUnpaddedArray((Class<T>)array.getClass().getComponentType(),
                 growSize(currentSize));

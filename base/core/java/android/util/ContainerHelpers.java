@@ -20,9 +20,11 @@ class ContainerHelpers {
 
     // This is Arrays.binarySearch(), but doesn't do any argument validation.
     static int binarySearch(int[] array, int size, int value) {
+        //定义低位
         int lo = 0;
+        //定义高位
         int hi = size - 1;
-
+        //遍历循环，知道搜索到目标
         while (lo <= hi) {
             final int mid = (lo + hi) >>> 1;
             final int midVal = array[mid];
