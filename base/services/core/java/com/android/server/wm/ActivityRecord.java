@@ -1216,6 +1216,7 @@ final class ActivityRecord extends ConfigurationContainer {
      * Reparents this activity into {@param newTask} at the provided {@param position}.  The caller
      * should ensure that the {@param newTask} is not already the parent of this activity.
      */
+    //将Activity放入到newTaks中的position位置，调用者需要保证newTask不是activity当前所在的任务栈
     void reparent(TaskRecord newTask, int position, String reason) {
         if (mAppWindowToken == null) {
             Slog.w(TAG, "reparent: Attempted to reparent non-existing app token: " + appToken);
@@ -1246,8 +1247,9 @@ final class ActivityRecord extends ConfigurationContainer {
             prevStack.onActivityRemovedFromStack(this);
         }
         // Remove the activity from the old task and add it to the new task.
+        //旧栈移除
         prevTask.removeActivity(this, true /* reparenting */);
-
+        //新栈添加
         newTask.addActivityAtIndex(position, this);
     }
 

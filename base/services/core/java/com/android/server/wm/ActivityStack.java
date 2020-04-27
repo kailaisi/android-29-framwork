@@ -3651,8 +3651,7 @@ class ActivityStack extends ConfigurationContainer {
                                   String resultWho, int requestCode, int resultCode, Intent data) {
 
         if (callingUid > 0) {
-            mService.mUgmInternal.grantUriPermissionFromIntent(callingUid, r.packageName,
-                    data, r.getUriPermissionsLocked(), r.mUserId);
+            mService.mUgmInternal.grantUriPermissionFromIntent(callingUid, r.packageName, data, r.getUriPermissionsLocked(), r.mUserId);
         }
 
         if (DEBUG_RESULTS) Slog.v(TAG, "Send activity result to " + r
@@ -3661,10 +3660,8 @@ class ActivityStack extends ConfigurationContainer {
         if (mResumedActivity == r && r.attachedToProcess()) {
             try {
                 ArrayList<ResultInfo> list = new ArrayList<ResultInfo>();
-                list.add(new ResultInfo(resultWho, requestCode,
-                        resultCode, data));
-                mService.getLifecycleManager().scheduleTransaction(r.app.getThread(), r.appToken,
-                        ActivityResultItem.obtain(list));
+                list.add(new ResultInfo(resultWho, requestCode, resultCode, data));
+                mService.getLifecycleManager().scheduleTransaction(r.app.getThread(), r.appToken, ActivityResultItem.obtain(list));
                 return;
             } catch (Exception e) {
                 Slog.w(TAG, "Exception thrown sending result to " + r, e);
