@@ -883,8 +883,7 @@ class RootActivityContainer extends ConfigurationContainer implements DisplayMan
      */
     void updateUserStack(int userId, ActivityStack stack) {
         if (userId != mCurrentUser) {
-            mUserStackInFront.put(userId, stack != null ? stack.getStackId()
-                    : getDefaultDisplay().getHomeStack().mStackId);
+            mUserStackInFront.put(userId, stack != null ? stack.getStackId() : getDefaultDisplay().getHomeStack().mStackId);
         }
     }
 
