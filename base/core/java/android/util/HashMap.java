@@ -398,7 +398,8 @@ public class HashMap<K,V> extends AbstractMap<K,V> implements Map<K,V>, Cloneabl
      * The table, initialized on first use, and resized as
      * necessary. When allocated, length is always a power of two.
      * (We also tolerate length zero in some operations to allow
-     * bootstrapping mechanics that are currently not needed.)
+     * bootstrapping mechanics that are cu
+     * rrently not needed.)
      */
     //存储元素的数组，transient关键字表示该属性不能被序列化
     transient Node<K,V>[] table;
