@@ -328,7 +328,7 @@ class ActivityStack extends ConfigurationContainer {
      * The back history of all previous (and possibly still
      * running) activities.  It contains #TaskRecord objects.
      */
-    //之前所有的活动的activity的记录
+    //之前所有的活动的TaskRecord的记录
     private final ArrayList<TaskRecord> mTaskHistory = new ArrayList<>();
 
     /**
@@ -342,6 +342,7 @@ class ActivityStack extends ConfigurationContainer {
      * When we are in the process of pausing an activity, before starting the
      * next one, this variable holds the activity that is currently being paused.
      */
+    //正在执行暂停的Activity
     ActivityRecord mPausingActivity = null;
 
     /**
@@ -349,6 +350,7 @@ class ActivityStack extends ConfigurationContainer {
      * used to determine if we need to do an activity transition while sleeping,
      * when we normally hold the top activity paused.
      */
+    //最后执行pause的activity
     ActivityRecord mLastPausedActivity = null;
 
     /**
@@ -362,7 +364,7 @@ class ActivityStack extends ConfigurationContainer {
     /**
      * Current activity that is resumed, or null if there is none.
      */
-    //当前正在执行resume的activity
+    //当前处于resumed状态的的activity
     ActivityRecord mResumedActivity = null;
     // The topmost Activity passed to convertToTranslucent(). When non-null it means we are
     // waiting for all Activities in mUndrawnActivitiesBelowTopTranslucent to be removed as they
@@ -420,6 +422,7 @@ class ActivityStack extends ConfigurationContainer {
     /**
      * Run all ActivityStacks through this
      */
+    //持有的ActivityStackSupervisor，用来管理所有的ActivityStack
     protected final ActivityStackSupervisor mStackSupervisor;
     protected final RootActivityContainer mRootActivityContainer;
 
@@ -1674,8 +1677,7 @@ class ActivityStack extends ConfigurationContainer {
     }
 
     /**
-     * Start pausing the currently resumed activity.  It is an error to call this if there
-     * is already an activity being paused or there is no resumed activity.
+     * Start pausing the currently resumed activity.  It is an error to call this if there is already an activity being paused or there is no resumed activity.
      *
      * @param userLeaving      True if this should result in an onUserLeaving to the current activity.
      * @param uiSleeping       True if this is happening with the user interface going to sleep (the
@@ -1688,11 +1690,9 @@ class ActivityStack extends ConfigurationContainer {
      * @return Returns true if an activity now is in the PAUSING state, and we are waiting for
      * it to tell us when it is done.
      */
-    final boolean startPausingLocked(boolean userLeaving, boolean uiSleeping,
-                                     ActivityRecord resuming, boolean pauseImmediately) {
+    final boolean startPausingLocked(boolean userLeaving, boolean uiSleeping, ActivityRecord resuming, boolean pauseImmediately) {
         if (mPausingActivity != null) {
-            Slog.wtf(TAG, "Going to pause when pause is already pending for " + mPausingActivity
-                    + " state=" + mPausingActivity.getState());
+            Slog.wtf(TAG, "Going to pause when pause is already pending for " + mPausingActivity + " state=" + mPausingActivity.getState());
             if (!shouldSleepActivities()) {
                 // Avoid recursion among check for sleep and complete pause during sleeping.
                 // Because activity will be paused immediately after resume, just let pause
@@ -1719,8 +1719,7 @@ class ActivityStack extends ConfigurationContainer {
         else if (DEBUG_PAUSE) Slog.v(TAG_PAUSE, "Start pausing: " + prev);
         mPausingActivity = prev;
         mLastPausedActivity = prev;
-        mLastNoHistoryActivity = (prev.intent.getFlags() & Intent.FLAG_ACTIVITY_NO_HISTORY) != 0
-                || (prev.info.flags & ActivityInfo.FLAG_NO_HISTORY) != 0 ? prev : null;
+        mLastNoHistoryActivity = (prev.intent.getFlags() & Intent.FLAG_ACTIVITY_NO_HISTORY) != 0 || (prev.info.flags & ActivityInfo.FLAG_NO_HISTORY) != 0 ? prev : null;
         prev.setState(PAUSING, "startPausingLocked");
         prev.getTaskRecord().touchActiveTime();
         clearLaunchTime(prev);
@@ -2660,11 +2659,11 @@ class ActivityStack extends ConfigurationContainer {
             // Not ready yet!
             return false;
         }
-
         // Find the next top-most activity to resume in this stack that is not finishing and is
         // focusable. If it is not focusable, we will fall into the case below to resume the
         // top activity in the next focusable task.
-        //查找到当前正在活动的activityRecord信息
+        //查找到当前正在活动的activityRecord信息.
+        //因为之前我们通过addOrReparentStartingActivity把activity添加到了任务栈的顶部，所以这里面获取到的next和入参pre是同一个activity
         ActivityRecord next = topRunningActivityLocked(true /* focusableOnly */);
         //当前activityStack是否有正在运行的activity的标志位
         final boolean hasRunningActivity = next != null;
@@ -2693,7 +2692,6 @@ class ActivityStack extends ConfigurationContainer {
 
         // If the top activity is the resumed one, nothing to do.
         //如果顶部的activity正在执行resume，则什么也不执行
-        if (mResumedActivity == next && next.isState(RESUMED) && display.allResumedActivitiesComplete()) {
             // Make sure we have executed any pending transitions, since there
             // should be nothing left to do at this point.
             executeAppTransition(options);
@@ -2750,8 +2748,7 @@ class ActivityStack extends ConfigurationContainer {
         // If we are currently pausing an activity, then don't do anything until that is done.
         //如果当前某个activity正在执行pause,那么直接返回false
         if (!mRootActivityContainer.allPausedActivitiesComplete()) {
-            if (DEBUG_SWITCH || DEBUG_PAUSE || DEBUG_STATES)
-                Slog.v(TAG_PAUSE, "resumeTopActivityLocked: Skip resume: some activity pausing.");
+            if (DEBUG_SWITCH || DEBUG_PAUSE || DEBUG_STATES) Slog.v(TAG_PAUSE, "resumeTopActivityLocked: Skip resume: some activity pausing.");
             return false;
         }
 
@@ -2779,7 +2776,7 @@ class ActivityStack extends ConfigurationContainer {
         // previous activity can't go into Pip since we want to give Pip activities a chance to
         // enter Pip before resuming the next activity.
         final boolean resumeWhilePausing = (next.info.flags & FLAG_RESUME_WHILE_PAUSING) != 0 && !lastResumedCanPip;
-		//暂停后台任务栈
+		//遍历循环暂停后台任务栈
         boolean pausing = getDisplay().pauseBackStacks(userLeaving, next, false);
         if (mResumedActivity != null) {
             if (DEBUG_STATES) Slog.d(TAG_STATES,"resumeTopActivityLocked: Pausing " + mResumedActivity);

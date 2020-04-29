@@ -587,6 +587,7 @@ class ActivityDisplay extends ConfigurationContainer<ActivityStack>
         boolean someActivityPaused = false;
         for (int stackNdx = mStacks.size() - 1; stackNdx >= 0; --stackNdx) {
             final ActivityStack stack = mStacks.get(stackNdx);
+            //获取当前ActivityStack中resume状态的activity，然后startPausingLocked，调用onPause方法暂停Activity
             final ActivityRecord resumedActivity = stack.getResumedActivity();
             if (resumedActivity != null&& (stack.getVisibility(resuming) != STACK_VISIBILITY_VISIBLE|| !stack.isFocusable())) {
                 if (DEBUG_STATES) Slog.d(TAG_STATES, "pauseBackStacks: stack=" + stack +" mResumedActivity=" + resumedActivity);
