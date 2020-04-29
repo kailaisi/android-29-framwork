@@ -2615,6 +2615,7 @@ class ActivityStack extends ConfigurationContainer {
         try {
             // Protect against recursion.
             mInResumeTopActivity = true;
+            //***重点关注******
             result = resumeTopActivityInnerLocked(prev, options);
 
             // When resuming the top activity, it may be necessary to pause the top activity (for
