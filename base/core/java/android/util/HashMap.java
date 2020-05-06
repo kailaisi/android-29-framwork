@@ -605,15 +605,19 @@ public class HashMap<K, V> extends AbstractMap<K, V> implements Map<K, V>, Clone
         Node<K, V> first, e;
         int n;
         K k;
+        //hash所对应的哈希桶是存在的
         if ((tab = table) != null && (n = tab.length) > 0 &&
                 (first = tab[(n - 1) & hash]) != null) {
+            //首先检测首节点是否是我们需要查找的数据，如果是的话，直接返回
             if (first.hash == hash && // always check first node
                     ((k = first.key) == key || (key != null && key.equals(k))))
                 return first;
+            //如果不是，遍历
             if ((e = first.next) != null) {
                 if (first instanceof TreeNode)
+                    //如果是红黑树，则从红黑树获取
                     return ((TreeNode<K, V>) first).getTreeNode(hash, key);
-                do {
+                do {//链表结构的话，遍历链表查询
                     if (e.hash == hash &&
                             ((k = e.key) == key || (key != null && key.equals(k))))
                         return e;
