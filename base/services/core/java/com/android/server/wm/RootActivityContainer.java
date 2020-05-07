@@ -878,8 +878,7 @@ class RootActivityContainer extends ConfigurationContainer implements DisplayMan
     }
 
     /**
-     * Update the last used stack id for non-current user (current user's last
-     * used stack is the focused stack)
+     * Update the last used stack id for non-current user (current user's last used stack is the focused stack)
      */
     void updateUserStack(int userId, ActivityStack stack) {
         if (userId != mCurrentUser) {
@@ -1149,22 +1148,23 @@ class RootActivityContainer extends ConfigurationContainer implements DisplayMan
     }
 
     boolean resumeFocusedStacksTopActivities(ActivityStack targetStack, ActivityRecord target, ActivityOptions targetOptions) {
-
         if (!mStackSupervisor.readyToResume()) {
             return false;
         }
 
         boolean result = false;
         if (targetStack != null && (targetStack.isTopStackOnDisplay()|| getTopDisplayFocusedStack() == targetStack)) {
-			//如果当前的activitystack正好处于屏幕的顶部，那么直接调用将target设置到顶部显示
+			//******重点方法******如果当前的activitystack正好处于屏幕的顶部，那么直接调用将target设置到顶部显示
             result = targetStack.resumeTopActivityUncheckedLocked(target, targetOptions);
         }
 
         for (int displayNdx = mActivityDisplays.size() - 1; displayNdx >= 0; --displayNdx) {
+            //标记是否已经显示在屏幕上
             boolean resumedOnDisplay = false;
             final ActivityDisplay display = mActivityDisplays.get(displayNdx);
             for (int stackNdx = display.getChildCount() - 1; stackNdx >= 0; --stackNdx) {
                 final ActivityStack stack = display.getChildAt(stackNdx);
+                //获取到当前ActivityStack顶部正在运行的Activity
                 final ActivityRecord topRunningActivity = stack.topRunningActivityLocked();
                 if (!stack.isFocusableAndVisible() || topRunningActivity == null) {
                     continue;
@@ -1173,6 +1173,7 @@ class RootActivityContainer extends ConfigurationContainer implements DisplayMan
                     // Simply update the result for targetStack because the targetStack had
                     // already resumed in above. We don't want to resume it again, especially in
                     // some cases, it would cause a second launch failure if app process was dead.
+                    //上面已经做过resume处理了，所以这里我们就不再做处理了
                     resumedOnDisplay |= result;
                     continue;
                 }
@@ -1184,6 +1185,7 @@ class RootActivityContainer extends ConfigurationContainer implements DisplayMan
                     resumedOnDisplay |= topRunningActivity.makeActiveIfNeeded(target);
                 }
             }
+            //如果仍然没有显示在屏幕上，那么就获取到屏幕当前持有焦点的ActivityStack，然后将activity显示在上面
             if (!resumedOnDisplay) {
                 // In cases when there are no valid activities (e.g. device just booted or launcher
                 // crashed) it's possible that nothing was resumed on a display. Requesting resume
