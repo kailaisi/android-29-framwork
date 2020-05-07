@@ -268,6 +268,7 @@ public class Fragment implements ComponentCallbacks2, OnCreateContextMenuListene
     private static final ArrayMap<String, Class<?>> sClassMap =
             new ArrayMap<String, Class<?>>();
 
+    //Fragment的状态
     static final int INVALID_STATE = -1;   // Invalid state used as a null value.
     static final int INITIALIZING = 0;     // Not yet created.
     static final int CREATED = 1;          // Created.
@@ -310,12 +311,14 @@ public class Fragment implements ComponentCallbacks2, OnCreateContextMenuListene
     boolean mAdded;
 
     // If set this fragment is being removed from its activity.
+    //Fragment是否移除
     boolean mRemoving;
 
     // Set to true if this fragment was instantiated from a layout file.
     boolean mFromLayout;
 
     // Set to true when the view has actually been inflated in its layout.
+    //如果布局是通过<fragment> 来进行绘制的
     boolean mInLayout;
 
     // True if this fragment has been restored from previously saved state.
@@ -393,8 +396,8 @@ public class Fragment implements ComponentCallbacks2, OnCreateContextMenuListene
     @UnsupportedAppUsage(maxTargetSdk = Build.VERSION_CODES.P, trackingBug = 115609023)
     View mView;
 
-    // Whether this fragment should defer starting until after other fragments
-    // have been started and their loaders are finished.
+    // Whether this fragment should defer starting until after other fragments  have been started and their loaders are finished.
+    //当前fragment是否延迟启动，直到其他fragment都已经启动以后再启动
     boolean mDeferStart;
 
     // Hint provided by the app that this fragment is currently visible to the user.
@@ -1534,9 +1537,9 @@ public class Fragment implements ComponentCallbacks2, OnCreateContextMenuListene
         final Context context = getContext();
         final int version = context != null ? context.getApplicationInfo().targetSdkVersion : 0;
         if (version >= Build.VERSION_CODES.N) {
+            //会调用restore方法
             restoreChildFragmentState(savedInstanceState, true);
-            if (mChildFragmentManager != null
-                    && !mChildFragmentManager.isStateAtLeast(Fragment.CREATED)) {
+            if (mChildFragmentManager != null && !mChildFragmentManager.isStateAtLeast(Fragment.CREATED)) {
                 mChildFragmentManager.dispatchCreate();
             }
         }
@@ -1644,6 +1647,7 @@ public class Fragment implements ComponentCallbacks2, OnCreateContextMenuListene
      * tied to {@link Activity#onStart() Activity.onStart} of the containing
      * Activity's lifecycle.
      */
+    //当Fragment对用户可见的时候，会调用这个方法，这个经常和Activity的onStart方法相关联
     @CallSuper
     public void onStart() {
         mCalled = true;
@@ -2531,6 +2535,7 @@ public class Fragment implements ComponentCallbacks2, OnCreateContextMenuListene
             mChildFragmentManager.noteStateNotSaved();
         }
         mPerformedCreateView = true;
+        //调用onCreateView方法进行View的绘制工作
         return onCreateView(inflater, container, savedInstanceState);
     }
 
