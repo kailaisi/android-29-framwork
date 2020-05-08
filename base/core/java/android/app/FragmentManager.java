@@ -1398,6 +1398,7 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
                         f.performDestroyView();
                         //生命周期的通知
                         dispatchOnFragmentViewDestroyed(f, false);
+                        //如果存在mContainer和mView。
                         if (f.mView != null && f.mContainer != null) {
                             if (getTargetSdk() >= Build.VERSION_CODES.O) {
                                 // Stop any current animations:
