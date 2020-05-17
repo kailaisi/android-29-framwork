@@ -1731,7 +1731,7 @@ class ActivityStack extends ConfigurationContainer {
             try {
                 EventLogTags.writeAmPauseActivity(prev.mUserId, System.identityHashCode(prev),
                         prev.shortComponentName, "userLeaving=" + userLeaving);
-
+                //******重点方法****
                 mService.getLifecycleManager().scheduleTransaction(prev.app.getThread(),
                         prev.appToken, PauseActivityItem.obtain(prev.finishing, userLeaving,
                                 prev.configChangeFlags, pauseImmediately));
@@ -2776,7 +2776,7 @@ class ActivityStack extends ConfigurationContainer {
         // previous activity can't go into Pip since we want to give Pip activities a chance to
         // enter Pip before resuming the next activity.
         final boolean resumeWhilePausing = (next.info.flags & FLAG_RESUME_WHILE_PAUSING) != 0 && !lastResumedCanPip;
-		//遍历循环暂停后台任务栈
+		//****重点方法 ****** 遍历循环暂停后台任务栈
         boolean pausing = getDisplay().pauseBackStacks(userLeaving, next, false);
         if (mResumedActivity != null) {
             if (DEBUG_STATES) Slog.d(TAG_STATES,"resumeTopActivityLocked: Pausing " + mResumedActivity);

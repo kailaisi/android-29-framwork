@@ -62,6 +62,7 @@ class ClientLifecycleManager {
      *
      * @see ClientTransactionItem
      */
+    //调用一次生命周期的请求
     void scheduleTransaction(@NonNull IApplicationThread client, @NonNull IBinder activityToken,
             @NonNull ActivityLifecycleItem stateRequest) throws RemoteException {
         final ClientTransaction clientTransaction = transactionWithState(client, activityToken,
@@ -80,8 +81,7 @@ class ClientLifecycleManager {
      */
     void scheduleTransaction(@NonNull IApplicationThread client, @NonNull IBinder activityToken,
             @NonNull ClientTransactionItem callback) throws RemoteException {
-        final ClientTransaction clientTransaction = transactionWithCallback(client, activityToken,
-                callback);
+        final ClientTransaction clientTransaction = transactionWithCallback(client, activityToken, callback);
         scheduleTransaction(clientTransaction);
     }
 

@@ -54,6 +54,7 @@ public class ClientTransaction implements Parcelable, ObjectPoolItem {
     private ActivityLifecycleItem mLifecycleStateRequest;
 
     /** Target client. */
+    //ActivityThread#ApplicationThread
     private IApplicationThread mClient;
 
     /** Target client activity. Might be null if the entire transaction is targeting an app. */
