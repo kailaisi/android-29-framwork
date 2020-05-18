@@ -40,11 +40,10 @@ public class PauseActivityItem extends ActivityLifecycleItem {
     private boolean mDontReport;
 
     @Override
-    public void execute(ClientTransactionHandler client, IBinder token,
-            PendingTransactionActions pendingActions) {
+    public void execute(ClientTransactionHandler client, IBinder token,  PendingTransactionActions pendingActions) {
         Trace.traceBegin(TRACE_TAG_ACTIVITY_MANAGER, "activityPause");
-        client.handlePauseActivity(token, mFinished, mUserLeaving, mConfigChanges, pendingActions,
-                "PAUSE_ACTIVITY_ITEM");
+        //这里的client，是Activity独享
+        client.handlePauseActivity(token, mFinished, mUserLeaving, mConfigChanges, pendingActions,"PAUSE_ACTIVITY_ITEM");
         Trace.traceEnd(TRACE_TAG_ACTIVITY_MANAGER);
     }
 
@@ -73,8 +72,8 @@ public class PauseActivityItem extends ActivityLifecycleItem {
     private PauseActivityItem() {}
 
     /** Obtain an instance initialized with provided params. */
-    public static PauseActivityItem obtain(boolean finished, boolean userLeaving, int configChanges,
-            boolean dontReport) {
+    //从池中取出一个PauseActivityItem类
+    public static PauseActivityItem obtain(boolean finished, boolean userLeaving, int configChanges, boolean dontReport) {
         PauseActivityItem instance = ObjectPool.obtain(PauseActivityItem.class);
         if (instance == null) {
             instance = new PauseActivityItem();

@@ -1665,6 +1665,7 @@ public final class ActivityThread extends ClientTransactionHandler {
 
         @Override
         public void scheduleTransaction(ClientTransaction transaction) throws RemoteException {
+            //会调用ActivityThread.scheduleTransaction方法->该方法位于ActivityThread的父类中
             ActivityThread.this.scheduleTransaction(transaction);
         }
 
@@ -2013,13 +2014,14 @@ public final class ActivityThread extends ClientTransactionHandler {
                     handleRunIsolatedEntryPoint((String) ((SomeArgs) msg.obj).arg1,
                             (String[]) ((SomeArgs) msg.obj).arg2);
                     break;
-                case EXECUTE_TRANSACTION:
+                case EXECUTE_TRANSACTION://执行生命周期的调度工作
                     final ClientTransaction transaction = (ClientTransaction) msg.obj;
                     mTransactionExecutor.execute(transaction);
                     if (isSystem()) {
                         // Client transactions inside system process are recycled on the client side
                         // instead of ClientLifecycleManager to avoid being cleared before this
                         // message is handled.
+                        //进行回收，因为我们的transaction是通过享元模式，从池中获取的，所以使用完以后需要将其放会到池中
                         transaction.recycle();
                     }
                     // TODO(lifecycler): Recycle locally scheduled transactions.

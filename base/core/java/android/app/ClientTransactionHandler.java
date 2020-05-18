@@ -43,7 +43,9 @@ public abstract class ClientTransactionHandler {
 
     /** Prepare and schedule transaction for execution. */
     void scheduleTransaction(ClientTransaction transaction) {
+        //执行预处理
         transaction.preExecute(this);
+        //通过Handler机制发送事务请求
         sendMessage(ActivityThread.H.EXECUTE_TRANSACTION, transaction);
     }
 

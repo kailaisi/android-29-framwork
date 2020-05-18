@@ -1691,7 +1691,7 @@ class ActivityStack extends ConfigurationContainer {
      * it to tell us when it is done.
      */
     final boolean startPausingLocked(boolean userLeaving, boolean uiSleeping, ActivityRecord resuming, boolean pauseImmediately) {
-        if (mPausingActivity != null) {
+		if (mPausingActivity != null) {
             Slog.wtf(TAG, "Going to pause when pause is already pending for " + mPausingActivity + " state=" + mPausingActivity.getState());
             if (!shouldSleepActivities()) {
                 // Avoid recursion among check for sleep and complete pause during sleeping.
@@ -1700,6 +1700,7 @@ class ActivityStack extends ConfigurationContainer {
                 completePauseLocked(false, resuming);
             }
         }
+		//当前正在显示的Activity
         ActivityRecord prev = mResumedActivity;
 
         if (prev == null) {
@@ -1717,6 +1718,8 @@ class ActivityStack extends ConfigurationContainer {
 
         if (DEBUG_STATES) Slog.v(TAG_STATES, "Moving to PAUSING: " + prev);
         else if (DEBUG_PAUSE) Slog.v(TAG_PAUSE, "Start pausing: " + prev);
+        //当前正在显示的Activity需要执行暂停操作了。
+        //将其赋值给mPausingActivity成员变量。
         mPausingActivity = prev;
         mLastPausedActivity = prev;
         mLastNoHistoryActivity = (prev.intent.getFlags() & Intent.FLAG_ACTIVITY_NO_HISTORY) != 0 || (prev.info.flags & ActivityInfo.FLAG_NO_HISTORY) != 0 ? prev : null;
@@ -1725,16 +1728,16 @@ class ActivityStack extends ConfigurationContainer {
         clearLaunchTime(prev);
 
         mService.updateCpuStats();
-
+        //Activity绑定了对应的APP？难道有不绑定的情况么？
         if (prev.attachedToProcess()) {
             if (DEBUG_PAUSE) Slog.v(TAG_PAUSE, "Enqueueing pending pause: " + prev);
             try {
-                EventLogTags.writeAmPauseActivity(prev.mUserId, System.identityHashCode(prev),
-                        prev.shortComponentName, "userLeaving=" + userLeaving);
+                EventLogTags.writeAmPauseActivity(prev.mUserId, System.identityHashCode(prev), prev.shortComponentName, "userLeaving=" + userLeaving);
                 //******重点方法****
-                mService.getLifecycleManager().scheduleTransaction(prev.app.getThread(),
-                        prev.appToken, PauseActivityItem.obtain(prev.finishing, userLeaving,
-                                prev.configChangeFlags, pauseImmediately));
+                //根据参数从ObjectPool中取出一个PauseActivityItem类，然后通过ClientLifecyclerManager.scheduleTransaction进行调度。
+                //prev.app.getThread()是ApplicationThread 最终会调用ActivityThread.ApplicationThread的scheduleTransaction方法。
+                mService.getLifecycleManager().scheduleTransaction(prev.app.getThread(),prev.appToken, PauseActivityItem.obtain(prev.finishing, userLeaving,prev.configChangeFlags, pauseImmediately));
+
             } catch (Exception e) {
                 // Ignore exception, if process died other code will cleanup.
                 Slog.w(TAG, "Exception thrown during pause", e);
@@ -2780,7 +2783,7 @@ class ActivityStack extends ConfigurationContainer {
         boolean pausing = getDisplay().pauseBackStacks(userLeaving, next, false);
         if (mResumedActivity != null) {
             if (DEBUG_STATES) Slog.d(TAG_STATES,"resumeTopActivityLocked: Pausing " + mResumedActivity);
-            //调用acitivity的pause方法
+            //****重点方法 ****** 调用acitivity的pause方法
             pausing |= startPausingLocked(userLeaving, false, next, false);
         }
         if (pausing && !resumeWhilePausing) {
@@ -2994,8 +2997,7 @@ class ActivityStack extends ConfigurationContainer {
                 }
 
                 if (next.newIntents != null) {
-                    transaction.addCallback(
-                            NewIntentItem.obtain(next.newIntents, true /* resume */));
+                    transaction.addCallback(NewIntentItem.obtain(next.newIntents, true /* resume */));
                 }
 
                 // Well the app will no longer be stopped.

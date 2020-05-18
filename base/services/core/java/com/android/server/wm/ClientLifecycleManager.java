@@ -42,6 +42,7 @@ class ClientLifecycleManager {
      *
      * @see ClientTransaction
      */
+    //实际的调度方法
     void scheduleTransaction(ClientTransaction transaction) throws RemoteException {
         final IApplicationThread client = transaction.getClient();
         transaction.schedule();
@@ -49,6 +50,7 @@ class ClientLifecycleManager {
             // If client is not an instance of Binder - it's a remote call and at this point it is
             // safe to recycle the object. All objects used for local calls will be recycled after
             // the transaction is executed on client in ActivityThread.
+            //回收
             transaction.recycle();
         }
     }
@@ -62,11 +64,9 @@ class ClientLifecycleManager {
      *
      * @see ClientTransactionItem
      */
-    //调用一次生命周期的请求
-    void scheduleTransaction(@NonNull IApplicationThread client, @NonNull IBinder activityToken,
-            @NonNull ActivityLifecycleItem stateRequest) throws RemoteException {
-        final ClientTransaction clientTransaction = transactionWithState(client, activityToken,
-                stateRequest);
+    //调用一次生命周期的调度请求
+    void scheduleTransaction(@NonNull IApplicationThread client, @NonNull IBinder activityToken,@NonNull ActivityLifecycleItem stateRequest) throws RemoteException {
+        final ClientTransaction clientTransaction = transactionWithState(client, activityToken,stateRequest);
         scheduleTransaction(clientTransaction);
     }
 
@@ -79,8 +79,7 @@ class ClientLifecycleManager {
      *
      * @see ClientTransactionItem
      */
-    void scheduleTransaction(@NonNull IApplicationThread client, @NonNull IBinder activityToken,
-            @NonNull ClientTransactionItem callback) throws RemoteException {
+    void scheduleTransaction(@NonNull IApplicationThread client, @NonNull IBinder activityToken, @NonNull ClientTransactionItem callback) throws RemoteException {
         final ClientTransaction clientTransaction = transactionWithCallback(client, activityToken, callback);
         scheduleTransaction(clientTransaction);
     }
@@ -106,6 +105,7 @@ class ClientLifecycleManager {
      * @see ClientTransaction
      * @see ClientTransactionItem
      */
+    //创建一个持有状态的事务类
     private static ClientTransaction transactionWithState(@NonNull IApplicationThread client,
             @NonNull IBinder activityToken, @NonNull ActivityLifecycleItem stateRequest) {
         final ClientTransaction clientTransaction = ClientTransaction.obtain(client, activityToken);

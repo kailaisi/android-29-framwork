@@ -44,17 +44,18 @@ import java.util.Objects;
 public class ClientTransaction implements Parcelable, ObjectPoolItem {
 
     /** A list of individual callbacks to a client. */
+    //对客户端一系列的回调
     @UnsupportedAppUsage
     private List<ClientTransactionItem> mActivityCallbacks;
 
     /**
-     * Final lifecycle state in which the client activity should be after the transaction is
-     * executed.
+     * Final lifecycle state in which the client activity should be after the transaction is executed.
      */
+    //事务执行以后，客户端应该处于的生命周期状态
     private ActivityLifecycleItem mLifecycleStateRequest;
 
     /** Target client. */
-    //ActivityThread#ApplicationThread
+    //IBinder对象，其Server端是ActivityThread#ApplicationThread
     private IApplicationThread mClient;
 
     /** Target client activity. Might be null if the entire transaction is targeting an app. */

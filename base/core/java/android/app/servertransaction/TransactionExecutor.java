@@ -45,6 +45,7 @@ import java.util.Map;
  * Class that manages transaction execution in the correct order.
  * @hide
  */
+//顺序管理事务执行的类
 public class TransactionExecutor {
 
     private static final boolean DEBUG_RESOLVER = false;
@@ -76,8 +77,7 @@ public class TransactionExecutor {
 
         final IBinder token = transaction.getActivityToken();
         if (token != null) {
-            final Map<IBinder, ClientTransactionItem> activitiesToBeDestroyed =
-                    mTransactionHandler.getActivitiesToBeDestroyed();
+            final Map<IBinder, ClientTransactionItem> activitiesToBeDestroyed = mTransactionHandler.getActivitiesToBeDestroyed();
             final ClientTransactionItem destroyItem = activitiesToBeDestroyed.get(token);
             if (destroyItem != null) {
                 if (transaction.getLifecycleStateRequest() == destroyItem) {
@@ -88,8 +88,7 @@ public class TransactionExecutor {
                 if (mTransactionHandler.getActivityClient(token) == null) {
                     // The activity has not been created but has been requested to destroy, so all
                     // transactions for the token are just like being cancelled.
-                    Slog.w(TAG, tId(transaction) + "Skip pre-destroyed transaction:\n"
-                            + transactionToString(transaction, mTransactionHandler));
+                    Slog.w(TAG, tId(transaction) + "Skip pre-destroyed transaction:\n" + transactionToString(transaction, mTransactionHandler));
                     return;
                 }
             }
@@ -97,6 +96,10 @@ public class TransactionExecutor {
 
         if (DEBUG_RESOLVER) Slog.d(TAG, transactionToString(transaction, mTransactionHandler));
         //循环遍历回调请求的所有状态，并在适当的时间执行它们
+        //ClientTransaction存在两种事务,
+        // 一种是通过setLifecycleStateRequest设置一个对象的事务类型，用于表示事务执行以后，客户端应该处于的生命周期状态
+        //一种是addCallback，增加对客户端的事务类型回调，对客户端一系列的回调。
+        // 这两个不同的类型，在这里就会存在不同的处理方法。
         executeCallbacks(transaction);
         //执行生命周期的改变
         executeLifecycleState(transaction);
@@ -105,7 +108,7 @@ public class TransactionExecutor {
     }
 
     /** Cycle through all states requested by callbacks and execute them at proper times. */
-    //循环遍历回调请求的所有状态，并在适当的时间执行它们
+    //循环遍历回调请求的所有状态，并在适当的时间执行它们。ClientTransaction存在两种事务，一种是通过set
     @VisibleForTesting
     public void executeCallbacks(ClientTransaction transaction) {
 
@@ -134,8 +137,7 @@ public class TransactionExecutor {
             final ClientTransactionItem item = callbacks.get(i);
             if (DEBUG_RESOLVER) Slog.d(TAG, tId(transaction) + "Resolving callback: " + item);
             final int postExecutionState = item.getPostExecutionState();
-            final int closestPreExecutionState = mHelper.getClosestPreExecutionState(r,
-                    item.getPostExecutionState());
+            final int closestPreExecutionState = mHelper.getClosestPreExecutionState(r,item.getPostExecutionState());
             if (closestPreExecutionState != UNDEFINED) {
                 cycleToPath(r, closestPreExecutionState, transaction);
             }
@@ -170,7 +172,7 @@ public class TransactionExecutor {
         //所以这里的lifecycleItem可能是ResumeActivityItem或者PauseActivityItem
         final ActivityLifecycleItem lifecycleItem = transaction.getLifecycleStateRequest();
         if (lifecycleItem == null) {
-            // No lifecycle request, return early.
+            //如果不是通过setLifecycleStateRequest设置的，那么该方法不需要处理，直接返回即可
             return;
         }
 
@@ -191,6 +193,7 @@ public class TransactionExecutor {
         cycleToPath(r, lifecycleItem.getTargetState(), true /* excludeLastState */, transaction);
 
         // Execute the final transition with proper parameters.
+        //使用适当的参数执行最后的转换
         lifecycleItem.execute(mTransactionHandler, token, mPendingActions);
         lifecycleItem.postExecute(mTransactionHandler, token, mPendingActions);
     }
