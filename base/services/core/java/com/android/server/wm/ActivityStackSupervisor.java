@@ -714,6 +714,7 @@ public class ActivityStackSupervisor implements RecentTasks.Callbacks {
         return resolveActivity(intent, rInfo, startFlags, profilerInfo);
     }
 
+    //真正执行Activity启动的方法
     boolean realStartActivityLocked(ActivityRecord r, WindowProcessController proc,
             boolean andResume, boolean checkConfig) throws RemoteException {
 
@@ -737,14 +738,14 @@ public class ActivityStackSupervisor implements RecentTasks.Callbacks {
 
             // schedule launch ticks to collect information about slow apps.
             r.startLaunchTickingLocked();
-
+            //设置进程信息
             r.setProcess(proc);
 
             // Ensure activity is allowed to be resumed after process has set.
             if (andResume && !r.canResumeByCompat()) {
                 andResume = false;
             }
-
+            //键盘的处理
             if (getKeyguardController().isKeyguardLocked()) {
                 r.notifyUnknownVisibilityLaunched();
             }
@@ -757,8 +758,7 @@ public class ActivityStackSupervisor implements RecentTasks.Callbacks {
                 // Deferring resume here because we're going to launch new activity shortly.
                 // We don't want to perform a redundant launch of the same record while ensuring
                 // configurations and trying to resume top activity of focused stack.
-                mRootActivityContainer.ensureVisibilityAndConfig(r, r.getDisplayId(),
-                        false /* markFrozenIfConfigChanged */, true /* deferResume */);
+                mRootActivityContainer.ensureVisibilityAndConfig(r, r.getDisplayId(), false /* markFrozenIfConfigChanged */, true /* deferResume */);
             }
 
             if (r.getActivityStack().checkKeyguardVisibility(r, true /* shouldBeVisible */,
@@ -771,8 +771,7 @@ public class ActivityStackSupervisor implements RecentTasks.Callbacks {
                 r.setVisibility(true);
             }
 
-            final int applicationInfoUid =
-                    (r.info.applicationInfo != null) ? r.info.applicationInfo.uid : -1;
+            final int applicationInfoUid = (r.info.applicationInfo != null) ? r.info.applicationInfo.uid : -1;
             if ((r.mUserId != proc.mUserId) || (r.appInfo.uid != applicationInfoUid)) {
                 Slog.wtf(TAG,
                         "User ID for activity changing for " + r
@@ -818,8 +817,7 @@ public class ActivityStackSupervisor implements RecentTasks.Callbacks {
                     // Home process is the root process of the task.
                     updateHomeProcess(task.mActivities.get(0).app);
                 }
-                mService.getPackageManagerInternalLocked().notifyPackageUse(
-                        r.intent.getComponent().getPackageName(), NOTIFY_PACKAGE_USE_ACTIVITY);
+                mService.getPackageManagerInternalLocked().notifyPackageUse(r.intent.getComponent().getPackageName(), NOTIFY_PACKAGE_USE_ACTIVITY);
                 r.sleeping = false;
                 r.forceNewConfig = false;
                 mService.getAppWarningsLocked().onStartActivity(r);
@@ -837,10 +835,11 @@ public class ActivityStackSupervisor implements RecentTasks.Callbacks {
 
 
                 // Create activity launch transaction.
-                final ClientTransaction clientTransaction = ClientTransaction.obtain(
-                        proc.getThread(), r.appToken);
+                //创建了一个Activity启动的事务
+                final ClientTransaction clientTransaction = ClientTransaction.obtain(proc.getThread(), r.appToken);
 
                 final DisplayContent dc = r.getDisplay().mDisplayContent;
+                //增加一个要执行的事务LaunchActivityItem。
                 clientTransaction.addCallback(LaunchActivityItem.obtain(new Intent(r.intent),
                         System.identityHashCode(r), r.info,
                         // TODO: Have this take the merged configuration instead of separate global
@@ -854,6 +853,7 @@ public class ActivityStackSupervisor implements RecentTasks.Callbacks {
 
                 // Set desired final state.
                 final ActivityLifecycleItem lifecycleItem;
+                //设置其生命周期LifecycleStateRequest
                 if (andResume) {
                     lifecycleItem = ResumeActivityItem.obtain(dc.isNextTransitionForward());
                 } else {
@@ -862,6 +862,7 @@ public class ActivityStackSupervisor implements RecentTasks.Callbacks {
                 clientTransaction.setLifecycleStateRequest(lifecycleItem);
 
                 // Schedule transaction.
+                //执行事务的调度
                 mService.getLifecycleManager().scheduleTransaction(clientTransaction);
 
                 if ((proc.mInfo.privateFlags & ApplicationInfo.PRIVATE_FLAG_CANT_SAVE_STATE) != 0
@@ -967,11 +968,12 @@ public class ActivityStackSupervisor implements RecentTasks.Callbacks {
 
     void startSpecificActivityLocked(ActivityRecord r, boolean andResume, boolean checkConfig) {
         // Is this activity's application already running?
-        final WindowProcessController wpc =
-                mService.getProcessController(r.processName, r.info.applicationInfo.uid);
+        //根据uid和pid，获取activity对应的进行和线程信息
+        final WindowProcessController wpc =mService.getProcessController(r.processName, r.info.applicationInfo.uid);
 
         boolean knownToBeDead = false;
         if (wpc != null && wpc.hasThread()) {
+            //如果进程和线程都存在，执行后面的代码
             try {
                 realStartActivityLocked(r, wpc, andResume, checkConfig);
                 return;
@@ -997,8 +999,8 @@ public class ActivityStackSupervisor implements RecentTasks.Callbacks {
                 Trace.traceBegin(TRACE_TAG_ACTIVITY_MANAGER, "dispatchingStartProcess:"
                         + r.processName);
             }
-            // Post message to start process to avoid possible deadlock of calling into AMS with the
-            // ATMS lock held.
+            // Post message to start process to avoid possible deadlock of calling into AMS with the ATMS lock held.
+            //通过message进行进程的启动。
             final Message msg = PooledLambda.obtainMessage(
                     ActivityManagerInternal::startProcess, mService.mAmInternal, r.processName,
                     r.info.applicationInfo, knownToBeDead, "activity", r.intent.getComponent());

@@ -2846,8 +2846,7 @@ class ActivityStack extends ConfigurationContainer {
         // Launching this app's activity, make sure the app is no longer
         // considered stopped.
         try {
-            AppGlobals.getPackageManager().setPackageStoppedState(
-                    next.packageName, false, next.mUserId); /* TODO: Verify if correct userid */
+            AppGlobals.getPackageManager().setPackageStoppedState(next.packageName, false, next.mUserId); /* TODO: Verify if correct userid */
         } catch (RemoteException e1) {
         } catch (IllegalArgumentException e) {
             Slog.w(TAG, "Failed trying to unstop package "
@@ -3038,7 +3037,7 @@ class ActivityStack extends ConfigurationContainer {
                     next.showStartingWindow(null /* prev */, false /* newTask */,
                             false /* taskSwitch */);
                 }
-                //进行activity的创建处理
+                //****重点方法****进行activity的创建处理
                 mStackSupervisor.startSpecificActivityLocked(next, true, false);
                 return true;
             }

@@ -7987,10 +7987,13 @@ public class Activity extends ContextThemeWrapper
     final void performPause() {
         dispatchActivityPrePaused();
         mDoReportFullyDrawn = false;
+        //管理的Fragment的处理
         mFragments.dispatchPause();
         mCalled = false;
+        //调用了onPause生命周期方法
         onPause();
         writeEventLog(LOG_AM_ON_PAUSE_CALLED, "performPause");
+        //设置mResumed为false，表示当前activity没有展示
         mResumed = false;
         if (!mCalled && getApplicationInfo().targetSdkVersion
                 >= android.os.Build.VERSION_CODES.GINGERBREAD) {
@@ -7998,6 +8001,7 @@ public class Activity extends ContextThemeWrapper
                     "Activity " + mComponent.toShortString() +
                             " did not call through to super.onPause()");
         }
+        //调用一些回调函数
         dispatchActivityPostPaused();
     }
 
