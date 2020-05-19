@@ -999,6 +999,8 @@ public class ActivityStackSupervisor implements RecentTasks.Callbacks {
             }
             // Post message to start process to avoid possible deadlock of calling into AMS with the ATMS lock held.
             //通过message进行进程的启动。
+            //发布消息以启动进程，以避免在ATM锁保持的情况下调用AMS时可能出现死锁
+            //最终调用到AMS的startProcess(),这里是如何过去的？有待研究
             final Message msg = PooledLambda.obtainMessage(
                     ActivityManagerInternal::startProcess, mService.mAmInternal, r.processName,
                     r.info.applicationInfo, knownToBeDead, "activity", r.intent.getComponent());

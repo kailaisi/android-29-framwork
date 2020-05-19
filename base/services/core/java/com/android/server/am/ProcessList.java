@@ -123,6 +123,7 @@ import java.util.List;
  * <li> Methods suffixed with "LS" should be called within the {@link #sLmkdSocketLock} lock.
  * </ul>
  */
+//进程管理器，用于处理进行信息
 public final class ProcessList {
     static final String TAG = TAG_WITH_CLASS_NAME ? "ProcessList" : TAG_AM;
 
@@ -1424,6 +1425,7 @@ public final class ProcessList {
      * @param disableHiddenApiChecks
      * @param abiOverride
      */
+    //启动进行
     @GuardedBy("mService")
     boolean startProcessLocked(ProcessRecord app, HostingRecord hostingRecord,
             boolean disableHiddenApiChecks, boolean mountExtStorageFull,
@@ -1431,6 +1433,7 @@ public final class ProcessList {
         if (app.pendingStart) {
             return true;
         }
+        //启动时间
         long startTime = SystemClock.elapsedRealtime();
         if (app.pid > 0 && app.pid != ActivityManagerService.MY_PID) {
             checkSlow(startTime, "startProcess: removing from pids map");

@@ -310,6 +310,7 @@ public abstract class ActivityManagerInternal {
     public abstract void killAllBackgroundProcessesExcept(int minTargetSdk, int maxProcState);
 
     /** Starts a given process. */
+    // 启动一个进行。抽象方法，由 ActivityManagerService 内部类 LocalService 实现
     public abstract void startProcess(String processName, ApplicationInfo info,
             boolean knownToBeDead, String hostingType, ComponentName hostingName);
 

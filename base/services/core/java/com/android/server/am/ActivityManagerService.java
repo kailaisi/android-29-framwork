@@ -3023,6 +3023,7 @@ public class ActivityManagerService extends IActivityManager.Stub
             ApplicationInfo info, boolean knownToBeDead, int intentFlags,
             HostingRecord hostingRecord, boolean allowWhileBooting,
             boolean isolated, boolean keepIfLarge) {
+        //
         return mProcessList.startProcessLocked(processName, info, knownToBeDead, intentFlags,
                 hostingRecord, allowWhileBooting, isolated, 0 /* isolatedUid */, keepIfLarge,
                 null /* ABI override */, null /* entryPoint */, null /* entryPointArgs */,
@@ -18405,6 +18406,7 @@ public class ActivityManagerService extends IActivityManager.Stub
                             + processName);
                 }
                 synchronized (ActivityManagerService.this) {
+                    //调用startProcessLocked方法
                     startProcessLocked(processName, info, knownToBeDead, 0 /* intentFlags */,
                             new HostingRecord(hostingType, hostingName),
                             false /* allowWhileBooting */, false /* isolated */,
