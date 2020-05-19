@@ -3547,11 +3547,11 @@ public final class ActivityThread extends ClientTransactionHandler {
     /**
      * Extended implementation of activity launch. Used when server requests a launch or relaunch.
      */
+    //当启动或者重启一个activity的时候调用的方法
     @Override
     public Activity handleLaunchActivity(ActivityClientRecord r,
                                          PendingTransactionActions pendingActions, Intent customIntent) {
-        // If we are getting ready to gc after going to the background, well
-        // we are back active so skip it.
+        // If we are getting ready to gc after going to the background, well we are back active so skip it.
         unscheduleGcIdler();
         mSomeActivitiesChanged = true;
 

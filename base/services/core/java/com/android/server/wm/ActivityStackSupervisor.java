@@ -715,9 +715,8 @@ public class ActivityStackSupervisor implements RecentTasks.Callbacks {
     }
 
     //真正执行Activity启动的方法
-    boolean realStartActivityLocked(ActivityRecord r, WindowProcessController proc,
-            boolean andResume, boolean checkConfig) throws RemoteException {
-
+    boolean realStartActivityLocked(ActivityRecord r, WindowProcessController proc, boolean andResume, boolean checkConfig) throws RemoteException {
+        //如果还有activity没有暂停，这里会直接返回false
         if (!mRootActivityContainer.allPausedActivitiesComplete()) {
             // While there are activities pausing we skipping starting any new activities until
             // pauses are complete. NOTE: that we also do this for activities that are starting in
@@ -730,18 +729,18 @@ public class ActivityStackSupervisor implements RecentTasks.Callbacks {
 
         final TaskRecord task = r.getTaskRecord();
         final ActivityStack stack = task.getStack();
-
+        //设置标志位，不再接收其他activity的resume的操作
         beginDeferResume();
 
         try {
             r.startFreezingScreenLocked(proc, 0);
-
             // schedule launch ticks to collect information about slow apps.
             r.startLaunchTickingLocked();
             //设置进程信息
             r.setProcess(proc);
 
             // Ensure activity is allowed to be resumed after process has set.
+            //在进程设置之后，能够执行resume操作
             if (andResume && !r.canResumeByCompat()) {
                 andResume = false;
             }
@@ -835,7 +834,7 @@ public class ActivityStackSupervisor implements RecentTasks.Callbacks {
 
 
                 // Create activity launch transaction.
-                //创建了一个Activity启动的事务
+                //创建了一个Activity事务
                 final ClientTransaction clientTransaction = ClientTransaction.obtain(proc.getThread(), r.appToken);
 
                 final DisplayContent dc = r.getDisplay().mDisplayContent;
@@ -899,6 +898,7 @@ public class ActivityStackSupervisor implements RecentTasks.Callbacks {
                 throw e;
             }
         } finally {
+            //放开对于resume的限制
             endDeferResume();
         }
 
@@ -910,8 +910,7 @@ public class ActivityStackSupervisor implements RecentTasks.Callbacks {
         // TODO(lifecycler): Resume or pause requests are done as part of launch transaction,
         // so updating the state should be done accordingly.
         if (andResume && readyToResume()) {
-            // As part of the process of launching, ActivityThread also performs
-            // a resume.
+            // As part of the process of launching, ActivityThread also performs a resume.
             stack.minimalResumeActivityLocked(r);
         } else {
             // This activity is not starting in the resumed state... which should look like we asked
@@ -921,8 +920,7 @@ public class ActivityStackSupervisor implements RecentTasks.Callbacks {
                     "Moving to PAUSED: " + r + " (starting in paused state)");
             r.setState(PAUSED, "realStartActivityLocked");
         }
-        // Perform OOM scoring after the activity state is set, so the process can be updated with
-        // the latest state.
+        // Perform OOM scoring after the activity state is set, so the process can be updated with the latest state.
         proc.onStartActivity(mService.mTopProcessState, r.info);
 
         // Launch the new version setup screen if needed.  We do this -after-

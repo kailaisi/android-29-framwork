@@ -78,6 +78,7 @@ import java.util.ArrayList;
  * window manager so the window manager lock is held and appropriate permissions are checked before
  * calls are allowed to proceed.
  */
+//Android Q中新增的类，AMS同步进程状态
 public class WindowProcessController extends ConfigurationContainer<ConfigurationContainer>
         implements ConfigurationContainerListener {
     private static final String TAG = TAG_WITH_CLASS_NAME ? "WindowProcessController" : TAG_ATM;
