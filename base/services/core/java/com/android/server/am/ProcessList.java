@@ -1620,7 +1620,7 @@ public final class ProcessList {
             // Start the process.  It will either succeed and return a result containing
             // the PID of the new process, or else throw a RuntimeException.
             final String entryPoint = "android.app.ActivityThread";
-
+            //重点方法
             return startProcessLocked(hostingRecord, entryPoint, app, uid, gids,
                     runtimeFlags, mountExternal, seInfo, requiredAbi, instructionSet, invokeWith,
                     startTime);
