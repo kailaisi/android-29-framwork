@@ -25,6 +25,7 @@ import android.annotation.Nullable;
  * <p>
  * Note that just like with a regular {@link Thread}, {@link #start()} must still be called.
  */
+//一个有Looper的线程。正常情况下，线程是没有Looper的，需要通过Looper.prepare()方法来启动一个looper。而这个类就帮我们做了这样的事情
 public class HandlerThread extends Thread {
     int mPriority;
     int mTid = -1;

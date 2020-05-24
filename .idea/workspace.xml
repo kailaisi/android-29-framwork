@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="08fb3911-ce4c-4d98-b048-4e26369056f4" name="Default Changelist" comment="">
+    <list default="true" id="08fb3911-ce4c-4d98-b048-4e26369056f4" name="Default Changelist" comment="增加了FragmentManager的解析完成">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/base/core/java/android/os/HandlerThread.java" beforeDir="false" afterPath="$PROJECT_DIR$/base/core/java/android/os/HandlerThread.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/base/core/java/android/os/MessageQueue.java" beforeDir="false" afterPath="$PROJECT_DIR$/base/core/java/android/os/MessageQueue.java" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -10,82 +12,127 @@
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
+  <component name="DefaultGradleProjectSettings">
+    <option name="isMigrated" value="true" />
+  </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/base/core/java/android/app/Fragment.java">
+        <entry file="file://$PROJECT_DIR$/base/core/java/android/app/FragmentManager.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="4811">
-              <caret line="339" selection-start-line="339" selection-end-line="339" />
+            <state relative-caret-position="458">
+              <caret line="3412" column="13" lean-forward="true" selection-start-line="3412" selection-start-column="13" selection-end-line="3412" selection-end-column="13" />
               <folding>
-                <element signature="e#0#123725#0" expanded="true" />
+                <element signature="imports" expanded="true" />
+                <element signature="class#BackStackEntry#0;class#FragmentManager#0" />
+                <element signature="class#OnBackStackChangedListener#0;class#FragmentManager#0" />
+                <element signature="class#FragmentManagerState#0" />
+                <element signature="e#51030#51103#0" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/base/core/java/android/app/Instrumentation.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="413">
+              <caret line="386" column="22" selection-start-line="386" selection-start-column="22" selection-end-line="386" selection-end-column="22" />
+              <folding>
+                <element signature="e#59005#59006#0" expanded="true" />
+                <element signature="e#59044#59045#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/base/core/java/android/os/MessageQueue.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="702">
+              <caret line="126" column="30" lean-forward="true" selection-start-line="126" selection-start-column="30" selection-end-line="126" selection-end-column="30" />
+              <folding>
+                <element signature="e#1943#1956#0" expanded="true" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/base/core/java/android/view/LayoutInflater.java">
+        <entry file="file://$PROJECT_DIR$/base/core/java/android/os/HandlerThread.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1116">
-              <caret line="661" column="69" selection-start-line="661" selection-start-column="45" selection-end-line="661" selection-end-column="69" />
+            <state relative-caret-position="494">
+              <caret line="27" column="83" selection-start-line="27" selection-start-column="83" selection-end-line="27" selection-end-column="83" />
               <folding>
-                <element signature="e#19166#19167#0" expanded="true" />
-                <element signature="e#19224#19225#0" expanded="true" />
+                <element signature="e#0#5334#0" expanded="true" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/base/core/java/android/content/res/Resources.java">
+        <entry file="file://$PROJECT_DIR$/base/services/core/java/com/android/server/am/ProcessList.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="36669">
-              <caret line="2283" column="25" selection-start-line="2283" selection-start-column="17" selection-end-line="2283" selection-end-column="25" />
+            <state relative-caret-position="26315">
+              <caret line="1504" column="21" selection-start-line="1504" selection-start-column="12" selection-end-line="1504" selection-end-column="21" />
             </state>
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/base/core/java/android/util/TypedValue.java">
+        <entry file="file://$PROJECT_DIR$/base/services/core/java/com/android/server/wm/ActivityTaskManagerService.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="2669">
-              <caret line="172" column="9" selection-start-line="172" selection-start-column="9" selection-end-line="172" selection-end-column="48" />
+            <state relative-caret-position="108300">
+              <caret line="6068" column="54" selection-start-line="6068" selection-start-column="54" selection-end-line="6068" selection-end-column="54" />
               <folding>
-                <element signature="e#0#22137#0" expanded="true" />
+                <element signature="e#258525#258526#0" expanded="true" />
+                <element signature="e#258562#258563#0" expanded="true" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/base/core/java/android/content/res/AssetManager.java">
+        <entry file="file://$PROJECT_DIR$/base/core/java/com/android/internal/util/function/pooled/PooledLambda.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="7905">
-              <caret line="515" column="44" selection-start-line="515" selection-start-column="34" selection-end-line="515" selection-end-column="44" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/base/core/java/android/content/res/ResourcesImpl.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="20060">
-              <caret line="1256" column="63" selection-start-line="1256" selection-start-column="60" selection-end-line="1256" selection-end-column="63" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/base/core/java/android/content/res/XmlBlock.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="901">
-              <caret line="84" column="43" selection-start-line="84" selection-start-column="43" selection-end-line="84" selection-end-column="43" />
+            <state relative-caret-position="18620">
+              <caret line="1025" column="18" selection-start-line="1025" selection-start-column="18" selection-end-line="1025" selection-end-column="18" />
               <folding>
-                <element signature="e#0#22091#0" expanded="true" />
-                <element signature="e#2173#2174#0" expanded="true" />
-                <element signature="e#2214#2215#0" expanded="true" />
+                <element signature="e#0#63156#0" expanded="true" />
               </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/base/core/java/android/app/servertransaction/LaunchActivityItem.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="741">
+              <caret line="75" column="47" selection-start-line="75" selection-start-column="33" selection-end-line="75" selection-end-column="47" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/base/services/core/java/com/android/server/wm/ActivityRecord.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="38114">
+              <caret line="2275" column="9" selection-start-line="2275" selection-start-column="9" selection-end-line="2275" selection-end-column="9" />
+              <folding>
+                <element signature="e#55262#55263#0" expanded="true" />
+                <element signature="e#55296#55297#0" expanded="true" />
+                <element signature="e#55331#55332#0" expanded="true" />
+                <element signature="e#55385#55386#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/base/core/java/android/app/servertransaction/TransactionExecutor.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="2033">
+              <caret line="144" column="13" selection-start-line="144" selection-start-column="13" selection-end-line="144" selection-end-column="13" />
             </state>
           </provider>
         </entry>
@@ -94,36 +141,36 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>resolveActivity</find>
-      <find>exec</find>
-      <find>exec(</find>
-      <find>startActivity</find>
-      <find>isInStackLocked</find>
-      <find>forTokenLocked</find>
-      <find>语音会话</find>
-      <find>startActivityMayWait</find>
-      <find>scheduleLaunchActivity</find>
-      <find>Acti</find>
-      <find>startActivityForResult</find>
-      <find>start</find>
-      <find>startTransitions</find>
-      <find>mBackStackNesting</find>
-      <find>executeOps</find>
-      <find>moveToState</find>
-      <find>checkAppSwitchAllowedLocked</find>
-      <find>calculate</find>
-      <find>mWindowingMode</find>
-      <find>topRunningNonDelayedActivityLocked</find>
-      <find>mFirstTouchTarget</find>
-      <find>FLAG_DISALLOW_INTERCEPT</find>
-      <find>getValue</find>
-      <find>string</find>
-      <find>NativeGetResourceValue</find>
-      <find>nativeGetResourceValue</find>
-      <find>getResourceValue</find>
-      <find>loadXmlResourceParser</find>
-      <find>getLayout</find>
-      <find>inflate</find>
+      <find>getProcessController</find>
+      <find>mStackSupervisor.startSpecificActivityLocked</find>
+      <find>startLaunchTickingLocked</find>
+      <find>isKeyguardLocked</find>
+      <find>ensureVisibilityAndConfig</find>
+      <find>obtain</find>
+      <find>getThread</find>
+      <find>startFreezingScreenLocked</find>
+      <find>appToken</find>
+      <find>allPausedActivitiesComplete</find>
+      <find>app</find>
+      <find>app;</find>
+      <find>realStartActivityLocked</find>
+      <find>completeResumeLocked</find>
+      <find>updateServiceConnectionActivities</find>
+      <find>removeIdleHandler</find>
+      <find>obtainMessage</find>
+      <find>mH</find>
+      <find>minimalResumeActivityLocked</find>
+      <find>handleLaunchActivity</find>
+      <find>acquire</find>
+      <find>ActivityManagerInternal</find>
+      <find>LocalService</find>
+      <find>extends ActivityManagerInternal</find>
+      <find>startProcessLocked</find>
+      <find>startSpecificActivityLocked</find>
+      <find>startProcess</find>
+      <find>registerFragmentLifecycleCallbacks</find>
+      <find>addIdleHandler</find>
+      <find>HandlerThread</find>
     </findStrings>
     <dirStrings>
       <dir>F:\android-source\Android_9_0_0\frameworks\base</dir>
@@ -136,20 +183,14 @@
     <option name="CHANGED_PATHS">
       <list>
         <option value="$PROJECT_DIR$/base/core/java/android/content/pm/PackageParser.java" />
-        <option value="$PROJECT_DIR$/base/services/core/java/com/android/server/wm/ActivityStackSupervisor.java" />
         <option value="$PROJECT_DIR$/base/services/core/java/com/android/server/pm/PackageManagerService.java" />
         <option value="$PROJECT_DIR$/base/services/core/java/com/android/server/wm/ActivityTaskManagerService.java" />
         <option value="$PROJECT_DIR$/base/services/core/java/com/android/server/wm/RootActivityContainer.java" />
-        <option value="$PROJECT_DIR$/base/core/java/android/app/servertransaction/LaunchActivityItem.java" />
-        <option value="$PROJECT_DIR$/base/core/java/android/app/servertransaction/TransactionExecutor.java" />
-        <option value="$PROJECT_DIR$/base/core/java/android/app/ActivityThread.java" />
         <option value="$PROJECT_DIR$/base/core/java/android/view/ViewRootImpl.java" />
         <option value="$PROJECT_DIR$/base/core/java/android/view/Window.java" />
         <option value="$PROJECT_DIR$/base/core/java/android/view/WindowManagerGlobal.java" />
         <option value="$PROJECT_DIR$/base/core/java/android/view/WindowManagerImpl.java" />
         <option value="$PROJECT_DIR$/base/core/java/com/android/internal/policy/PhoneWindow.java" />
-        <option value="$PROJECT_DIR$/base/services/core/java/com/android/server/wm/ActivityStack.java" />
-        <option value="$PROJECT_DIR$/base/core/java/android/app/Activity.java" />
         <option value="$PROJECT_DIR$/base/core/java/android/app/FragmentTransition.java" />
         <option value="$PROJECT_DIR$/base/core/java/android/app/BackStackRecord.java" />
         <option value="$PROJECT_DIR$/base/services/core/java/com/android/server/wm/ActivityStarter.java" />
@@ -157,14 +198,32 @@
         <option value="$PROJECT_DIR$/base/core/java/android/content/res/AssetManager.java" />
         <option value="$PROJECT_DIR$/base/core/java/android/content/res/ResourcesImpl.java" />
         <option value="$PROJECT_DIR$/base/core/java/android/view/LayoutInflater.java" />
+        <option value="$PROJECT_DIR$/base/core/java/android/app/Fragment.java" />
+        <option value="$PROJECT_DIR$/base/core/java/android/app/FragmentManager.java" />
+        <option value="$PROJECT_DIR$/base/core/java/android/app/ClientTransactionHandler.java" />
+        <option value="$PROJECT_DIR$/base/services/core/java/com/android/server/wm/ClientLifecycleManager.java" />
+        <option value="$PROJECT_DIR$/base/core/java/android/app/servertransaction/ClientTransaction.java" />
+        <option value="$PROJECT_DIR$/base/core/java/android/app/servertransaction/TransactionExecutor.java" />
+        <option value="$PROJECT_DIR$/base/core/java/android/app/servertransaction/PauseActivityItem.java" />
+        <option value="$PROJECT_DIR$/base/core/java/android/app/Instrumentation.java" />
+        <option value="$PROJECT_DIR$/base/core/java/android/app/Activity.java" />
+        <option value="$PROJECT_DIR$/base/services/core/java/com/android/server/wm/ActivityStack.java" />
+        <option value="$PROJECT_DIR$/base/services/core/java/com/android/server/wm/WindowProcessController.java" />
+        <option value="$PROJECT_DIR$/base/core/java/android/app/servertransaction/LaunchActivityItem.java" />
+        <option value="$PROJECT_DIR$/base/core/java/android/app/ActivityThread.java" />
+        <option value="$PROJECT_DIR$/base/services/core/java/com/android/server/wm/ActivityStackSupervisor.java" />
+        <option value="$PROJECT_DIR$/base/core/java/android/app/ActivityManagerInternal.java" />
+        <option value="$PROJECT_DIR$/base/services/core/java/com/android/server/am/ActivityManagerService.java" />
+        <option value="$PROJECT_DIR$/base/services/core/java/com/android/server/am/ProcessList.java" />
+        <option value="$PROJECT_DIR$/base/core/java/android/os/MessageQueue.java" />
+        <option value="$PROJECT_DIR$/base/core/java/android/os/HandlerThread.java" />
       </list>
     </option>
   </component>
-  <component name="ProjectFrameBounds" extendedState="6">
-    <option name="x" value="511" />
-    <option name="y" value="241" />
-    <option name="width" value="1780" />
-    <option name="height" value="1140" />
+  <component name="ProjectFrameBounds">
+    <option name="x" value="105" />
+    <option name="width" value="1308" />
+    <option name="height" value="1400" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectView">
@@ -174,13 +233,19 @@
     <panes />
   </component>
   <component name="PropertiesComponent">
+    <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="aspect.path.notification.shown" value="true" />
-    <property name="com.android.tools.idea.instantapp.provision.ProvisionBeforeRunTaskProvider.myTimeStamp" value="1586594824077" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/../android.ipr" />
+    <property name="com.android.tools.idea.instantapp.provision.ProvisionBeforeRunTaskProvider.myTimeStamp" value="1588954372152" />
+    <property name="last_opened_file_path" value="D:/gongcheng/booknote" />
     <property name="nodejs_interpreter_path.stuck_in_default_project" value="undefined stuck path" />
     <property name="nodejs_npm_path_reset_for_default_project" value="true" />
-    <property name="settings.editor.selected.configurable" value="project.propVCSSupport.Mappings" />
+    <property name="settings.editor.selected.configurable" value="yiiguxing.plugin.translate" />
+  </component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="F:\android-source\Android_9_0_0\frameworks" />
+    </key>
   </component>
   <component name="RestServicesNavigator">
     <treeState>
@@ -218,6 +283,14 @@
       <workItem from="1586445446629" duration="3163000" />
       <workItem from="1586478613417" duration="23539000" />
       <workItem from="1586613811361" duration="6734000" />
+      <workItem from="1588941512477" duration="9128000" />
+      <workItem from="1589729118748" duration="2610000" />
+      <workItem from="1589765174613" duration="22650000" />
+      <workItem from="1589871822110" duration="9295000" />
+      <workItem from="1589984635420" duration="2192000" />
+      <workItem from="1590127563527" duration="1245000" />
+      <workItem from="1590331162693" duration="121000" />
+      <workItem from="1590332534363" duration="793000" />
     </task>
     <task id="LOCAL-00001" summary="增加了LayoutInflater的部分解析">
       <created>1586536301658</created>
@@ -233,16 +306,66 @@
       <option name="project" value="LOCAL" />
       <updated>1586624407362</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="增加了FragmentManager的解析完成">
+      <created>1588949074122</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1588949074122</updated>
+    </task>
+    <task id="LOCAL-00004" summary="继续activity的启动流程">
+      <created>1589730276256</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1589730276256</updated>
+    </task>
+    <task id="LOCAL-00005" summary="Activity的onPause流程的调用过程">
+      <created>1589806054062</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1589806054062</updated>
+    </task>
+    <task id="LOCAL-00006" summary="增加了部分onLaunch方法的调用流程">
+      <created>1589812518057</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1589812518057</updated>
+    </task>
+    <task id="LOCAL-00007" summary="增加了activity的创建和启动过程">
+      <created>1589877763216</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1589877763216</updated>
+    </task>
+    <task id="LOCAL-00008" summary="Activity的创建和启动流程详解">
+      <created>1589892022953</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1589892022953</updated>
+    </task>
+    <task id="LOCAL-00009" summary="增加了FragmentManager的解析完成">
+      <created>1589985990073</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1589985990074</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="80138000" />
+    <option name="totallyTimeSpent" value="128208000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="-8" y="-8" width="2576" height="1416" extended-state="6" />
+    <frame x="105" y="0" width="1308" height="1400" extended-state="0" />
+    <editor active="true" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" weight="0.27093023" />
+      <window_info content_ui="combo" id="Project" order="0" weight="0.80991733" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Designer" order="2" />
       <window_info id="Image Layers" order="3" />
@@ -257,11 +380,11 @@
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" />
       <window_info anchor="bottom" id="Terminal" order="7" />
-      <window_info anchor="bottom" id="Docker" order="8" />
+      <window_info anchor="bottom" id="Docker" order="8" show_stripe_button="false" />
       <window_info anchor="bottom" id="Event Log" order="9" side_tool="true" />
       <window_info anchor="bottom" id="Messages" order="10" />
       <window_info anchor="bottom" id="Database Changes" order="11" />
-      <window_info anchor="bottom" id="Version Control" order="12" weight="0.3736952" />
+      <window_info anchor="bottom" id="Version Control" order="12" weight="0.57030016" />
       <window_info anchor="bottom" id="LuaCheck" order="13" weight="0.3299611" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
@@ -275,10 +398,61 @@
       <window_info anchor="right" id="Palette&#9;" order="9" />
       <window_info anchor="right" id="Theme Preview" order="10" />
       <window_info anchor="right" id="RestServices" order="11" weight="0.499098" />
+      <window_info anchor="right" id="Translation Assistant" order="12" weight="0.9645809" />
     </layout>
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="1" />
+  </component>
+  <component name="Vcs.Log.History.Properties">
+    <option name="COLUMN_ORDER">
+      <list>
+        <option value="0" />
+        <option value="2" />
+        <option value="3" />
+        <option value="1" />
+      </list>
+    </option>
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State>
+              <option name="RECENTLY_FILTERED_USER_GROUPS">
+                <collection />
+              </option>
+              <option name="RECENTLY_FILTERED_BRANCH_GROUPS">
+                <collection />
+              </option>
+              <option name="COLUMN_ORDER">
+                <list>
+                  <option value="0" />
+                  <option value="1" />
+                  <option value="2" />
+                  <option value="3" />
+                </list>
+              </option>
+            </State>
+          </value>
+        </entry>
+      </map>
+    </option>
+    <option name="RECENT_FILTERS">
+      <map>
+        <entry key="Branch">
+          <value>
+            <list />
+          </value>
+        </entry>
+        <entry key="User">
+          <value>
+            <list />
+          </value>
+        </entry>
+      </map>
+    </option>
   </component>
   <component name="VcsManagerConfiguration">
     <ignored-roots>
@@ -321,7 +495,13 @@
     <MESSAGE value="init初次只把android9.0.0的frameworks的文件夹来分析" />
     <MESSAGE value="增加了LayoutInflater的部分解析" />
     <MESSAGE value="增加了LayoutInflater的解析完成" />
-    <option name="LAST_COMMIT_MESSAGE" value="增加了LayoutInflater的解析完成" />
+    <MESSAGE value="继续activity的启动流程" />
+    <MESSAGE value="Activity的onPause流程的调用过程" />
+    <MESSAGE value="增加了部分onLaunch方法的调用流程" />
+    <MESSAGE value="增加了activity的创建和启动过程" />
+    <MESSAGE value="Activity的创建和启动流程详解" />
+    <MESSAGE value="增加了FragmentManager的解析完成" />
+    <option name="LAST_COMMIT_MESSAGE" value="增加了FragmentManager的解析完成" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -336,498 +516,6 @@
     </breakpoint-manager>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/base/tools/aapt2/xml/XmlPullParser.cpp">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/base/services/core/java/com/android/server/pm/permission/PermissionManagerServiceInternal.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="420">
-          <caret line="96" column="34" selection-start-line="96" selection-start-column="34" selection-end-line="96" selection-end-column="34" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/base/services/core/java/com/android/server/pm/ParallelPackageParser.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="908">
-          <caret line="139" column="41" selection-start-line="139" selection-start-column="29" selection-end-line="139" selection-end-column="41" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/base/core/java/android/content/pm/PackageParser.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="453">
-          <caret line="1027" selection-start-line="1027" selection-end-line="1027" />
-          <folding>
-            <element signature="e#0#363071#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/base/core/java/android/provider/Settings.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-1479">
-          <folding>
-            <element signature="e#0#613401#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/base/services/core/java/com/android/server/pm/Settings.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="657">
-          <caret line="561" column="20" lean-forward="true" selection-start-line="561" selection-start-column="20" selection-end-line="561" selection-end-column="20" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/base/core/java/android/content/pm/ResolveInfo.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="136">
-          <caret line="33" lean-forward="true" selection-start-line="33" selection-end-line="38" selection-end-column="3" />
-          <folding>
-            <element signature="e#0#18103#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/base/core/java/com/android/internal/util/function/pooled/PooledLambda.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="504">
-          <caret line="249" column="18" selection-start-line="249" selection-start-column="12" selection-end-line="249" selection-end-column="18" />
-          <folding>
-            <element signature="e#0#63156#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/base/core/java/android/app/WaitResult.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="425">
-          <caret line="32" column="23" selection-start-line="32" selection-start-column="13" selection-end-line="32" selection-end-column="23" />
-          <folding>
-            <element signature="e#0#3827#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/base/services/core/java/com/android/server/pm/ComponentResolver.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state>
-          <folding>
-            <element signature="e#0#83972#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/base/services/core/java/com/android/server/wm/WindowProcessController.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="325">
-          <caret line="202" column="19" selection-start-line="202" selection-start-column="19" selection-end-line="202" selection-end-column="19" />
-          <folding>
-            <element signature="e#0#41370#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/base/core/java/android/app/LauncherActivity.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="855">
-          <caret line="439" column="7" lean-forward="true" selection-start-line="439" selection-start-column="7" selection-end-line="439" selection-end-column="7" />
-          <folding>
-            <element signature="e#0#16937#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/base/services/core/java/com/android/server/pm/PackageManagerService.java.bak">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-279844">
-          <caret line="9053" column="39" selection-start-line="9053" selection-start-column="39" selection-end-line="9053" selection-end-column="39" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/base/core/java/android/os/UserHandle.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="461">
-          <caret line="206" column="43" lean-forward="true" selection-start-line="206" selection-start-column="43" selection-end-line="206" selection-end-column="43" />
-          <folding>
-            <element signature="e#0#16734#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/base/services/core/java/com/android/server/pm/PackageManagerService.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-519">
-          <caret line="7068" column="51" selection-start-line="7068" selection-start-column="22" selection-end-line="7068" selection-end-column="51" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/base/services/core/java/com/android/server/wm/ActivityStackSupervisor.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="9214">
-          <caret line="693" column="17" selection-start-line="693" selection-start-column="17" selection-end-line="694" selection-end-column="22" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/base/services/core/java/com/android/server/am/ActivityManagerService.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="51510">
-          <caret line="3507" selection-start-line="3507" selection-end-line="3507" />
-          <folding>
-            <element signature="e#0#842822#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/base/services/core/java/com/android/server/wm/RootActivityContainer.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="35683">
-          <caret line="2241" column="43" selection-start-line="2241" selection-start-column="26" selection-end-line="2241" selection-end-column="43" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/base/services/core/java/com/android/server/wm/ActivityRecord.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="10897">
-          <caret line="864" column="7" selection-start-line="864" selection-start-column="7" selection-end-line="864" selection-end-column="7" />
-          <folding>
-            <element signature="e#0#180553#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/base/services/core/java/com/android/server/wm/ActivityTaskManagerService.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="94435">
-          <caret line="5912" column="76" selection-start-line="5912" selection-start-column="76" selection-end-line="5912" selection-end-column="76" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/base/core/java/com/android/internal/app/ProcessMap.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="884">
-          <caret line="54" column="19" selection-start-line="54" selection-start-column="15" selection-end-line="54" selection-end-column="19" />
-          <folding>
-            <element signature="e#0#1761#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/base/services/core/java/com/android/server/wm/ActivityStartController.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="6409">
-          <caret line="432" column="88" selection-start-line="432" selection-start-column="88" selection-end-line="432" selection-end-column="88" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/base/core/java/android/app/Instrumentation.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="27523">
-          <caret line="1724" column="27" selection-start-line="1724" selection-start-column="27" selection-end-line="1724" selection-end-column="27" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/base/core/java/android/app/servertransaction/LaunchActivityItem.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1112">
-          <caret line="287" selection-start-line="287" selection-end-line="287" />
-          <folding>
-            <element signature="e#0#11923#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/base/core/java/android/app/servertransaction/TransactionExecutor.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="3927">
-          <caret line="268" selection-start-line="268" selection-end-line="268" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/base/core/java/android/view/ViewRootImpl.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="149039">
-          <caret line="9058" column="11" selection-start-line="9058" selection-start-column="11" selection-end-line="9058" selection-end-column="11" />
-          <folding>
-            <element signature="e#26278#26279#0" expanded="true" />
-            <element signature="e#26328#26329#0" expanded="true" />
-            <element signature="e#27036#27037#0" expanded="true" />
-            <element signature="e#27067#27068#0" expanded="true" />
-            <element signature="e#42280#42281#0" expanded="true" />
-            <element signature="e#42326#42327#0" expanded="true" />
-            <element signature="e#42359#42360#0" expanded="true" />
-            <element signature="e#42405#42406#0" expanded="true" />
-            <element signature="e#42443#42444#0" expanded="true" />
-            <element signature="e#42494#42495#0" expanded="true" />
-            <element signature="e#42697#42698#0" expanded="true" />
-            <element signature="e#42726#42727#0" expanded="true" />
-            <element signature="e#42932#42933#0" expanded="true" />
-            <element signature="e#42962#42963#0" expanded="true" />
-            <element signature="e#50572#50573#0" expanded="true" />
-            <element signature="e#50600#50601#0" expanded="true" />
-            <element signature="e#50640#50641#0" expanded="true" />
-            <element signature="e#50672#50673#0" expanded="true" />
-            <element signature="e#59527#59528#0" expanded="true" />
-            <element signature="e#59566#59567#0" expanded="true" />
-            <element signature="e#60472#60473#0" expanded="true" />
-            <element signature="e#60524#60525#0" expanded="true" />
-            <element signature="e#62185#62186#0" expanded="true" />
-            <element signature="e#62225#62226#0" expanded="true" />
-            <element signature="e#62481#62482#0" expanded="true" />
-            <element signature="e#62527#62528#0" expanded="true" />
-            <element signature="e#62592#62593#0" expanded="true" />
-            <element signature="e#62641#62642#0" expanded="true" />
-            <element signature="e#66249#66250#0" expanded="true" />
-            <element signature="e#66294#66295#0" expanded="true" />
-            <element signature="e#66345#66346#0" expanded="true" />
-            <element signature="e#66372#66373#0" expanded="true" />
-            <element signature="e#66897#66898#0" expanded="true" />
-            <element signature="e#66998#66999#0" expanded="true" />
-            <element signature="e#76509#76510#0" expanded="true" />
-            <element signature="e#76588#76589#0" expanded="true" />
-            <element signature="e#76802#76803#0" expanded="true" />
-            <element signature="e#76884#76885#0" expanded="true" />
-            <element signature="e#80269#80270#0" expanded="true" />
-            <element signature="e#80309#80310#0" expanded="true" />
-            <element signature="e#132102#132103#0" expanded="true" />
-            <element signature="e#132134#132135#0" expanded="true" />
-            <element signature="e#144355#144356#0" expanded="true" />
-            <element signature="e#144396#144397#0" expanded="true" />
-            <element signature="e#146840#146841#0" expanded="true" />
-            <element signature="e#146878#146879#0" expanded="true" />
-            <element signature="e#147217#147218#0" expanded="true" />
-            <element signature="e#147277#147278#0" expanded="true" />
-            <element signature="e#167090#167091#0" expanded="true" />
-            <element signature="e#167137#167138#0" expanded="true" />
-            <element signature="e#173790#173791#0" expanded="true" />
-            <element signature="e#173838#173839#0" expanded="true" />
-            <element signature="e#173965#173966#0" expanded="true" />
-            <element signature="e#174020#174021#0" expanded="true" />
-            <element signature="e#176415#176416#0" expanded="true" />
-            <element signature="e#176453#176454#0" expanded="true" />
-            <element signature="e#178002#178003#0" expanded="true" />
-            <element signature="e#178029#178030#0" expanded="true" />
-            <element signature="e#208654#208655#0" expanded="true" />
-            <element signature="e#208690#208691#0" expanded="true" />
-            <element signature="e#209587#209588#0" expanded="true" />
-            <element signature="e#209629#209630#0" expanded="true" />
-            <element signature="e#210381#210382#0" expanded="true" />
-            <element signature="e#210419#210420#0" expanded="true" />
-            <element signature="e#218414#218415#0" expanded="true" />
-            <element signature="e#218463#218464#0" expanded="true" />
-            <element signature="e#219278#219279#0" expanded="true" />
-            <element signature="e#219313#219314#0" expanded="true" />
-            <element signature="e#220088#220089#0" expanded="true" />
-            <element signature="e#220137#220138#0" expanded="true" />
-            <element signature="e#221639#221640#0" expanded="true" />
-            <element signature="e#221674#221675#0" expanded="true" />
-            <element signature="e#225301#225302#0" expanded="true" />
-            <element signature="e#225350#225351#0" expanded="true" />
-            <element signature="e#226097#226098#0" expanded="true" />
-            <element signature="e#226132#226133#0" expanded="true" />
-            <element signature="e#240296#240297#0" expanded="true" />
-            <element signature="e#240331#240332#0" expanded="true" />
-            <element signature="e#242684#242685#0" expanded="true" />
-            <element signature="e#242726#242727#0" expanded="true" />
-            <element signature="e#256303#256304#0" expanded="true" />
-            <element signature="e#256338#256339#0" expanded="true" />
-            <element signature="e#264485#264486#0" expanded="true" />
-            <element signature="e#264584#264585#0" expanded="true" />
-            <element signature="e#264633#264634#0" expanded="true" />
-            <element signature="e#264732#264733#0" expanded="true" />
-            <element signature="e#269707#269708#0" expanded="true" />
-            <element signature="e#269742#269743#0" expanded="true" />
-            <element signature="e#285125#285126#0" expanded="true" />
-            <element signature="e#285177#285178#0" expanded="true" />
-            <element signature="e#286947#286948#0" expanded="true" />
-            <element signature="e#286984#286985#0" expanded="true" />
-            <element signature="e#292421#292422#0" expanded="true" />
-            <element signature="e#292481#292482#0" expanded="true" />
-            <element signature="e#292528#292529#0" expanded="true" />
-            <element signature="e#292593#292594#0" expanded="true" />
-            <element signature="e#293298#293299#0" expanded="true" />
-            <element signature="e#293337#293338#0" expanded="true" />
-            <element signature="e#301483#301484#0" expanded="true" />
-            <element signature="e#301512#301513#0" expanded="true" />
-            <element signature="e#316653#316654#0" expanded="true" />
-            <element signature="e#316709#316710#0" expanded="true" />
-            <element signature="e#324065#324066#0" expanded="true" />
-            <element signature="e#324102#324103#0" expanded="true" />
-            <element signature="e#324338#324339#0" expanded="true" />
-            <element signature="e#324389#324390#0" expanded="true" />
-            <element signature="e#326034#326035#0" expanded="true" />
-            <element signature="e#326115#326116#0" expanded="true" />
-            <element signature="e#326406#326407#0" expanded="true" />
-            <element signature="e#326455#326456#0" expanded="true" />
-            <element signature="e#330248#330249#0" expanded="true" />
-            <element signature="e#330308#330309#0" expanded="true" />
-            <element signature="e#330904#330905#0" expanded="true" />
-            <element signature="e#330951#330952#0" expanded="true" />
-            <element signature="e#333249#333250#0" expanded="true" />
-            <element signature="e#333317#333318#0" expanded="true" />
-            <element signature="e#336631#336632#0" expanded="true" />
-            <element signature="e#336659#336660#0" expanded="true" />
-            <element signature="e#336756#336757#0" expanded="true" />
-            <element signature="e#336784#336785#0" expanded="true" />
-            <element signature="e#336896#336897#0" expanded="true" />
-            <element signature="e#336923#336924#0" expanded="true" />
-            <element signature="e#343601#343602#0" expanded="true" />
-            <element signature="e#343628#343629#0" expanded="true" />
-            <element signature="e#343692#343693#0" expanded="true" />
-            <element signature="e#343719#343720#0" expanded="true" />
-            <element signature="e#343772#343773#0" expanded="true" />
-            <element signature="e#343833#343834#0" expanded="true" />
-            <element signature="e#343895#343896#0" expanded="true" />
-            <element signature="e#343922#343923#0" expanded="true" />
-            <element signature="e#343984#343985#0" expanded="true" />
-            <element signature="e#344011#344012#0" expanded="true" />
-            <element signature="e#344062#344063#0" expanded="true" />
-            <element signature="e#344121#344122#0" expanded="true" />
-            <element signature="e#344183#344184#0" expanded="true" />
-            <element signature="e#344210#344211#0" expanded="true" />
-            <element signature="e#344272#344273#0" expanded="true" />
-            <element signature="e#344299#344300#0" expanded="true" />
-            <element signature="e#344350#344351#0" expanded="true" />
-            <element signature="e#344409#344410#0" expanded="true" />
-            <element signature="e#346937#346938#0" expanded="true" />
-            <element signature="e#346965#346966#0" expanded="true" />
-            <element signature="e#347528#347529#0" expanded="true" />
-            <element signature="e#347556#347557#0" expanded="true" />
-            <element signature="e#347656#347657#0" expanded="true" />
-            <element signature="e#347684#347685#0" expanded="true" />
-            <element signature="e#347796#347797#0" expanded="true" />
-            <element signature="e#347824#347825#0" expanded="true" />
-            <element signature="e#349011#349012#0" expanded="true" />
-            <element signature="e#349077#349078#0" expanded="true" />
-            <element signature="e#349198#349199#0" expanded="true" />
-            <element signature="e#349244#349245#0" expanded="true" />
-            <element signature="e#349469#349470#0" expanded="true" />
-            <element signature="e#349548#349549#0" expanded="true" />
-            <element signature="e#349607#349608#0" expanded="true" />
-            <element signature="e#349682#349683#0" expanded="true" />
-            <element signature="e#349941#349942#0" expanded="true" />
-            <element signature="e#349983#349984#0" expanded="true" />
-            <element signature="e#358283#358284#0" expanded="true" />
-            <element signature="e#358317#358318#0" expanded="true" />
-            <element signature="e#360829#360830#0" expanded="true" />
-            <element signature="e#360871#360872#0" expanded="true" />
-            <element signature="e#360920#360921#0" expanded="true" />
-            <element signature="e#360958#360959#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/base/core/java/android/view/Window.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="40630">
-          <caret line="2512" column="7" selection-start-line="2512" selection-start-column="7" selection-end-line="2512" selection-end-column="7" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/base/core/java/android/app/Activity.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1146">
-          <caret line="8689" column="1" selection-start-line="8689" selection-start-column="1" selection-end-line="8689" selection-end-column="1" />
-          <folding>
-            <element signature="e#148236#148237#0" expanded="true" />
-            <element signature="e#148293#148294#0" expanded="true" />
-            <element signature="e#160114#160115#0" expanded="true" />
-            <element signature="e#160214#160215#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/base/core/java/android/app/ActivityThread.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="34">
-          <caret line="16" column="20" selection-start-line="16" selection-start-column="20" selection-end-line="16" selection-end-column="20" />
-          <folding>
-            <element signature="e#17508#17509#0" expanded="true" />
-            <element signature="e#17596#17597#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/base/core/java/android/app/FragmentTransaction.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="510">
-          <caret line="40" column="41" selection-start-line="40" selection-start-column="41" selection-end-line="40" selection-end-column="41" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/base/services/core/java/com/android/server/wm/LaunchParamsController.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="935">
-          <caret line="85" column="30" selection-start-line="83" selection-start-column="8" selection-end-line="85" selection-end-column="30" />
-          <folding>
-            <element signature="e#0#12946#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/base/services/core/java/com/android/server/wm/ActivityStack.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="94860">
-          <caret line="5787" selection-start-line="5787" selection-end-line="5787" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/base/core/java/android/app/FragmentTransition.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="986">
-          <caret line="88" column="19" selection-start-line="88" selection-start-column="19" selection-end-line="88" selection-end-column="19" />
-          <folding>
-            <element signature="e#26479#26480#0" expanded="true" />
-            <element signature="e#26543#26544#0" expanded="true" />
-            <element signature="e#42611#42612#0" expanded="true" />
-            <element signature="e#42667#42668#0" expanded="true" />
-            <element signature="e#48451#48452#0" expanded="true" />
-            <element signature="e#48514#48515#0" expanded="true" />
-            <element signature="e#51947#51948#0" expanded="true" />
-            <element signature="e#52000#52001#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/base/core/java/android/app/BackStackRecord.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="12257">
-          <caret line="766" column="34" selection-start-line="766" selection-start-column="34" selection-end-line="766" selection-end-column="34" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/base/core/java/android/app/FragmentManager.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="59942">
-          <caret line="3619" column="12" selection-start-line="3619" selection-start-column="12" selection-end-line="3619" selection-end-column="12" />
-          <folding>
-            <element signature="e#62067#62068#0" expanded="true" />
-            <element signature="e#62121#62122#0" expanded="true" />
-            <element signature="e#77535#77536#0" expanded="true" />
-            <element signature="e#77569#77570#0" expanded="true" />
-            <element signature="e#123255#123256#0" expanded="true" />
-            <element signature="e#123308#123309#0" expanded="true" />
-            <element signature="e#123346#123347#0" expanded="true" />
-            <element signature="e#123399#123400#0" expanded="true" />
-            <element signature="e#123444#123445#0" expanded="true" />
-            <element signature="e#123497#123498#0" expanded="true" />
-            <element signature="e#130003#130004#0" expanded="true" />
-            <element signature="e#130037#130038#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/base/core/java/android/view/WindowManagerGlobal.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="10846">
-          <caret line="677" column="50" selection-start-line="677" selection-start-column="50" selection-end-line="677" selection-end-column="50" />
-          <folding>
-            <element signature="e#6384#6385#0" expanded="true" />
-            <element signature="e#6425#6426#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/base/core/java/android/view/WindowManagerImpl.java">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="2295">
@@ -869,16 +557,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="698">
           <caret line="763" column="18" selection-start-line="763" selection-start-column="9" selection-end-line="763" selection-end-column="18" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/base/core/java/android/app/Fragment.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="4811">
-          <caret line="339" selection-start-line="339" selection-end-line="339" />
-          <folding>
-            <element signature="e#0#123725#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -932,6 +610,376 @@
           <folding>
             <element signature="e#19166#19167#0" expanded="true" />
             <element signature="e#19224#19225#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/base/core/java/android/util/HashMap.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="32555">
+          <caret line="2016" column="38" selection-start-line="2016" selection-start-column="38" selection-end-line="2016" selection-end-column="38" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/CopyOnWriteArrayList.java" />
+    <entry file="file://$PROJECT_DIR$/.gitattributes">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/base/core/java/android/app/Fragment.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="404">
+          <caret line="317" column="23" selection-start-line="317" selection-start-column="12" selection-end-line="317" selection-end-column="23" />
+          <folding>
+            <element signature="e#17946#19393#0" />
+            <element signature="e#21116#24010#0" />
+            <element signature="e#25858#25859#0" expanded="true" />
+            <element signature="e#25892#25893#0" expanded="true" />
+            <element signature="e#61808#61809#0" expanded="true" />
+            <element signature="e#61838#61839#0" expanded="true" />
+            <element signature="e#106837#106838#0" expanded="true" />
+            <element signature="e#120804#120805#0" expanded="true" />
+            <element signature="e#121080#121081#0" expanded="true" />
+            <element signature="e#121515#121516#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/base/core/java/android/app/LoaderManager.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="884">
+          <caret line="60" selection-start-line="60" selection-end-line="60" selection-end-column="11" />
+          <folding>
+            <element signature="e#0#38300#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/base/core/java/android/content/Intent.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1166">
+          <caret line="8312" column="21" selection-start-line="8312" selection-start-column="21" selection-end-line="8312" selection-end-column="21" />
+          <folding>
+            <element signature="e#0#461961#0" expanded="true" />
+            <element signature="e#294045#294046#0" expanded="true" />
+            <element signature="e#294112#294113#0" expanded="true" />
+            <element signature="e#362688#362689#0" expanded="true" />
+            <element signature="e#362721#362722#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/base/core/java/android/app/FragmentHostCallback.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2958">
+          <caret line="210" column="32" selection-start-line="210" selection-start-column="16" selection-end-line="210" selection-end-column="32" />
+          <folding>
+            <element signature="e#0#13147#0" expanded="true" />
+            <element signature="e#4145#4146#0" expanded="true" />
+            <element signature="e#4172#4173#0" expanded="true" />
+            <element signature="e#8222#8223#0" expanded="true" />
+            <element signature="e#8261#8262#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/base/packages/SystemUI/src/com/android/systemui/fragments/FragmentHostManager.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="3791">
+          <caret line="293" column="49" selection-start-line="293" selection-start-column="33" selection-end-line="293" selection-end-column="49" />
+          <folding>
+            <element signature="e#0#12244#0" expanded="true" />
+            <element signature="e#6709#6710#0" expanded="true" />
+            <element signature="e#6763#6764#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/base/core/java/android/content/pm/ActivityInfo.java">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/base/services/core/java/com/android/server/wm/ActivityDisplay.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="8806">
+          <caret line="590" column="48" selection-start-line="590" selection-start-column="33" selection-end-line="590" selection-end-column="48" />
+          <folding>
+            <element signature="e#0#65627#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/base/services/core/java/com/android/server/wm/TaskRecord.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="22406">
+          <caret line="1483" column="67" selection-start-line="1483" selection-start-column="63" selection-end-line="1483" selection-end-column="67" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/base/core/java/android/app/IApplicationThread.aidl">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="712">
+          <caret line="53" column="63" lean-forward="true" selection-start-line="53" selection-start-column="63" selection-end-line="53" selection-end-column="63" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/base/core/java/android/app/servertransaction/ObjectPool.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="601">
+          <caret line="39" selection-start-line="39" selection-end-line="48" selection-end-column="5" />
+          <folding>
+            <element signature="e#0#2662#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/base/services/core/java/com/android/server/wm/ClientLifecycleManager.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="796">
+          <caret line="110" column="31" selection-start-line="110" selection-start-column="14" selection-end-line="110" selection-end-column="31" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/base/core/java/android/app/ClientTransactionHandler.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-979">
+          <caret line="39" column="46" selection-start-line="39" selection-start-column="22" selection-end-line="39" selection-end-column="46" />
+          <folding>
+            <element signature="e#0#9674#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/base/core/java/android/app/servertransaction/ClientTransactionItem.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="493">
+          <caret line="32" column="43" selection-start-line="32" selection-start-column="22" selection-end-line="32" selection-end-column="43" />
+          <folding>
+            <element signature="e#0#1472#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/base/core/java/android/app/servertransaction/PauseActivityItem.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="578">
+          <caret line="42" column="48" selection-start-line="42" selection-start-column="24" selection-end-line="42" selection-end-column="48" />
+          <folding>
+            <element signature="e#0#5464#0" expanded="true" />
+            <element signature="e#1729#1730#0" expanded="true" />
+            <element signature="e#1760#1761#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/base/services/core/java/com/android/server/wm/KeyguardController.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="452">
+          <caret line="117" column="61" selection-start-line="117" selection-start-column="53" selection-end-line="117" selection-end-column="61" />
+          <folding>
+            <element signature="e#0#24619#0" expanded="true" />
+            <element signature="e#5145#5146#0" expanded="true" />
+            <element signature="e#5207#5208#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/base/services/core/java/com/android/server/wm/WindowProcessControllerMap.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="114">
+          <caret line="24" column="38" selection-start-line="24" selection-start-column="12" selection-end-line="24" selection-end-column="38" />
+          <folding>
+            <element signature="e#0#2961#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/base/core/java/android/app/servertransaction/ClientTransaction.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2033">
+          <caret line="145" column="68" selection-start-line="145" selection-start-column="62" selection-end-line="145" selection-end-column="68" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/base/core/java/android/app/Activity.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="145901">
+          <caret line="7995" column="21" selection-start-line="7995" selection-start-column="21" selection-end-line="7995" selection-end-column="21" />
+          <folding>
+            <element signature="e#148236#148237#0" expanded="true" />
+            <element signature="e#148293#148294#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/base/core/java/android/app/FragmentController.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="3097">
+          <caret line="217" column="30" selection-start-line="217" selection-start-column="15" selection-end-line="217" selection-end-column="30" />
+          <folding>
+            <element signature="e#0#15796#0" expanded="true" />
+            <element signature="e#1959#1960#0" expanded="true" />
+            <element signature="e#1992#1993#0" expanded="true" />
+            <element signature="e#5637#5638#0" expanded="true" />
+            <element signature="e#5692#5693#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/base/services/core/java/com/android/server/wm/RootActivityContainer.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="735">
+          <caret line="2098" column="22" selection-start-line="2098" selection-start-column="15" selection-end-line="2098" selection-end-column="22" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/base/services/core/java/com/android/server/wm/ActivityStack.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="332">
+          <caret line="1533" column="51" selection-start-line="1533" selection-start-column="37" selection-end-line="1533" selection-end-column="51" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/base/services/core/java/com/android/server/wm/WindowProcessController.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-308">
+          <caret line="71" column="80" lean-forward="true" selection-start-line="70" selection-start-column="3" selection-end-line="71" selection-end-column="80" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/base/services/core/java/com/android/server/pm/PackageManagerService.java.bak">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="228">
+          <caret line="4982" column="13" selection-start-line="4982" selection-start-column="13" selection-end-line="4982" selection-end-column="13" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/base/core/java/android/app/ActivityThread.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="57912">
+          <caret line="3324" column="21" selection-start-line="3324" selection-start-column="21" selection-end-line="3324" selection-end-column="21" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/base/services/core/java/com/android/server/wm/ActivityStackSupervisor.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="16207">
+          <caret line="1004" column="57" selection-start-line="1004" selection-start-column="45" selection-end-line="1004" selection-end-column="57" />
+          <folding>
+            <element signature="e#21693#21694#0" expanded="true" />
+            <element signature="e#21735#21736#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/base/core/java/android/app/ActivityManagerInternal.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="5377">
+          <caret line="313" column="37" selection-start-line="313" selection-start-column="25" selection-end-line="313" selection-end-column="37" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/base/services/core/java/com/android/server/am/ActivityManagerService.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="49476">
+          <caret line="3070" column="40" selection-start-line="3070" selection-start-column="40" selection-end-line="3070" selection-end-column="40" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/base/services/core/java/com/android/server/am/ProcessList.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="26315">
+          <caret line="1504" column="21" selection-start-line="1504" selection-start-column="12" selection-end-line="1504" selection-end-column="21" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/base/services/core/java/com/android/server/wm/ActivityTaskManagerService.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="108300">
+          <caret line="6068" column="54" selection-start-line="6068" selection-start-column="54" selection-end-line="6068" selection-end-column="54" />
+          <folding>
+            <element signature="e#258525#258526#0" expanded="true" />
+            <element signature="e#258562#258563#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/base/core/java/com/android/internal/util/function/pooled/PooledLambda.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="18620">
+          <caret line="1025" column="18" selection-start-line="1025" selection-start-column="18" selection-end-line="1025" selection-end-column="18" />
+          <folding>
+            <element signature="e#0#63156#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/base/core/java/android/app/servertransaction/LaunchActivityItem.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="741">
+          <caret line="75" column="47" selection-start-line="75" selection-start-column="33" selection-end-line="75" selection-end-column="47" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/base/services/core/java/com/android/server/wm/ActivityRecord.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="38114">
+          <caret line="2275" column="9" selection-start-line="2275" selection-start-column="9" selection-end-line="2275" selection-end-column="9" />
+          <folding>
+            <element signature="e#55262#55263#0" expanded="true" />
+            <element signature="e#55296#55297#0" expanded="true" />
+            <element signature="e#55331#55332#0" expanded="true" />
+            <element signature="e#55385#55386#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/base/core/java/android/app/servertransaction/TransactionExecutor.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2033">
+          <caret line="144" column="13" selection-start-line="144" selection-start-column="13" selection-end-line="144" selection-end-column="13" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/base/core/java/android/app/FragmentManager.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="458">
+          <caret line="3412" column="13" lean-forward="true" selection-start-line="3412" selection-start-column="13" selection-end-line="3412" selection-end-column="13" />
+          <folding>
+            <element signature="imports" expanded="true" />
+            <element signature="class#BackStackEntry#0;class#FragmentManager#0" />
+            <element signature="class#OnBackStackChangedListener#0;class#FragmentManager#0" />
+            <element signature="class#FragmentManagerState#0" />
+            <element signature="e#51030#51103#0" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/base/core/java/android/app/Instrumentation.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="413">
+          <caret line="386" column="22" selection-start-line="386" selection-start-column="22" selection-end-line="386" selection-end-column="22" />
+          <folding>
+            <element signature="e#59005#59006#0" expanded="true" />
+            <element signature="e#59044#59045#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/base/core/java/android/os/MessageQueue.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="702">
+          <caret line="126" column="30" lean-forward="true" selection-start-line="126" selection-start-column="30" selection-end-line="126" selection-end-column="30" />
+          <folding>
+            <element signature="e#1943#1956#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/base/core/java/android/os/HandlerThread.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="494">
+          <caret line="27" column="83" selection-start-line="27" selection-start-column="83" selection-end-line="27" selection-end-column="83" />
+          <folding>
+            <element signature="e#0#5334#0" expanded="true" />
           </folding>
         </state>
       </provider>
