@@ -91,11 +91,9 @@ class ZygoteConnection {
         mSocket = socket;
         this.abiList = abiList;
 
-        mSocketOutStream
-                = new DataOutputStream(socket.getOutputStream());
+        mSocketOutStream = new DataOutputStream(socket.getOutputStream());
 
-        mSocketReader = new BufferedReader(
-                new InputStreamReader(socket.getInputStream()), 256);
+        mSocketReader = new BufferedReader(new InputStreamReader(socket.getInputStream()), 256);
 
         mSocket.setSoTimeout(CONNECTION_TIMEOUT_MILLIS);
 
@@ -132,8 +130,8 @@ class ZygoteConnection {
         FileDescriptor[] descriptors;
 
         try {
+            //读取socket传来的参数信息
             args = Zygote.readArgumentList(mSocketReader);
-
             // TODO (chriswailes): Remove this and add an assert.
             descriptors = mSocket.getAncillaryFileDescriptors();
         } catch (IOException ex) {
@@ -263,7 +261,7 @@ class ZygoteConnection {
         }
 
         fd = null;
-
+        //*****重点方法**** fork一个子进程，得到一个对应的进程pid
         pid = Zygote.forkAndSpecialize(parsedArgs.mUid, parsedArgs.mGid, parsedArgs.mGids,
                 parsedArgs.mRuntimeFlags, rlimits, parsedArgs.mMountExternal, parsedArgs.mSeInfo,
                 parsedArgs.mNiceName, fdsToClose, fdsToIgnore, parsedArgs.mStartChildZygote,
@@ -272,12 +270,12 @@ class ZygoteConnection {
         try {
             if (pid == 0) {
                 // in child
+                //当pid=0，说明是fork的子进程
                 zygoteServer.setForkChild();
-
                 zygoteServer.closeServerSocket();
                 IoUtils.closeQuietly(serverPipeFd);
                 serverPipeFd = null;
-
+                //****重点方法*****  处理子进程
                 return handleChildProc(parsedArgs, descriptors, childPipeFd,
                         parsedArgs.mStartChildZygote);
             } else {
@@ -557,6 +555,8 @@ class ZygoteConnection {
      * @param pipeFd null-ok; pipe for communication back to Zygote.
      * @param isZygote whether this new child process is itself a new Zygote.
      */
+    //进程创建完成后的处理工作，适当的关闭socket，适当的重新打开stdio，返回成功或者失败信息等
+    //返回的Runnable是一个封装了创建进程时，socket传进来的程序入口的方法以及对应的参数的类。其run方法会通过反射调用类的main方法
     private Runnable handleChildProc(ZygoteArguments parsedArgs, FileDescriptor[] descriptors,
             FileDescriptor pipeFd, boolean isZygote) {
         /**
@@ -564,7 +564,7 @@ class ZygoteConnection {
          * socket connections, and substituted /dev/null in their place.  The LocalSocket
          * objects still need to be closed properly.
          */
-
+        //当执行到这的时候，connection已经关闭了关闭socket，用/dev/null替换它们。
         closeSocket();
         if (descriptors != null) {
             try {
@@ -596,9 +596,11 @@ class ZygoteConnection {
             throw new IllegalStateException("WrapperInit.execApplication unexpectedly returned");
         } else {
             if (!isZygote) {
+
                 return ZygoteInit.zygoteInit(parsedArgs.mTargetSdkVersion,
                         parsedArgs.mRemainingArgs, null /* classLoader */);
             } else {
+                //这个里面会通过反射创建socket传递的启动程序的入口类（ActivityThread），然后调用其main方法进行启动
                 return ZygoteInit.childZygoteInit(parsedArgs.mTargetSdkVersion,
                         parsedArgs.mRemainingArgs, null /* classLoader */);
             }
@@ -703,6 +705,7 @@ class ZygoteConnection {
         }
 
         try {
+            //将创建的子进程pid输出出去
             mSocketOutStream.writeInt(pid);
             mSocketOutStream.writeBoolean(usingWrapper);
         } catch (IOException ex) {

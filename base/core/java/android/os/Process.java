@@ -476,6 +476,7 @@ public class Process {
      * State associated with the zygote process.
      * @hide
      */
+    //zygote进行
     public static final ZygoteProcess ZYGOTE_PROCESS = new ZygoteProcess();
 
     /**
@@ -531,6 +532,7 @@ public class Process {
                                            @Nullable String invokeWith,
                                            @Nullable String packageName,
                                            @Nullable String[] zygoteArgs) {
+        //processClass为"android.app.ActivityThread"，表示程序的入口类
         return ZYGOTE_PROCESS.start(processClass, niceName, uid, gid, gids,
                     runtimeFlags, mountExternal, targetSdkVersion, seInfo,
                     abi, instructionSet, appDataDir, invokeWith, packageName,

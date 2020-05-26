@@ -228,19 +228,19 @@ public final class Zygote {
      * @param instructionSet null-ok the instruction set to use.
      * @param appDataDir null-ok the data directory of the app.
      *
-     * @return 0 if this is the child, pid of the child
-     * if this is the parent, or -1 on error.
+     * @return 0 if this is the child, pid of the child if this is the parent, or -1 on error.
      */
+    //fork一个子进程，如果这是子节点则返回0；如果这是父进程，则返回子进程的pid；发生异常则返回-1。
     public static int forkAndSpecialize(int uid, int gid, int[] gids, int runtimeFlags,
             int[][] rlimits, int mountExternal, String seInfo, String niceName, int[] fdsToClose,
             int[] fdsToIgnore, boolean startChildZygote, String instructionSet, String appDataDir,
             int targetSdkVersion) {
+        //fork前的准备工作
         ZygoteHooks.preFork();
         // Resets nice priority for zygote process.
         resetNicePriority();
-        int pid = nativeForkAndSpecialize(
-                uid, gid, gids, runtimeFlags, rlimits, mountExternal, seInfo, niceName, fdsToClose,
-                fdsToIgnore, startChildZygote, instructionSet, appDataDir);
+        //调用native方法，fork出一个子进程
+        int pid = nativeForkAndSpecialize(uid, gid, gids, runtimeFlags, rlimits, mountExternal, seInfo, niceName, fdsToClose,fdsToIgnore, startChildZygote, instructionSet, appDataDir);
         // Enable tracing as soon as possible for the child process.
         if (pid == 0) {
             Zygote.disableExecuteOnly(targetSdkVersion);
@@ -249,10 +249,11 @@ public final class Zygote {
             // Note that this event ends at the end of handleChildProc,
             Trace.traceBegin(Trace.TRACE_TAG_ACTIVITY_MANAGER, "PostFork");
         }
+        //fork之后的处理
         ZygoteHooks.postForkCommon();
         return pid;
     }
-
+    //com_android_internal_os_Zygote.cpp
     private static native int nativeForkAndSpecialize(int uid, int gid, int[] gids,
             int runtimeFlags, int[][] rlimits, int mountExternal, String seInfo, String niceName,
             int[] fdsToClose, int[] fdsToIgnore, boolean startChildZygote, String instructionSet,

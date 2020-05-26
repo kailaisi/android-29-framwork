@@ -150,14 +150,10 @@ class ZygoteServer {
 
         if (isPrimaryZygote) {
             mZygoteSocket = Zygote.createManagedSocketFromInitSocket(Zygote.PRIMARY_SOCKET_NAME);
-            mUsapPoolSocket =
-                    Zygote.createManagedSocketFromInitSocket(
-                            Zygote.USAP_POOL_PRIMARY_SOCKET_NAME);
+            mUsapPoolSocket = Zygote.createManagedSocketFromInitSocket(Zygote.USAP_POOL_PRIMARY_SOCKET_NAME);
         } else {
             mZygoteSocket = Zygote.createManagedSocketFromInitSocket(Zygote.SECONDARY_SOCKET_NAME);
-            mUsapPoolSocket =
-                    Zygote.createManagedSocketFromInitSocket(
-                            Zygote.USAP_POOL_SECONDARY_SOCKET_NAME);
+            mUsapPoolSocket = Zygote.createManagedSocketFromInitSocket(Zygote.USAP_POOL_SECONDARY_SOCKET_NAME);
         }
 
         fetchUsapPoolPolicyProps();
@@ -366,17 +362,17 @@ class ZygoteServer {
     }
 
     /**
-     * Runs the zygote process's select loop. Accepts new connections as
-     * they happen, and reads commands from connections one spawn-request's
+     * Runs the zygote process's select loop. Accepts new connections as they happen, and reads commands from connections one spawn-request's
      * worth at a time.
      */
+    //
     Runnable runSelectLoop(String abiList) {
         ArrayList<FileDescriptor> socketFDs = new ArrayList<FileDescriptor>();
         ArrayList<ZygoteConnection> peers = new ArrayList<ZygoteConnection>();
-
+        //socketFDs[0]是socketServer。
         socketFDs.add(mZygoteSocket.getFileDescriptor());
         peers.add(null);
-
+        //死循环
         while (true) {
             fetchUsapPoolPolicyPropsWithMinInterval();
 
@@ -429,6 +425,7 @@ class ZygoteServer {
             }
 
             try {
+                //***重点方法****  这里会进入阻塞，当有pollFDs事件到来的时候，则继续往下执行
                 Os.poll(pollFDs, -1);
             } catch (ErrnoException ex) {
                 throw new RuntimeException("poll failed", ex);
@@ -437,22 +434,26 @@ class ZygoteServer {
             boolean usapPoolFDRead = false;
 
             while (--pollIndex >= 0) {
+                //
                 if ((pollFDs[pollIndex].revents & POLLIN) == 0) {
                     continue;
                 }
 
-                if (pollIndex == 0) {
+                if (pollIndex == 0) {//index==0表示selcet接收到的是Zygote的socket连接的事件
                     // Zygote server socket
-
+                    //采用I/O 多路复用机制。
+                    // 客户端第一次请求服务端，服务端会调用accept方法与客户端建立连接，客户端在zygote以ZygoteConnection对象表示
                     ZygoteConnection newPeer = acceptCommandPeer(abiList);
                     peers.add(newPeer);
                     socketFDs.add(newPeer.getFileDescriptor());
-
                 } else if (pollIndex < usapPoolEventFDIndex) {
                     // Session socket accepted from the Zygote server socket
-
+                    //当连接以后，能够接收指令，经过上个if操作后，客户端与服务端已经建立连接，并开始发送数据
                     try {
+                        //peers.get(index)取得发送数据客户端的ZygoteConnection对象。这个就是多路复用的机制了
                         ZygoteConnection connection = peers.get(pollIndex);
+                        //收到Socket发来的消息，进行fork的创建工作。返回的command是MethodAndArgsCaller类
+                        //其run方法，会调用通过socket接收到的启动类的main方法
                         final Runnable command = connection.processOneCommand(this);
 
                         // TODO (chriswailes): Is this extra check necessary?

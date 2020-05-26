@@ -969,7 +969,7 @@ static void SpecializeCommon(JNIEnv* env, uid_t uid, gid_t gid, jintArray gids,
                              jstring managed_nice_name, bool is_system_server,
                              bool is_child_zygote, jstring managed_instruction_set,
                              jstring managed_app_data_dir) {
-  const char* process_name = is_system_server ? "system_server" : "zygote";
+  const char* process_name = is_system_server ? "system_server" : "zygote";//区分是系统服务还是孵化的进程
   auto fail_fn = std::bind(ZygoteFailure, env, process_name, managed_nice_name, _1);
   auto extract_fn = std::bind(ExtractJString, env, process_name, managed_nice_name, _1);
 
@@ -1108,14 +1108,15 @@ static void SpecializeCommon(JNIEnv* env, uid_t uid, gid_t gid, jintArray gids,
   // Unset the SIGCHLD handler, but keep ignoring SIGHUP (rationale in SetSignalHandlers).
   UnsetChldSignalHandler();
 
-  if (is_system_server) {
+  if (is_system_server) {//如果是系统服务
+    //调用Zygote.java的CallPostForkSystemServerHooks方法
     env->CallStaticVoidMethod(gZygoteClass, gCallPostForkSystemServerHooks);
     if (env->ExceptionCheck()) {
       fail_fn("Error calling post fork system server hooks.");
     }
 
-    // Prefetch the classloader for the system server. This is done early to
-    // allow a tie-down of the proper system server selinux domain.
+    // Prefetch the classloader for the system server. This is done early to allow a tie-down of the proper system server selinux domain.
+    //调用ZygoteInit.java的CreateSystemServerClassLoader方法
     env->CallStaticVoidMethod(gZygoteInitClass, gCreateSystemServerClassLoader);
     if (env->ExceptionCheck()) {
       // Be robust here. The Java code will attempt to create the classloader
@@ -1129,7 +1130,7 @@ static void SpecializeCommon(JNIEnv* env, uid_t uid, gid_t gid, jintArray gids,
       fail_fn(CREATE_ERROR("selinux_android_setcon(%s)", kSystemServerLabel));
     }
   }
-
+  //调用Zygote.java的CallPostForkChildHooks方法
   env->CallStaticVoidMethod(gZygoteClass, gCallPostForkChildHooks, runtime_flags,
                             is_system_server, is_child_zygote, managed_instruction_set);
 
@@ -1371,7 +1372,7 @@ static jint com_android_internal_os_Zygote_nativeForkAndSpecialize(
       fds_to_close.push_back(gUsapPoolEventFD);
       fds_to_ignore.push_back(gUsapPoolEventFD);
     }
-
+    //fork指令的执行，fork.cpp
     pid_t pid = ForkCommon(env, false, fds_to_close, fds_to_ignore);
 
     if (pid == 0) {

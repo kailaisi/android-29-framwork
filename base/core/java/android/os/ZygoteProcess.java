@@ -104,19 +104,11 @@ public class ZygoteProcess {
     private final LocalSocketAddress mUsapPoolSecondarySocketAddress;
 
     public ZygoteProcess() {
-        mZygoteSocketAddress =
-                new LocalSocketAddress(Zygote.PRIMARY_SOCKET_NAME,
-                                       LocalSocketAddress.Namespace.RESERVED);
-        mZygoteSecondarySocketAddress =
-                new LocalSocketAddress(Zygote.SECONDARY_SOCKET_NAME,
-                                       LocalSocketAddress.Namespace.RESERVED);
+        mZygoteSocketAddress =new LocalSocketAddress(Zygote.PRIMARY_SOCKET_NAME,LocalSocketAddress.Namespace.RESERVED);
+        mZygoteSecondarySocketAddress =new LocalSocketAddress(Zygote.SECONDARY_SOCKET_NAME,LocalSocketAddress.Namespace.RESERVED);
 
-        mUsapPoolSocketAddress =
-                new LocalSocketAddress(Zygote.USAP_POOL_PRIMARY_SOCKET_NAME,
-                                       LocalSocketAddress.Namespace.RESERVED);
-        mUsapPoolSecondarySocketAddress =
-                new LocalSocketAddress(Zygote.USAP_POOL_SECONDARY_SOCKET_NAME,
-                                       LocalSocketAddress.Namespace.RESERVED);
+        mUsapPoolSocketAddress =new LocalSocketAddress(Zygote.USAP_POOL_PRIMARY_SOCKET_NAME,LocalSocketAddress.Namespace.RESERVED);
+        mUsapPoolSecondarySocketAddress =new LocalSocketAddress(Zygote.USAP_POOL_SECONDARY_SOCKET_NAME,LocalSocketAddress.Namespace.RESERVED);
     }
 
     public ZygoteProcess(LocalSocketAddress primarySocketAddress,
@@ -172,9 +164,7 @@ public class ZygoteProcess {
          * address
          * @throws IOException
          */
-        static ZygoteState connect(@NonNull LocalSocketAddress zygoteSocketAddress,
-                @Nullable LocalSocketAddress usapSocketAddress)
-                throws IOException {
+        static ZygoteState connect(@NonNull LocalSocketAddress zygoteSocketAddress,@Nullable LocalSocketAddress usapSocketAddress)throws IOException {
 
             DataInputStream zygoteInputStream;
             BufferedWriter zygoteOutputWriter;
@@ -185,20 +175,21 @@ public class ZygoteProcess {
             }
 
             try {
+                //进行连接
                 zygoteSessionSocket.connect(zygoteSocketAddress);
+                //创建DataInputStream
                 zygoteInputStream = new DataInputStream(zygoteSessionSocket.getInputStream());
-                zygoteOutputWriter =
-                        new BufferedWriter(
-                                new OutputStreamWriter(zygoteSessionSocket.getOutputStream()),
-                                Zygote.SOCKET_BUFFER_SIZE);
+                //创建BufferedWriter
+                zygoteOutputWriter = new BufferedWriter(new OutputStreamWriter(zygoteSessionSocket.getOutputStream()),Zygote.SOCKET_BUFFER_SIZE);
             } catch (IOException ex) {
                 try {
+                    //
                     zygoteSessionSocket.close();
                 } catch (IOException ignore) { }
 
                 throw ex;
             }
-
+            //封装为ZygoteState对象
             return new ZygoteState(zygoteSocketAddress, usapSocketAddress,
                                    zygoteSessionSocket, zygoteInputStream, zygoteOutputWriter,
                                    getAbiList(zygoteOutputWriter, zygoteInputStream));
@@ -311,6 +302,7 @@ public class ZygoteProcess {
      * @return An object that describes the result of the attempt to start the process.
      * @throws RuntimeException on fatal start failure
      */
+    //启动一个新的进程
     public final Process.ProcessStartResult start(@NonNull final String processClass,
                                                   final String niceName,
                                                   int uid, int gid, @Nullable int[] gids,
@@ -330,6 +322,7 @@ public class ZygoteProcess {
         }
 
         try {
+            //***重点方法****
             return startViaZygote(processClass, niceName, uid, gid, gids,
                     runtimeFlags, mountExternal, targetSdkVersion, seInfo,
                     abi, instructionSet, appDataDir, invokeWith, /*startChildZygote=*/ false,
@@ -377,12 +370,12 @@ public class ZygoteProcess {
      *
      * @throws ZygoteStartFailedEx if process start failed for any reason
      */
+    //通过socket连接zygote进程，将参数发送给Zygote，通过Zygote来孵化一个子进程，并返回子进程的pid，并执行 "android.app.ActivityThread"的main方法
     @GuardedBy("mLock")
-    private Process.ProcessStartResult zygoteSendArgsAndGetResult(
-            ZygoteState zygoteState, boolean useUsapPool, @NonNull ArrayList<String> args)
-            throws ZygoteStartFailedEx {
+    private Process.ProcessStartResult zygoteSendArgsAndGetResult( ZygoteState zygoteState, boolean useUsapPool, @NonNull ArrayList<String> args)  throws ZygoteStartFailedEx {
         // Throw early if any of the arguments are malformed. This means we can
         // avoid writing a partial response to the zygote.
+        //校验参数的合法性
         for (String arg : args) {
             // Making two indexOf calls here is faster than running a manually fused loop due
             // to the fact that indexOf is a optimized intrinsic.
@@ -415,30 +408,31 @@ public class ZygoteProcess {
                         + ex.getMessage());
             }
         }
-
+        //****重点方法**** 尝试fork子线程
         return attemptZygoteSendArgsAndGetResult(zygoteState, msgStr);
     }
 
     private Process.ProcessStartResult attemptZygoteSendArgsAndGetResult(
             ZygoteState zygoteState, String msgStr) throws ZygoteStartFailedEx {
         try {
+            //传入的zygoteState为openZygoteSocketIfNeeded()，里面会通过abi来检查是第一个zygote还是第二个
             final BufferedWriter zygoteWriter = zygoteState.mZygoteOutputWriter;
             final DataInputStream zygoteInputStream = zygoteState.mZygoteInputStream;
-
+            //将参数的信息写给Zygote进程，包括前面的processClass ="android.app.ActivityThread"
             zygoteWriter.write(msgStr);
+            //刷数据，全部写入Zygote进程，处于阻塞状态
             zygoteWriter.flush();
 
-            // Always read the entire result from the input stream to avoid leaving
-            // bytes in the stream for future process starts to accidentally stumble
-            // upon.
+            // Always read the entire result from the input stream to avoid leaving  bytes in the stream for future process starts to accidentally stumble upon.
+            //从socket中得到zygote创建的应用pid，赋值给 ProcessStartResult的对象
             Process.ProcessStartResult result = new Process.ProcessStartResult();
+            //从socket中读取创建的进程的pid
             result.pid = zygoteInputStream.readInt();
             result.usingWrapper = zygoteInputStream.readBoolean();
-
+            //如果pid<0，表示创建失败
             if (result.pid < 0) {
                 throw new ZygoteStartFailedEx("fork() failed");
             }
-
             return result;
         } catch (IOException ex) {
             zygoteState.close();
@@ -538,6 +532,7 @@ public class ZygoteProcess {
      * @return An object that describes the result of the attempt to start the process.
      * @throws ZygoteStartFailedEx if process start failed for any reason
      */
+    //通过Zygote机制启动一个新的过程。
     private Process.ProcessStartResult startViaZygote(@NonNull final String processClass,
                                                       @Nullable final String niceName,
                                                       final int uid, final int gid,
@@ -558,6 +553,7 @@ public class ZygoteProcess {
 
         // --runtime-args, --setuid=, --setgid=,
         // and --setgroups= must go first
+        //这是一些创建进程时候的参数信息
         argsForZygote.add("--runtime-args");
         argsForZygote.add("--setuid=" + uid);
         argsForZygote.add("--setgid=" + gid);
@@ -622,7 +618,7 @@ public class ZygoteProcess {
         if (packageName != null) {
             argsForZygote.add("--package-name=" + packageName);
         }
-
+        //这个是程序的入口类，设置的是"android.app.ActivityThread"
         argsForZygote.add(processClass);
 
         if (extraArgs != null) {
@@ -632,6 +628,7 @@ public class ZygoteProcess {
         synchronized(mLock) {
             // The USAP pool can not be used if the application will not use the systems graphics
             // driver.  If that driver is requested use the Zygote application start path.
+            //***重点方法***
             return zygoteSendArgsAndGetResult(openZygoteSocketIfNeeded(abi),
                                               useUsapPool,
                                               argsForZygote);
@@ -868,12 +865,12 @@ public class ZygoteProcess {
     /**
      * Creates a ZygoteState for the primary zygote if it doesn't exist or has been disconnected.
      */
+    //如果初始的Zygote的连接不存在或者未连接。则创建一个Socket连接，并将相关信息封装为ZygoteState
     @GuardedBy("mLock")
     private void attemptConnectionToPrimaryZygote() throws IOException {
+        //如果没有连接
         if (primaryZygoteState == null || primaryZygoteState.isClosed()) {
-            primaryZygoteState =
-                    ZygoteState.connect(mZygoteSocketAddress, mUsapPoolSocketAddress);
-
+            primaryZygoteState = ZygoteState.connect(mZygoteSocketAddress, mUsapPoolSocketAddress);
             maybeSetApiBlacklistExemptions(primaryZygoteState, false);
             maybeSetHiddenApiAccessLogSampleRate(primaryZygoteState);
             maybeSetHiddenApiAccessStatslogSampleRate(primaryZygoteState);
@@ -905,6 +902,7 @@ public class ZygoteProcess {
     @GuardedBy("mLock")
     private ZygoteState openZygoteSocketIfNeeded(String abi) throws ZygoteStartFailedEx {
         try {
+            //尝试连接到最初始的Zygote进程
             attemptConnectionToPrimaryZygote();
 
             if (primaryZygoteState.matches(abi)) {

@@ -281,11 +281,13 @@ public class RuntimeInit {
      * @param argv Argument vector for main()
      * @param classLoader the classLoader to load {@className} with
      */
+    //调用传入的className所对应的类的main方法
     protected static Runnable findStaticMain(String className, String[] argv,
             ClassLoader classLoader) {
         Class<?> cl;
 
         try {
+            //反射创建类
             cl = Class.forName(className, true, classLoader);
         } catch (ClassNotFoundException ex) {
             throw new RuntimeException(
@@ -295,6 +297,7 @@ public class RuntimeInit {
 
         Method m;
         try {
+            //获取类的main方法
             m = cl.getMethod("main", new Class[] { String[].class });
         } catch (NoSuchMethodException ex) {
             throw new RuntimeException(
@@ -316,6 +319,7 @@ public class RuntimeInit {
          * clears up all the stack frames that were required in setting
          * up the process.
          */
+        //封装一个Runnable类，将方法和参数都传递给了该类，其run方法会通过反射调用main方法
         return new MethodAndArgsCaller(m, argv);
     }
 
@@ -447,6 +451,7 @@ public class RuntimeInit {
         /**
          * Parses the commandline arguments intended for the Runtime.
          */
+        //进行参数的解析
         private void parseArgs(String args[])
                 throws IllegalArgumentException {
             int curArg = 0;
@@ -464,8 +469,9 @@ public class RuntimeInit {
             if (curArg == args.length) {
                 throw new IllegalArgumentException("Missing classname argument to RuntimeInit!");
             }
-
+            //在传递参数的时候，最后一项传递的是程序入口类的信息
             startClass = args[curArg++];
+            //参数信息
             startArgs = new String[args.length - curArg];
             System.arraycopy(args, curArg, startArgs, 0, startArgs.length);
         }

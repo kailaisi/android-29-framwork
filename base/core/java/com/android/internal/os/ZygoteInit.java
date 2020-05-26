@@ -80,6 +80,7 @@ import java.security.Security;
  *
  * @hide
  */
+//Zygote初始化
 public class ZygoteInit {
 
     // TODO (chriswailes): Change this so it is set with Zygote or ZygoteSecondary as appropriate
@@ -132,6 +133,7 @@ public class ZygoteInit {
      */
     private static ClassLoader sCachedSystemServerClassLoader = null;
 
+    //预加载
     static void preload(TimingsTraceLog bootTimingsTraceLog) {
         Log.d(TAG, "begin preload");
         bootTimingsTraceLog.traceBegin("BeginPreload");
@@ -884,6 +886,7 @@ public class ZygoteInit {
 
             // Do an initial gc to clean up after startup
             bootTimingsTraceLog.traceBegin("PostZygoteInitGC");
+            //启动后执行一个gc操作
             gcAndFinalize();
             bootTimingsTraceLog.traceEnd(); // PostZygoteInitGC
 
@@ -896,15 +899,17 @@ public class ZygoteInit {
             Zygote.initNativeState(isPrimaryZygote);
 
             ZygoteHooks.stopZygoteNoThreadCreation();
-
+            //创建一个ZygoteServer对象，这个对象创建一个socket服务端，能够接收连接并且孵化对应的子进程
             zygoteServer = new ZygoteServer(isPrimaryZygote);
 
             if (startSystemServer) {
+                //Fork出第一个进程   SystemServer服务所需的进程
                 Runnable r = forkSystemServer(abiList, zygoteSocketName, zygoteServer);
 
                 // {@code r == null} in the parent (zygote) process, and {@code r != null} in the
                 // child (system_server) process.
                 if (r != null) {
+                    //启动SystemServer服务
                     r.run();
                     return;
                 }
@@ -912,8 +917,9 @@ public class ZygoteInit {
 
             Log.i(TAG, "Accepting command socket connections");
 
-            // The select loop returns early in the child process after a fork and
-            // loops forever in the zygote.
+            // The select loop returns early in the child process after a fork and loops forever in the zygote.
+            //这里会进入循环等待，用来接收Socket发来的消息，用来fork出其他应用所需要的进程信息。并且返回fork出的进程的启动函数
+            //这里会等待fork出其他的应用进程，比如说Launcher，
             caller = zygoteServer.runSelectLoop(abiList);
         } catch (Throwable ex) {
             Log.e(TAG, "System zygote died with exception", ex);
@@ -924,9 +930,9 @@ public class ZygoteInit {
             }
         }
 
-        // We're in the child process and have exited the select loop. Proceed to execute the
-        // command.
+        // We're in the child process and have exited the select loop. Proceed to execute the command.
         if (caller != null) {
+            //调用caller的run方法，启动子进程（run方法会调用子进程的启动程序的main方法，也就是ActivityThread.java的main()方法）
             caller.run();
         }
     }
@@ -988,8 +994,8 @@ public class ZygoteInit {
      * to zygoteInit(), which skips calling into initialization routines that start the Binder
      * threadpool.
      */
-    static final Runnable childZygoteInit(
-            int targetSdkVersion, String[] argv, ClassLoader classLoader) {
+    static final Runnable childZygoteInit(int targetSdkVersion, String[] argv, ClassLoader classLoader) {
+        //根据argv获取到对应的运行的相关参数
         RuntimeInit.Arguments args = new RuntimeInit.Arguments(argv);
         return RuntimeInit.findStaticMain(args.startClass, args.startArgs, classLoader);
     }

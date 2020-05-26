@@ -1410,6 +1410,7 @@ public final class ProcessList {
         return null;
     }
 
+    //用于检测操作是否属于满操作
     private void checkSlow(long startTime, String where) {
         long now = SystemClock.uptimeMillis();
         if ((now - startTime) > 50) {
@@ -1425,11 +1426,12 @@ public final class ProcessList {
      * @param disableHiddenApiChecks
      * @param abiOverride
      */
-    //启动进行
+    //启动进程
     @GuardedBy("mService")
     boolean startProcessLocked(ProcessRecord app, HostingRecord hostingRecord,
             boolean disableHiddenApiChecks, boolean mountExtStorageFull,
             String abiOverride) {
+        //已经启动，则直接返回
         if (app.pendingStart) {
             return true;
         }
@@ -1444,9 +1446,8 @@ public final class ProcessList {
             app.startSeq = 0;
         }
 
-        if (DEBUG_PROCESSES && mService.mProcessesOnHold.contains(app)) Slog.v(
-                TAG_PROCESSES,
-                "startProcessLocked removing on hold: " + app);
+        if (DEBUG_PROCESSES && mService.mProcessesOnHold.contains(app))
+            Slog.v(TAG_PROCESSES, "startProcessLocked removing on hold: " + app);
         mService.mProcessesOnHold.remove(app);
 
         checkSlow(startTime, "startProcess: starting to update cpu stats");
@@ -1619,8 +1620,9 @@ public final class ProcessList {
                     + (TextUtils.isEmpty(app.info.seInfoUser) ? "" : app.info.seInfoUser);
             // Start the process.  It will either succeed and return a result containing
             // the PID of the new process, or else throw a RuntimeException.
+            //设置程序的入口
             final String entryPoint = "android.app.ActivityThread";
-            //重点方法
+            //***重点方法****
             return startProcessLocked(hostingRecord, entryPoint, app, uid, gids,
                     runtimeFlags, mountExternal, seInfo, requiredAbi, instructionSet, invokeWith,
                     startTime);
@@ -1658,6 +1660,7 @@ public final class ProcessList {
                     + " with non-zero pid:" + app.pid);
         }
         final long startSeq = app.startSeq = ++mProcStartSeqCounter;
+        //设置启动参数
         app.setStartParams(uid, hostingRecord, seInfo, startTime);
         app.setUsingWrapper(invokeWith != null
                 || SystemProperties.get("wrap." + app.processName) != null);
@@ -1668,6 +1671,7 @@ public final class ProcessList {
                     "Posting procStart msg for " + app.toShortString());
             mService.mProcStartHandler.post(() -> {
                 try {
+                    //***重点方法***
                     final Process.ProcessStartResult startResult = startProcess(app.hostingRecord,
                             entryPoint, app, app.startUid, gids, runtimeFlags, mountExternal,
                             app.seInfo, requiredAbi, instructionSet, invokeWith, app.startTime);
@@ -1808,6 +1812,7 @@ public final class ProcessList {
             checkSlow(startTime, "startProcess: asking zygote to start proc");
             final Process.ProcessStartResult startResult;
             if (hostingRecord.usesWebviewZygote()) {
+                //如果是WebView的进程，所以，webview有时候是可以单独作为一个进程来处理的
                 startResult = startWebView(entryPoint,
                         app.processName, uid, uid, gids, runtimeFlags, mountExternal,
                         app.info.targetSdkVersion, seInfo, requiredAbi, instructionSet,
@@ -1815,7 +1820,6 @@ public final class ProcessList {
                         new String[] {PROC_START_SEQ_IDENT + app.startSeq});
             } else if (hostingRecord.usesAppZygote()) {
                 final AppZygote appZygote = createAppZygoteForProcessIfNeeded(app);
-
                 startResult = appZygote.getProcess().start(entryPoint,
                         app.processName, uid, uid, gids, runtimeFlags, mountExternal,
                         app.info.targetSdkVersion, seInfo, requiredAbi, instructionSet,
@@ -1823,6 +1827,7 @@ public final class ProcessList {
                         /*useUsapPool=*/ false,
                         new String[] {PROC_START_SEQ_IDENT + app.startSeq});
             } else {
+                //*****重点方法*****最终调用的创建进程的方法
                 startResult = Process.start(entryPoint,
                         app.processName, uid, uid, gids, runtimeFlags, mountExternal,
                         app.info.targetSdkVersion, seInfo, requiredAbi, instructionSet,
@@ -1848,6 +1853,7 @@ public final class ProcessList {
                 false /* disableHiddenApiChecks */, false /* mountExtStorageFull */, abiOverride);
     }
 
+    //zygote创建进程调用的方法
     @GuardedBy("mService")
     final ProcessRecord startProcessLocked(String processName, ApplicationInfo info,
             boolean knownToBeDead, int intentFlags, HostingRecord hostingRecord,

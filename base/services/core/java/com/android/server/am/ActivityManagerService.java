@@ -3023,7 +3023,6 @@ public class ActivityManagerService extends IActivityManager.Stub
             ApplicationInfo info, boolean knownToBeDead, int intentFlags,
             HostingRecord hostingRecord, boolean allowWhileBooting,
             boolean isolated, boolean keepIfLarge) {
-        //
         return mProcessList.startProcessLocked(processName, info, knownToBeDead, intentFlags,
                 hostingRecord, allowWhileBooting, isolated, 0 /* isolatedUid */, keepIfLarge,
                 null /* ABI override */, null /* entryPoint */, null /* entryPointArgs */,
@@ -18405,8 +18404,10 @@ public class ActivityManagerService extends IActivityManager.Stub
                     Trace.traceBegin(Trace.TRACE_TAG_ACTIVITY_MANAGER, "startProcess:"
                             + processName);
                 }
+                //同步操作，避免死锁
                 synchronized (ActivityManagerService.this) {
-                    //调用startProcessLocked方法
+                    //调用startProcessLocked方法, Process的start，最终到ZygoteProcess的attemptUsapSendArgsAndGetResult()
+                    // 用来fork一个新的Launcher的进程
                     startProcessLocked(processName, info, knownToBeDead, 0 /* intentFlags */,
                             new HostingRecord(hostingType, hostingName),
                             false /* allowWhileBooting */, false /* isolated */,
