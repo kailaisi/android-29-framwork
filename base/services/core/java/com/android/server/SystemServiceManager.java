@@ -46,6 +46,7 @@ public class SystemServiceManager {
     private long mRuntimeStartUptime;
 
     // Services that should receive lifecycle events.
+    //注册的系统服务
     private final ArrayList<SystemService> mServices = new ArrayList<SystemService>();
 
     private int mCurrentPhase = -1;
@@ -97,7 +98,9 @@ public class SystemServiceManager {
             }
             final T service;
             try {
+                //反射构造函数
                 Constructor<T> constructor = serviceClass.getConstructor(Context.class);
+                //创建服务
                 service = constructor.newInstance(mContext);
             } catch (InstantiationException ex) {
                 throw new RuntimeException("Failed to create service " + name
@@ -112,7 +115,7 @@ public class SystemServiceManager {
                 throw new RuntimeException("Failed to create service " + name
                         + ": service constructor threw an exception", ex);
             }
-
+            //启动服务
             startService(service);
             return service;
         } finally {
@@ -126,6 +129,7 @@ public class SystemServiceManager {
         // Start it.
         long time = SystemClock.elapsedRealtime();
         try {
+            //启动服务
             service.onStart();
         } catch (RuntimeException ex) {
             throw new RuntimeException("Failed to start service " + service.getClass().getName()

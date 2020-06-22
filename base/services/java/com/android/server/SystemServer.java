@@ -655,10 +655,8 @@ public final class SystemServer {
         // Activity manager runs the show.
         traceBeginAndSlog("StartActivityManager");
         // TODO: Might need to move after migration to WM.
-        ActivityTaskManagerService atm = mSystemServiceManager.startService(
-                ActivityTaskManagerService.Lifecycle.class).getService();
-        mActivityManagerService = ActivityManagerService.Lifecycle.startService(
-                mSystemServiceManager, atm);
+        ActivityTaskManagerService atm = mSystemServiceManager.startService(ActivityTaskManagerService.Lifecycle.class).getService();
+        mActivityManagerService = ActivityManagerService.Lifecycle.startService(mSystemServiceManager, atm);
         mActivityManagerService.setSystemServiceManager(mSystemServiceManager);
         mActivityManagerService.setInstaller(installer);
         mWindowManagerGlobalLock = atm.getGlobalLock();
@@ -668,6 +666,7 @@ public final class SystemServer {
         // Native daemons may be watching for it to be registered so it must be ready
         // to handle incoming binder calls immediately (including being able to verify
         // the permissions for those calls).
+        //启动对系统的电量管理服务
         traceBeginAndSlog("StartPowerManager");
         mPowerManagerService = mSystemServiceManager.startService(PowerManagerService.class);
         traceEnd();

@@ -78,6 +78,7 @@ import com.android.server.statusbar.StatusBarManagerInternal;
  * tell the system when we go to sleep so that it can lock the keyguard if needed.
  * </p>
  */
+//用于广播重要的电量的变化（比如说20%，10%的低电量提醒？）
 @VisibleForTesting
 public class Notifier {
     private static final String TAG = "PowerManagerNotifier";

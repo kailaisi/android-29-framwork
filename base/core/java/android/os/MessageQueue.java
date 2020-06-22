@@ -122,6 +122,7 @@ public final class MessageQueue {
      *
      * @param handler The IdleHandler to be added.
      */
+    //添加一个当消息队列空闲的时候，执行的操作
     public void addIdleHandler(@NonNull IdleHandler handler) {
         if (handler == null) {
             throw new NullPointerException("Can't add a null IdleHandler");
