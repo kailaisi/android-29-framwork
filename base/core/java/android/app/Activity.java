@@ -5884,8 +5884,7 @@ public class Activity extends ContextThemeWrapper
      */
     @Override
     @UnsupportedAppUsage
-    public void startActivityForResult(
-            String who, Intent intent, int requestCode, @Nullable Bundle options) {
+    public void startActivityForResult(String who, Intent intent, int requestCode, @Nullable Bundle options) {
         Uri referrer = onProvideReferrer();
         if (referrer != null) {
             intent.putExtra(Intent.EXTRA_REFERRER, referrer);

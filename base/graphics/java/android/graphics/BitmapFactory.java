@@ -37,6 +37,7 @@ import java.io.InputStream;
  * Creates Bitmap objects from various sources, including files, streams,
  * and byte-arrays.
  */
+//通过不同的资源（包括文件，stream流，二进制数组），来创建一个Bitmap对象。
 public class BitmapFactory {
     private static final int DECODE_BUFFER_SIZE = 16 * 1024;
 
@@ -101,6 +102,7 @@ public class BitmapFactory {
          *
          * @see Bitmap#reconfigure(int,int, android.graphics.Bitmap.Config)
          */
+        //在解析Bitmap时重用该Bitmap，但是必须相同大小的Bitmap
         public Bitmap inBitmap;
 
         /**
