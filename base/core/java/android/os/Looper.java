@@ -148,6 +148,7 @@ public final class Looper {
      * Run the message queue in this thread. Be sure to call
      * {@link #quit()} to end the loop.
      */
+    //消息循环，即从消息队列中获取消息、分发消息到Handler
     public static void loop() {
         final Looper me = myLooper();
         if (me == null) {
