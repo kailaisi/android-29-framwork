@@ -98,7 +98,9 @@ public class MediaRecorder implements AudioRouting,
                                       MicrophoneDirection
 {
     static {
+        //动态的加载so文件
         System.loadLibrary("media_jni");
+        //调用native方法
         native_init();
     }
     private final static String TAG = "MediaRecorder";
@@ -1669,7 +1671,7 @@ public class MediaRecorder implements AudioRouting,
      * at the same time.
      */
     public native void release();
-
+    //native方法。可以通过动态注册或者静态注册的方法来进行
     @UnsupportedAppUsage(maxTargetSdk = Build.VERSION_CODES.P, trackingBug = 115609023)
     private static native final void native_init();
 

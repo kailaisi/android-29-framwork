@@ -92,12 +92,14 @@ JNIMediaRecorderListener::JNIMediaRecorderListener(JNIEnv* env, jobject thiz, jo
 
     // Hold onto the MediaRecorder class for use in calling the static method
     // that posts events to the application thread.
+    /*本地引用，在这个方法调用完成以后就会资源释放*/
     jclass clazz = env->GetObjectClass(thiz);
     if (clazz == NULL) {
         ALOGE("Can't find android/media/MediaRecorder");
         jniThrowException(env, "java/lang/Exception", NULL);
         return;
     }
+    /*将本地引用转化为全局引用，这时候通过gc就无法回收了，需要在析构函数中，进行释放*/
     mClass = (jclass)env->NewGlobalRef(clazz);
 
     // We use a weak reference so the MediaRecorder object can be garbage collected.
@@ -116,8 +118,9 @@ JNIMediaRecorderListener::~JNIMediaRecorderListener()
 void JNIMediaRecorderListener::notify(int msg, int ext1, int ext2)
 {
     ALOGV("JNIMediaRecorderListener::notify");
-
+    /*获取Java环境*/
     JNIEnv *env = AndroidRuntime::getJNIEnv();
+    /*调用静态的void方法*/
     env->CallStaticVoidMethod(mClass, fields.post_event, mObject, msg, ext1, ext2, NULL);
 }
 
@@ -402,7 +405,7 @@ android_media_MediaRecorder_setMaxFileSize(
 
     process_media_recorder_call(env, mr->setParameters(String8(params)), "java/lang/RuntimeException", "setMaxFileSize failed.");
 }
-
+/*java中的native的prepare方法*/
 static void
 android_media_MediaRecorder_prepare(JNIEnv *env, jobject thiz)
 {
@@ -545,16 +548,18 @@ android_media_MediaRecorder_release(JNIEnv *env, jobject thiz)
 // This function gets some field IDs, which in turn causes class initialization.
 // It is called from a static block in MediaRecorder, which won't run until the
 // first time an instance of this class is used.
+/*JNIEnv是Native世界中Java环境的代表，通过 *指针可以在Native中访问Java中的代码并进行操作、
+JNIEnv的结构体在libnativehelper\include_jni\jni.h中进行了定义，并进行了一些函数的定义，包括FindClass,GetFieldID等*/
 static void
 android_media_MediaRecorder_native_init(JNIEnv *env)
 {
     jclass clazz;
-
+    /*获取到Java中的类*/
     clazz = env->FindClass("android/media/MediaRecorder");
     if (clazz == NULL) {
         return;
     }
-
+    /*fields 的结构体在60行处*/
     fields.context = env->GetFieldID(clazz, "mNativeContext", "J");
     if (fields.context == NULL) {
         return;
@@ -569,7 +574,7 @@ android_media_MediaRecorder_native_init(JNIEnv *env)
     if (surface == NULL) {
         return;
     }
-
+    /*获取静态方法postEventFromNative，参数是Object，和Object*/
     fields.post_event = env->GetStaticMethodID(clazz, "postEventFromNative",
                                                "(Ljava/lang/Object;IIILjava/lang/Object;)V");
     if (fields.post_event == NULL) {
@@ -812,7 +817,7 @@ static jint android_media_MediaRecord_getPortId(JNIEnv *env,  jobject thiz) {
 }
 
 // ----------------------------------------------------------------------------
-
+//动态注册，注册java中的native方法和jni的方法对应关系。这个住测试通过下面的register_android_media_MediaRecorder来进行注册的。
 static const JNINativeMethod gMethods[] = {
     {"setCamera",            "(Landroid/hardware/Camera;)V",    (void *)android_media_MediaRecorder_setCamera},
     {"setVideoSource",       "(I)V",                            (void *)android_media_MediaRecorder_setVideoSource},
@@ -830,6 +835,7 @@ static const JNINativeMethod gMethods[] = {
     {"_prepare",             "()V",                             (void *)android_media_MediaRecorder_prepare},
     {"getSurface",           "()Landroid/view/Surface;",        (void *)android_media_MediaRecorder_getSurface},
     {"getMaxAmplitude",      "()I",                             (void *)android_media_MediaRecorder_native_getMaxAmplitude},
+    /*start是java层的native方法。()V是java方法的签名。对应的JNI层的函数是android_media_MediaRecord_start方法*/
     {"start",                "()V",                             (void *)android_media_MediaRecorder_start},
     {"stop",                 "()V",                             (void *)android_media_MediaRecorder_stop},
     {"pause",                "()V",                             (void *)android_media_MediaRecorder_pause},
@@ -858,6 +864,7 @@ static const JNINativeMethod gMethods[] = {
 
 // This function only registers the native methods, and is called from
 // JNI_OnLoad in android_media_MediaPlayer.cpp
+//这个方法会在android_media_MediaPlayer.cpp的JNI_OnLoad中进行调用。而JNI_OnLoad方法则会在调用System.loadLibrary函数后调用。
 int register_android_media_MediaRecorder(JNIEnv *env)
 {
     return AndroidRuntime::registerNativeMethods(env,

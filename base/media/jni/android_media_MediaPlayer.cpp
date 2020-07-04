@@ -1453,7 +1453,7 @@ extern int register_android_media_MediaProfiles(JNIEnv *env);
 extern int register_android_mtp_MtpDatabase(JNIEnv *env);
 extern int register_android_mtp_MtpDevice(JNIEnv *env);
 extern int register_android_mtp_MtpServer(JNIEnv *env);
-
+//会在调用 System.loadLibrary("media_jni") 是调用这个方法
 jint JNI_OnLoad(JavaVM* vm, void* /* reserved */)
 {
     JNIEnv* env = NULL;
