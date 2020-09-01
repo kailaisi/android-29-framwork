@@ -241,6 +241,9 @@ public class QueuedWork {
         }
     }
 
+    /**
+     * 执行队列
+     */
     private static void processPendingWork() {
         long startTime = 0;
 
@@ -260,6 +263,7 @@ public class QueuedWork {
             }
 
             if (work.size() > 0) {
+                //执行所有的方法
                 for (Runnable w : work) {
                     w.run();
                 }

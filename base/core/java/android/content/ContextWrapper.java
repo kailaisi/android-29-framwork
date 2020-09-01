@@ -55,6 +55,7 @@ import java.util.concurrent.Executor;
  * the original Context.
  */
 public class ContextWrapper extends Context {
+    //实际是ContextImpl
     @UnsupportedAppUsage
     Context mBase;
 
