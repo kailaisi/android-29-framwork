@@ -52,12 +52,17 @@ import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.concurrent.CountDownLatch;
 
+/**
+ * SharedPreferences的具体实现类。
+ */
 final class SharedPreferencesImpl implements SharedPreferences {
     private static final String TAG = "SharedPreferencesImpl";
     private static final boolean DEBUG = false;
     private static final Object CONTENT = new Object();
 
-    /** If a fsync takes more than {@value #MAX_FSYNC_DURATION_MILLIS} ms, warn */
+    /**
+     * If a fsync takes more than {@value #MAX_FSYNC_DURATION_MILLIS} ms, warn
+     */
     private static final long MAX_FSYNC_DURATION_MILLIS = 256;
 
     // Lock ordering rules:
@@ -68,6 +73,7 @@ final class SharedPreferencesImpl implements SharedPreferences {
     private final File mFile;
     private final File mBackupFile;
     private final int mMode;
+    //锁，在首次没有没有读取sp文件的时候，会通过这个锁进行锁定，然后进行sp的缓存。然后才会进行数据的读取
     private final Object mLock = new Object();
     private final Object mWritingToDiskLock = new Object();
 
@@ -92,15 +98,21 @@ final class SharedPreferencesImpl implements SharedPreferences {
     private final WeakHashMap<OnSharedPreferenceChangeListener, Object> mListeners =
             new WeakHashMap<OnSharedPreferenceChangeListener, Object>();
 
-    /** Current memory state (always increasing) */
+    /**
+     * Current memory state (always increasing)
+     */
     @GuardedBy("this")
     private long mCurrentMemoryStateGeneration;
 
-    /** Latest memory state that was committed to disk */
+    /**
+     * Latest memory state that was committed to disk
+     */
     @GuardedBy("mWritingToDiskLock")
     private long mDiskStateGeneration;
 
-    /** Time (and number of instances) of file-system sync requests */
+    /**
+     * Time (and number of instances) of file-system sync requests
+     */
     @GuardedBy("mWritingToDiskLock")
     private final ExponentiallyBucketedHistogram mSyncTimes = new ExponentiallyBucketedHistogram(16);
     private int mNumSync = 0;
@@ -113,6 +125,7 @@ final class SharedPreferencesImpl implements SharedPreferences {
         mLoaded = false;
         mMap = null;
         mThrowable = null;
+        //从磁盘加载数据
         startLoadFromDisk();
     }
 
@@ -133,6 +146,7 @@ final class SharedPreferencesImpl implements SharedPreferences {
             if (mLoaded) {
                 return;
             }
+            //备份文件存在则使用备份文件的数据
             if (mBackupFile.exists()) {
                 mFile.delete();
                 mBackupFile.renameTo(mFile);
@@ -140,10 +154,11 @@ final class SharedPreferencesImpl implements SharedPreferences {
         }
 
         // Debugging
+        //权限校验
         if (mFile.exists() && !mFile.canRead()) {
             Log.w(TAG, "Attempt to read preferences file " + mFile + " without permission");
         }
-
+        //读取sp中保存的键值对，保存到hashmap中
         Map<String, Object> map = null;
         StructStat stat = null;
         Throwable thrown = null;
@@ -154,6 +169,7 @@ final class SharedPreferencesImpl implements SharedPreferences {
                 try {
                     str = new BufferedInputStream(
                             new FileInputStream(mFile), 16 * 1024);
+                    //读取对应的键值对
                     map = (Map<String, Object>) XmlUtils.readMapXml(str);
                 } catch (Exception e) {
                     Log.w(TAG, "Cannot read " + mFile.getAbsolutePath(), e);
@@ -178,7 +194,9 @@ final class SharedPreferencesImpl implements SharedPreferences {
             try {
                 if (thrown == null) {
                     if (map != null) {
+                        //如果读取过程中没有发生异常，则把对应的键值赋值给mMap中。
                         mMap = map;
+                        //记录初始化的时间和对应的大小
                         mStatTimestamp = stat.st_mtim;
                         mStatSize = stat.st_size;
                     } else {
@@ -240,18 +258,21 @@ final class SharedPreferencesImpl implements SharedPreferences {
 
     @Override
     public void registerOnSharedPreferenceChangeListener(OnSharedPreferenceChangeListener listener) {
-        synchronized(mLock) {
+        synchronized (mLock) {
             mListeners.put(listener, CONTENT);
         }
     }
 
     @Override
     public void unregisterOnSharedPreferenceChangeListener(OnSharedPreferenceChangeListener listener) {
-        synchronized(mLock) {
+        synchronized (mLock) {
             mListeners.remove(listener);
         }
     }
 
+    /**
+     * 等待磁盘的sp键值对加载完成
+     */
     @GuardedBy("mLock")
     private void awaitLoadedLocked() {
         if (!mLoaded) {
@@ -262,6 +283,7 @@ final class SharedPreferencesImpl implements SharedPreferences {
         }
         while (!mLoaded) {
             try {
+                //这里会阻塞，等待子Thread读取完所有的键值对以后，这里才会继续执行，返回一个imp了
                 mLock.wait();
             } catch (InterruptedException unused) {
             }
@@ -285,7 +307,7 @@ final class SharedPreferencesImpl implements SharedPreferences {
     public String getString(String key, @Nullable String defValue) {
         synchronized (mLock) {
             awaitLoadedLocked();
-            String v = (String)mMap.get(key);
+            String v = (String) mMap.get(key);
             return v != null ? v : defValue;
         }
     }
@@ -304,31 +326,34 @@ final class SharedPreferencesImpl implements SharedPreferences {
     public int getInt(String key, int defValue) {
         synchronized (mLock) {
             awaitLoadedLocked();
-            Integer v = (Integer)mMap.get(key);
+            Integer v = (Integer) mMap.get(key);
             return v != null ? v : defValue;
         }
     }
+
     @Override
     public long getLong(String key, long defValue) {
         synchronized (mLock) {
             awaitLoadedLocked();
-            Long v = (Long)mMap.get(key);
+            Long v = (Long) mMap.get(key);
             return v != null ? v : defValue;
         }
     }
+
     @Override
     public float getFloat(String key, float defValue) {
         synchronized (mLock) {
             awaitLoadedLocked();
-            Float v = (Float)mMap.get(key);
+            Float v = (Float) mMap.get(key);
             return v != null ? v : defValue;
         }
     }
+
     @Override
     public boolean getBoolean(String key, boolean defValue) {
         synchronized (mLock) {
             awaitLoadedLocked();
-            Boolean v = (Boolean)mMap.get(key);
+            Boolean v = (Boolean) mMap.get(key);
             return v != null ? v : defValue;
         }
     }
@@ -358,10 +383,13 @@ final class SharedPreferencesImpl implements SharedPreferences {
     }
 
     // Return value from EditorImpl#commitToMemory()
+    //提交返回结果
     private static class MemoryCommitResult {
         final long memoryStateGeneration;
-        @Nullable final List<String> keysModified;
-        @Nullable final Set<OnSharedPreferenceChangeListener> listeners;
+        @Nullable
+        final List<String> keysModified;
+        @Nullable
+        final Set<OnSharedPreferenceChangeListener> listeners;
         final Map<String, Object> mapToWriteToDisk;
         final CountDownLatch writtenToDiskLatch = new CountDownLatch(1);
 
@@ -370,8 +398,8 @@ final class SharedPreferencesImpl implements SharedPreferences {
         boolean wasWritten = false;
 
         private MemoryCommitResult(long memoryStateGeneration, @Nullable List<String> keysModified,
-                @Nullable Set<OnSharedPreferenceChangeListener> listeners,
-                Map<String, Object> mapToWriteToDisk) {
+                                   @Nullable Set<OnSharedPreferenceChangeListener> listeners,
+                                   Map<String, Object> mapToWriteToDisk) {
             this.memoryStateGeneration = memoryStateGeneration;
             this.keysModified = keysModified;
             this.listeners = listeners;
@@ -401,6 +429,7 @@ final class SharedPreferencesImpl implements SharedPreferences {
                 return this;
             }
         }
+
         @Override
         public Editor putStringSet(String key, @Nullable Set<String> values) {
             synchronized (mEditorLock) {
@@ -409,6 +438,7 @@ final class SharedPreferencesImpl implements SharedPreferences {
                 return this;
             }
         }
+
         @Override
         public Editor putInt(String key, int value) {
             synchronized (mEditorLock) {
@@ -416,6 +446,7 @@ final class SharedPreferencesImpl implements SharedPreferences {
                 return this;
             }
         }
+
         @Override
         public Editor putLong(String key, long value) {
             synchronized (mEditorLock) {
@@ -423,6 +454,7 @@ final class SharedPreferencesImpl implements SharedPreferences {
                 return this;
             }
         }
+
         @Override
         public Editor putFloat(String key, float value) {
             synchronized (mEditorLock) {
@@ -430,6 +462,7 @@ final class SharedPreferencesImpl implements SharedPreferences {
                 return this;
             }
         }
+
         @Override
         public Editor putBoolean(String key, boolean value) {
             synchronized (mEditorLock) {
@@ -441,6 +474,7 @@ final class SharedPreferencesImpl implements SharedPreferences {
         @Override
         public Editor remove(String key) {
             synchronized (mEditorLock) {
+                //这里设置为了this,而不是null
                 mModified.put(key, this);
                 return this;
             }
@@ -459,32 +493,34 @@ final class SharedPreferencesImpl implements SharedPreferences {
             final long startTime = System.currentTimeMillis();
 
             final MemoryCommitResult mcr = commitToMemory();
+            //子线程，将数据写入到磁盘中
             final Runnable awaitCommit = new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            mcr.writtenToDiskLatch.await();
-                        } catch (InterruptedException ignored) {
-                        }
-
-                        if (DEBUG && mcr.wasWritten) {
-                            Log.d(TAG, mFile.getName() + ":" + mcr.memoryStateGeneration
-                                    + " applied after " + (System.currentTimeMillis() - startTime)
-                                    + " ms");
-                        }
+                @Override
+                public void run() {
+                    try {
+                        //等待写入完成
+                        mcr.writtenToDiskLatch.await();
+                    } catch (InterruptedException ignored) {
                     }
-                };
+
+                    if (DEBUG && mcr.wasWritten) {
+                        Log.d(TAG, mFile.getName() + ":" + mcr.memoryStateGeneration
+                                + " applied after " + (System.currentTimeMillis() - startTime)
+                                + " ms");
+                    }
+                }
+            };
 
             QueuedWork.addFinisher(awaitCommit);
-
+            //子线程，执行await子线程，并将数据移除
             Runnable postWriteRunnable = new Runnable() {
-                    @Override
-                    public void run() {
-                        awaitCommit.run();
-                        QueuedWork.removeFinisher(awaitCommit);
-                    }
-                };
-
+                @Override
+                public void run() {
+                    awaitCommit.run();//调用写入磁盘等待的方法
+                    QueuedWork.removeFinisher(awaitCommit);
+                }
+            };
+            //入队写数据
             SharedPreferencesImpl.this.enqueueDiskWrite(mcr, postWriteRunnable);
 
             // Okay to notify the listeners before it's hit disk
@@ -497,14 +533,17 @@ final class SharedPreferencesImpl implements SharedPreferences {
         // Returns true if any changes were made
         private MemoryCommitResult commitToMemory() {
             long memoryStateGeneration;
+            //修改的key列表
             List<String> keysModified = null;
             Set<OnSharedPreferenceChangeListener> listeners = null;
+            //将要保存的数据map信息
             Map<String, Object> mapToWriteToDisk;
 
             synchronized (SharedPreferencesImpl.this.mLock) {
                 // We optimistically don't make a deep copy until
                 // a memory commit comes in when we're already
                 // writing to disk.
+                //如果当前正在写的话，那么这时候不能直接修改，需要弄出来一个备份
                 if (mDiskWritesInFlight > 0) {
                     // We can't modify our mMap as a currently
                     // in-flight write owns it.  Clone it before
@@ -522,6 +561,7 @@ final class SharedPreferencesImpl implements SharedPreferences {
                 }
 
                 synchronized (mEditorLock) {
+                    //记录是否发生了数据变化
                     boolean changesMade = false;
 
                     if (mClear) {
@@ -531,14 +571,14 @@ final class SharedPreferencesImpl implements SharedPreferences {
                         }
                         mClear = false;
                     }
-
+                    //逐个检测变更的数据
                     for (Map.Entry<String, Object> e : mModified.entrySet()) {
                         String k = e.getKey();
                         Object v = e.getValue();
                         // "this" is the magic value for a removal mutation. In addition,
                         // setting a value to "null" for a given key is specified to be
                         // equivalent to calling remove on that key.
-                        if (v == this || v == null) {
+                        if (v == this || v == null) {//如果值是null，或者this，那么久移除
                             if (!mapToWriteToDisk.containsKey(k)) {
                                 continue;
                             }
@@ -547,6 +587,7 @@ final class SharedPreferencesImpl implements SharedPreferences {
                             if (mapToWriteToDisk.containsKey(k)) {
                                 Object existingValue = mapToWriteToDisk.get(k);
                                 if (existingValue != null && existingValue.equals(v)) {
+                                    //如果相同就不再修改了
                                     continue;
                                 }
                             }
@@ -581,10 +622,10 @@ final class SharedPreferencesImpl implements SharedPreferences {
             }
 
             MemoryCommitResult mcr = commitToMemory();
-
-            SharedPreferencesImpl.this.enqueueDiskWrite(
-                mcr, null /* sync write on this thread okay */);
+            //入队
+            SharedPreferencesImpl.this.enqueueDiskWrite(mcr, null /* sync write on this thread okay */);
             try {
+                //等待写入完成
                 mcr.writtenToDiskLatch.await();
             } catch (InterruptedException e) {
                 return false;
@@ -601,7 +642,7 @@ final class SharedPreferencesImpl implements SharedPreferences {
 
         private void notifyListeners(final MemoryCommitResult mcr) {
             if (mcr.listeners == null || mcr.keysModified == null ||
-                mcr.keysModified.size() == 0) {
+                    mcr.keysModified.size() == 0) {
                 return;
             }
             if (Looper.myLooper() == Looper.getMainLooper()) {
@@ -623,37 +664,40 @@ final class SharedPreferencesImpl implements SharedPreferences {
     /**
      * Enqueue an already-committed-to-memory result to be written
      * to disk.
-     *
+     * <p>
      * They will be written to disk one-at-a-time in the order
      * that they're enqueued.
      *
      * @param postWriteRunnable if non-null, we're being called
-     *   from apply() and this is the runnable to run after
-     *   the write proceeds.  if null (from a regular commit()),
-     *   then we're allowed to do this disk write on the main
-     *   thread (which in addition to reducing allocations and
-     *   creating a background thread, this has the advantage that
-     *   we catch them in userdebug StrictMode reports to convert
-     *   them where possible to apply() ...)
+     *                          from apply() and this is the runnable to run after
+     *                          the write proceeds.  if null (from a regular commit()),
+     *                          then we're allowed to do this disk write on the main
+     *                          thread (which in addition to reducing allocations and
+     *                          creating a background thread, this has the advantage that
+     *                          we catch them in userdebug StrictMode reports to convert
+     *                          them where possible to apply() ...)
      */
-    private void enqueueDiskWrite(final MemoryCommitResult mcr,
-                                  final Runnable postWriteRunnable) {
+    //推入到写入磁盘队列
+    private void enqueueDiskWrite(final MemoryCommitResult mcr, final Runnable postWriteRunnable) {
+        //是否是同步
         final boolean isFromSyncCommit = (postWriteRunnable == null);
-
+        //真正执行将数据写入到磁盘的线程
         final Runnable writeToDiskRunnable = new Runnable() {
-                @Override
-                public void run() {
-                    synchronized (mWritingToDiskLock) {
-                        writeToFile(mcr, isFromSyncCommit);
-                    }
-                    synchronized (mLock) {
-                        mDiskWritesInFlight--;
-                    }
-                    if (postWriteRunnable != null) {
-                        postWriteRunnable.run();
-                    }
+            @Override
+            public void run() {
+                synchronized (mWritingToDiskLock) {
+                    //写入磁盘
+                    writeToFile(mcr, isFromSyncCommit);
                 }
-            };
+                synchronized (mLock) {
+                    //计数器-1
+                    mDiskWritesInFlight--;
+                }
+                if (postWriteRunnable != null) {
+                    postWriteRunnable.run();
+                }
+            }
+        };
 
         // Typical #commit() path with fewer allocations, doing a write on
         // the current thread.
@@ -662,12 +706,12 @@ final class SharedPreferencesImpl implements SharedPreferences {
             synchronized (mLock) {
                 wasEmpty = mDiskWritesInFlight == 1;
             }
-            if (wasEmpty) {
+            if (wasEmpty) {//如果当前只有一个线程在执行，那么可以直接执行线程，然后返回。如果不是1的话，证明现在有其他线程在进行写入的操作，需要将其放入到队列中
                 writeToDiskRunnable.run();
                 return;
             }
         }
-
+        //这里会将写入的放入到队列中进行处理
         QueuedWork.queue(writeToDiskRunnable, !isFromSyncCommit);
     }
 
@@ -682,9 +726,9 @@ final class SharedPreferencesImpl implements SharedPreferences {
                 return null;
             }
             FileUtils.setPermissions(
-                parent.getPath(),
-                FileUtils.S_IRWXU|FileUtils.S_IRWXG|FileUtils.S_IXOTH,
-                -1, -1);
+                    parent.getPath(),
+                    FileUtils.S_IRWXU | FileUtils.S_IRWXG | FileUtils.S_IXOTH,
+                    -1, -1);
             try {
                 str = new FileOutputStream(file);
             } catch (FileNotFoundException e2) {
@@ -752,7 +796,7 @@ final class SharedPreferencesImpl implements SharedPreferences {
             if (!backupFileExists) {
                 if (!mFile.renameTo(mBackupFile)) {
                     Log.e(TAG, "Couldn't rename file " + mFile
-                          + " to backup file " + mBackupFile);
+                            + " to backup file " + mBackupFile);
                     mcr.setDiskWriteResult(false, false);
                     return;
                 }

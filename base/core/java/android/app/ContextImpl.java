@@ -116,7 +116,7 @@ class ReceiverRestrictedContext extends ContextWrapper {
     public Intent registerReceiver(BroadcastReceiver receiver, IntentFilter filter,
             String broadcastPermission, Handler scheduler) {
         if (receiver == null) {
-            // Allow retrieving current sticky broadcast; this is safe since we
+            // Allow retrieving current sticky broadcast; this is safe since weget
             // aren't actually registering a receiver.
             return super.registerReceiver(null, filter, broadcastPermission, scheduler);
         } else {
@@ -173,6 +173,7 @@ class ContextImpl extends Context {
     /**
      * Map from package name, to preference name, to cached preferences.
      */
+    //string 是包名。根据包名找到其对应的impl的缓存map信息
     @GuardedBy("ContextImpl.class")
     @UnsupportedAppUsage
     private static ArrayMap<String, ArrayMap<File, SharedPreferencesImpl>> sSharedPrefsCache;
@@ -180,6 +181,7 @@ class ContextImpl extends Context {
     /**
      * Map from preference name to generated path.
      */
+    //缓存的对应的sp的名称和文件列表
     @GuardedBy("ContextImpl.class")
     @UnsupportedAppUsage(maxTargetSdk = Build.VERSION_CODES.P, trackingBug = 115609023)
     private ArrayMap<String, File> mSharedPrefsPaths;
@@ -422,8 +424,7 @@ class ContextImpl extends Context {
         // At least one application in the world actually passes in a null
         // name.  This happened to work because when we generated the file name
         // we would stringify it to "null.xml".  Nice.
-        if (mPackageInfo.getApplicationInfo().targetSdkVersion <
-                Build.VERSION_CODES.KITKAT) {
+        if (mPackageInfo.getApplicationInfo().targetSdkVersion < Build.VERSION_CODES.KITKAT) {
             if (name == null) {
                 name = "null";
             }
@@ -436,6 +437,7 @@ class ContextImpl extends Context {
             }
             file = mSharedPrefsPaths.get(name);
             if (file == null) {
+                //创建对应的sp文件，并放入到缓存中。路径为data/shared_prefs/name.xml
                 file = getSharedPreferencesPath(name);
                 mSharedPrefsPaths.put(name, file);
             }
@@ -447,6 +449,7 @@ class ContextImpl extends Context {
     public SharedPreferences getSharedPreferences(File file, int mode) {
         SharedPreferencesImpl sp;
         synchronized (ContextImpl.class) {
+            //获取缓存的SharedPreferencesImpl实例
             final ArrayMap<File, SharedPreferencesImpl> cache = getSharedPreferencesCacheLocked();
             sp = cache.get(file);
             if (sp == null) {
@@ -459,6 +462,7 @@ class ContextImpl extends Context {
                                 + "storage are not available until after user is unlocked");
                     }
                 }
+                //创建对应的SharedPreferencesImpl实例
                 sp = new SharedPreferencesImpl(file, mode);
                 cache.put(file, sp);
                 return sp;

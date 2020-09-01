@@ -291,6 +291,7 @@ public class Fragment implements ComponentCallbacks2, OnCreateContextMenuListene
     int mIndex = -1;
 
     // Internal unique name for this fragment;
+    //fragment对应的唯一名称：是和对应的parent：id组成的字符串
     @UnsupportedAppUsage
     String mWho;
 
@@ -338,6 +339,7 @@ public class Fragment implements ComponentCallbacks2, OnCreateContextMenuListene
     FragmentManagerImpl mFragmentManager;
 
     // Activity this fragment is attached to.
+    //fragment所在的Activity宿主
     @UnsupportedAppUsage
     FragmentHostCallback mHost;
 
@@ -1117,6 +1119,7 @@ public class Fragment implements ComponentCallbacks2, OnCreateContextMenuListene
      * Call {@link Activity#startActivityForResult(Intent, int, Bundle)} from the fragment's
      * containing Activity.
      */
+    //调用了Activity的onStartActivityFromFragment方法
     public void startActivityForResult(Intent intent, int requestCode, Bundle options) {
         if (mHost == null) {
             throw new IllegalStateException("Fragment " + this + " not attached to Activity");
