@@ -71,6 +71,10 @@ final class SharedPreferencesImpl implements SharedPreferences {
 
     @UnsupportedAppUsage
     private final File mFile;
+    //备份的文件。属于SP的备份机制。
+    //如果读写的时候发现存在了备份文件，证明之前的读写肯定出现了问题，
+    //初始化的时候，如果发现了bak文件，那么就把sp文件删除，然后将.bak文件重命名为sp文件
+    //在读写过程中，会先将原来的sp文件备份为.bak文件。然后进行数据的写入，如果写入出现异常，那么就会把出错的mFile直接删除，然后将备份的文件恢复。
     private final File mBackupFile;
     private final int mMode;
     //锁，在首次没有没有读取sp文件的时候，会通过这个锁进行锁定，然后进行sp的缓存。然后才会进行数据的读取
@@ -106,6 +110,7 @@ final class SharedPreferencesImpl implements SharedPreferences {
 
     /**
      * Latest memory state that was committed to disk
+     * 最后一次提交到磁盘的计数器
      */
     @GuardedBy("mWritingToDiskLock")
     private long mDiskStateGeneration;
@@ -167,8 +172,7 @@ final class SharedPreferencesImpl implements SharedPreferences {
             if (mFile.canRead()) {
                 BufferedInputStream str = null;
                 try {
-                    str = new BufferedInputStream(
-                            new FileInputStream(mFile), 16 * 1024);
+                    str = new BufferedInputStream(new FileInputStream(mFile), 16 * 1024);
                     //读取对应的键值对
                     map = (Map<String, Object>) XmlUtils.readMapXml(str);
                 } catch (Exception e) {
@@ -725,10 +729,7 @@ final class SharedPreferencesImpl implements SharedPreferences {
                 Log.e(TAG, "Couldn't create directory for SharedPreferences file " + file);
                 return null;
             }
-            FileUtils.setPermissions(
-                    parent.getPath(),
-                    FileUtils.S_IRWXU | FileUtils.S_IRWXG | FileUtils.S_IXOTH,
-                    -1, -1);
+            FileUtils.setPermissions(parent.getPath(), FileUtils.S_IRWXU | FileUtils.S_IRWXG | FileUtils.S_IXOTH, -1, -1);
             try {
                 str = new FileOutputStream(file);
             } catch (FileNotFoundException e2) {
@@ -764,12 +765,14 @@ final class SharedPreferencesImpl implements SharedPreferences {
         }
 
         // Rename the current file so it may be used as a backup during the next read
-        if (fileExists) {
+        if (fileExists) {//文件必须存在
+            //标记是否需要写入
             boolean needsWrite = false;
 
             // Only need to write if the disk state is older than this commit
+            //只有当磁盘的状态比本次提交的commit信息旧，则进行提交
             if (mDiskStateGeneration < mcr.memoryStateGeneration) {
-                if (isFromSyncCommit) {
+                if (isFromSyncCommit) {//commit方式
                     needsWrite = true;
                 } else {
                     synchronized (mLock) {
@@ -793,32 +796,35 @@ final class SharedPreferencesImpl implements SharedPreferences {
                 backupExistsTime = System.currentTimeMillis();
             }
 
-            if (!backupFileExists) {
-                if (!mFile.renameTo(mBackupFile)) {
-                    Log.e(TAG, "Couldn't rename file " + mFile
-                            + " to backup file " + mBackupFile);
+            if (!backupFileExists) {//如果备份文件不存在，则将原来的文件命名为备份文件
+                if (!mFile.renameTo(mBackupFile)) {//重命名失败则直接退出
+                    Log.e(TAG, "Couldn't rename file " + mFile + " to backup file " + mBackupFile);
                     mcr.setDiskWriteResult(false, false);
                     return;
                 }
-            } else {
+            } else {//备份文件存在了，原来的文件则直接删除
                 mFile.delete();
             }
         }
-
+        //在上面的步骤中，将对应原来的文件，重命名为了备份文件
+        //后面会尽量将数据写入到文件中，然后如果成功，则将备份文件删除，然后返回true
+        //如果写入过程出现异常了，那么就会删除新创建的文件，让后将备份文件还原回来。
         // Attempt to write the file, delete the backup and return true as atomically as
         // possible.  If any exception occurs, delete the new file; next time we will restore
         // from the backup.
         try {
+            //创建对应的sp所对应的文件输出流
             FileOutputStream str = createFileOutputStream(mFile);
 
             if (DEBUG) {
                 outputStreamCreateTime = System.currentTimeMillis();
             }
-
+            //输出流创建失败，那么这里直接返回false
             if (str == null) {
                 mcr.setDiskWriteResult(false, false);
                 return;
             }
+            //将map数据写入到文件中
             XmlUtils.writeMapXml(mcr.mapToWriteToDisk, str);
 
             writeTime = System.currentTimeMillis();
@@ -837,6 +843,7 @@ final class SharedPreferencesImpl implements SharedPreferences {
             try {
                 final StructStat stat = Os.stat(mFile.getPath());
                 synchronized (mLock) {
+                    //更对对应的时间戳等状态
                     mStatTimestamp = stat.st_mtim;
                     mStatSize = stat.st_size;
                 }
@@ -849,6 +856,7 @@ final class SharedPreferencesImpl implements SharedPreferences {
             }
 
             // Writing was successful, delete the backup file if there is one.
+            //数据已经都存入到sp文件了，那么删除备份文件
             mBackupFile.delete();
 
             if (DEBUG) {
@@ -856,7 +864,7 @@ final class SharedPreferencesImpl implements SharedPreferences {
             }
 
             mDiskStateGeneration = mcr.memoryStateGeneration;
-
+            //设置写入成功，然后通知阻塞对象被打开，能够继续进行操作了
             mcr.setDiskWriteResult(true, true);
 
             if (DEBUG) {
