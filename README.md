@@ -28,4 +28,4 @@ SourceInsight非常适合用于进行大项目的源码阅读，能够通过sync
 
 
 
-### [对应输出文档连接](https://gitee.com/tcsl_wujinxiang/booknote)
+### [对应输出文档连接](https://github.com/kailaisi/Android-Guide/tree/master/%E8%BE%93%E5%87%BA%E6%96%87%E7%AB%A0)
