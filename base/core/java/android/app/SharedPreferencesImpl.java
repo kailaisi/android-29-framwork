@@ -313,6 +313,7 @@ final class SharedPreferencesImpl implements SharedPreferences {
     @Nullable
     public String getString(String key, @Nullable String defValue) {
         synchronized (mLock) {
+            //等待锁
             awaitLoadedLocked();
             String v = (String) mMap.get(key);
             return v != null ? v : defValue;
