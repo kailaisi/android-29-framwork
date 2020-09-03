@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="08fb3911-ce4c-4d98-b048-4e26369056f4" name="Default Changelist" comment="SharedPreferences的源码解析">
+    <list default="true" id="08fb3911-ce4c-4d98-b048-4e26369056f4" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/base/core/java/android/app/SharedPreferencesImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/base/core/java/android/app/SharedPreferencesImpl.java" afterDir="false" />
     </list>
@@ -43,8 +43,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/base/core/java/android/app/SharedPreferencesImpl.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="211">
-              <caret line="315" column="17" selection-start-line="315" selection-start-column="17" selection-end-line="315" selection-end-column="17" />
+            <state relative-caret-position="263">
+              <caret line="290" column="40" selection-start-line="290" selection-start-column="40" selection-end-line="290" selection-end-column="40" />
               <folding>
                 <element signature="e#4349#4350#0" expanded="true" />
                 <element signature="e#4395#4396#0" expanded="true" />
@@ -238,8 +238,9 @@
       </list>
     </option>
   </component>
-  <component name="ProjectFrameBounds" extendedState="6">
-    <option name="x" value="252" />
+  <component name="ProjectFrameBounds" extendedState="7">
+    <option name="x" value="521" />
+    <option name="y" value="43" />
     <option name="width" value="939" />
     <option name="height" value="874" />
   </component>
@@ -321,7 +322,7 @@
       <workItem from="1598935711512" duration="10567000" />
       <workItem from="1599007698407" duration="1720000" />
       <workItem from="1599023420726" duration="4244000" />
-      <workItem from="1599116118359" duration="7514000" />
+      <workItem from="1599116118359" duration="8115000" />
     </task>
     <task id="LOCAL-00001" summary="增加了LayoutInflater的部分解析">
       <created>1586536301658</created>
@@ -442,11 +443,25 @@
       <option name="project" value="LOCAL" />
       <updated>1599125758360</updated>
     </task>
-    <option name="localTasksCounter" value="18" />
+    <task id="LOCAL-00018" summary="SharedPreferences的源码解析">
+      <created>1599126348829</created>
+      <option name="number" value="00018" />
+      <option name="presentableId" value="LOCAL-00018" />
+      <option name="project" value="LOCAL" />
+      <updated>1599126348829</updated>
+    </task>
+    <task id="LOCAL-00019" summary="SharedPreferences的源码解析">
+      <created>1599126604312</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1599126604312</updated>
+    </task>
+    <option name="localTasksCounter" value="20" />
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="190388000" />
+    <option name="totallyTimeSpent" value="190989000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="-8" y="-8" width="1616" height="876" extended-state="6" />
@@ -466,7 +481,7 @@
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" />
-      <window_info anchor="bottom" id="Terminal" order="7" />
+      <window_info active="true" anchor="bottom" id="Terminal" order="7" visible="true" weight="0.17520216" />
       <window_info anchor="bottom" id="Docker" order="8" show_stripe_button="false" />
       <window_info anchor="bottom" id="Event Log" order="9" side_tool="true" />
       <window_info anchor="bottom" id="Messages" order="10" />
@@ -1063,8 +1078,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/base/core/java/android/app/SharedPreferencesImpl.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="211">
-          <caret line="315" column="17" selection-start-line="315" selection-start-column="17" selection-end-line="315" selection-end-column="17" />
+        <state relative-caret-position="263">
+          <caret line="290" column="40" selection-start-line="290" selection-start-column="40" selection-end-line="290" selection-end-column="40" />
           <folding>
             <element signature="e#4349#4350#0" expanded="true" />
             <element signature="e#4395#4396#0" expanded="true" />

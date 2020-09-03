@@ -288,7 +288,7 @@ final class SharedPreferencesImpl implements SharedPreferences {
             // thread and otherwise ignored by StrictMode.
             BlockGuard.getThreadPolicy().onReadFromDisk();
         }
-        while (!mLoaded) {
+        while (!mLoaded) {//如果正在加载中，则等待锁（mLoaded会在加载文件之前，将mLoaded设置为false）
             try {
                 //这里会阻塞，等待子Thread读取完所有的键值对以后，这里才会继续执行，返回一个imp了
                 mLock.wait();
