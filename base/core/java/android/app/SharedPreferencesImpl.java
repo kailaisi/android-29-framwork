@@ -125,6 +125,7 @@ final class SharedPreferencesImpl implements SharedPreferences {
     @UnsupportedAppUsage
     SharedPreferencesImpl(File file, int mode) {
         mFile = file;
+        //生成备份文件
         mBackupFile = makeBackupFile(file);
         mMode = mode;
         mLoaded = false;
@@ -169,6 +170,7 @@ final class SharedPreferencesImpl implements SharedPreferences {
         Throwable thrown = null;
         try {
             stat = Os.stat(mFile.getPath());
+            //可读权限
             if (mFile.canRead()) {
                 BufferedInputStream str = null;
                 try {
@@ -218,6 +220,7 @@ final class SharedPreferencesImpl implements SharedPreferences {
     }
 
     static File makeBackupFile(File prefsFile) {
+        //以sp文件名，创建对应的.bak文件
         return new File(prefsFile.getPath() + ".bak");
     }
 

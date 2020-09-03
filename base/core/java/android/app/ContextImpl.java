@@ -439,25 +439,27 @@ class ContextImpl extends Context {
             if (file == null) {
                 //创建对应的sp文件，并放入到缓存中。路径为data/shared_prefs/name.xml
                 file = getSharedPreferencesPath(name);
+                //将文件和对应的文件关系进行缓存
                 mSharedPrefsPaths.put(name, file);
             }
         }
+        //返回对应的SharedPreferences实例
         return getSharedPreferences(file, mode);
     }
 
+    //获取对应的SharedPreferences实例
     @Override
     public SharedPreferences getSharedPreferences(File file, int mode) {
         SharedPreferencesImpl sp;
         synchronized (ContextImpl.class) {
-            //获取缓存的SharedPreferencesImpl实例
+            //获取缓存的SharedPreferencesImpl
             final ArrayMap<File, SharedPreferencesImpl> cache = getSharedPreferencesCacheLocked();
             sp = cache.get(file);
             if (sp == null) {
+                //权限校验，在android N中  全局可用的mode已经不能使用了，这里会做拦截
                 checkMode(mode);
                 if (getApplicationInfo().targetSdkVersion >= android.os.Build.VERSION_CODES.O) {
-                    if (isCredentialProtectedStorage()
-                            && !getSystemService(UserManager.class)
-                                    .isUserUnlockingOrUnlocked(UserHandle.myUserId())) {
+                    if (isCredentialProtectedStorage() && !getSystemService(UserManager.class).isUserUnlockingOrUnlocked(UserHandle.myUserId())) {
                         throw new IllegalStateException("SharedPreferences in credential encrypted "
                                 + "storage are not available until after user is unlocked");
                     }
@@ -468,8 +470,7 @@ class ContextImpl extends Context {
                 return sp;
             }
         }
-        if ((mode & Context.MODE_MULTI_PROCESS) != 0 ||
-            getApplicationInfo().targetSdkVersion < android.os.Build.VERSION_CODES.HONEYCOMB) {
+        if ((mode & Context.MODE_MULTI_PROCESS) != 0 || getApplicationInfo().targetSdkVersion < android.os.Build.VERSION_CODES.HONEYCOMB) {
             // If somebody else (some other process) changed the prefs
             // file behind our back, we reload it.  This has been the
             // historical (if undocumented) behavior.
@@ -587,12 +588,15 @@ class ContextImpl extends Context {
         }
     }
 
+    //获取sp的文件路径
     @UnsupportedAppUsage
     private File getPreferencesDir() {
         synchronized (mSync) {
             if (mPreferencesDir == null) {
+                //data目录下的shared_prefs文件夹
                 mPreferencesDir = new File(getDataDir(), "shared_prefs");
             }
+            //确保文件有对应的读写权限等
             return ensurePrivateDirExists(mPreferencesDir);
         }
     }
