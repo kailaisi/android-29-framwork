@@ -45,7 +45,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * {@hide}
+ * {@hide} xml文件的辅助类
  */
 public class XmlUtils {
 
@@ -174,8 +174,8 @@ public class XmlUtils {
     }
 
     /**
-     * Flatten a Map into an output stream as XML.  The map can later be
-     * read back with readMapXml().
+     * Flatten a Map into an output stream as XML.  The map can later be read back with readMapXml().
+     *
      *
      * @param val The map to be flattened.
      * @param out Where to write the XML data.
@@ -185,8 +185,7 @@ public class XmlUtils {
      * @see #readMapXml
      */
     @UnsupportedAppUsage
-    public static final void writeMapXml(Map val, OutputStream out)
-            throws XmlPullParserException, java.io.IOException {
+    public static final void writeMapXml(Map val, OutputStream out) throws XmlPullParserException, java.io.IOException {
         XmlSerializer serializer = new FastXmlSerializer();
         serializer.setOutput(out, StandardCharsets.UTF_8.name());
         serializer.startDocument(null, true);
@@ -257,7 +256,7 @@ public class XmlUtils {
             out.endTag(null, "null");
             return;
         }
-
+        //先来个map标签
         out.startTag(null, "map");
         if (name != null) {
             out.attribute(null, "name", name);
@@ -281,17 +280,17 @@ public class XmlUtils {
      * @see #writeValueXml
      * @see #readMapXml
      */
-    public static final void writeMapXml(Map val, XmlSerializer out,
-                                         WriteMapCallback callback) throws XmlPullParserException, java.io.IOException {
+    public static final void writeMapXml(Map val, XmlSerializer out, WriteMapCallback callback) throws XmlPullParserException, java.io.IOException {
         if (val == null) {
             return;
         }
 
         Set s = val.entrySet();
         Iterator i = s.iterator();
-
+        //map进行遍历
         while (i.hasNext()) {
             Map.Entry e = (Map.Entry) i.next();
+            //逐个写入数据
             writeValueXml(e.getValue(), (String) e.getKey(), out, callback);
         }
     }

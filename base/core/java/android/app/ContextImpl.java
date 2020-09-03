@@ -2635,20 +2635,20 @@ class ContextImpl extends Context {
     }
 
     @SuppressWarnings("deprecation")
-    static void setFilePermissionsFromMode(String name, int mode,
-            int extraPermissions) {
+    static void setFilePermissionsFromMode(String name, int mode, int extraPermissions) {
+        //首先设置文件拥有用户级别和组级别的权限
         int perms = FileUtils.S_IRUSR|FileUtils.S_IWUSR
             |FileUtils.S_IRGRP|FileUtils.S_IWGRP
             |extraPermissions;
+        //其他用户权限。在安卓9中，这个级别已经depresed，因为认为该权限安全问题太大
         if ((mode&MODE_WORLD_READABLE) != 0) {
             perms |= FileUtils.S_IROTH;
         }
-        if ((mode&MODE_WORLD_WRITEABLE) != 0) {
+        if ((mode&MODE_WORLD_WRITEABLE) != 0) {//所有的应用都可以读写的权限
             perms |= FileUtils.S_IWOTH;
         }
         if (DEBUG) {
-            Log.i(TAG, "File " + name + ": mode=0x" + Integer.toHexString(mode)
-                  + ", perms=0x" + Integer.toHexString(perms));
+            Log.i(TAG, "File " + name + ": mode=0x" + Integer.toHexString(mode) + ", perms=0x" + Integer.toHexString(perms));
         }
         FileUtils.setPermissions(name, perms, -1, -1);
     }

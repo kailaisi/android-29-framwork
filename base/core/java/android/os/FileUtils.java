@@ -89,16 +89,17 @@ import java.util.zip.CheckedInputStream;
 public final class FileUtils {
     private static final String TAG = "FileUtils";
 
+    //用户级别
     /** {@hide} */ public static final int S_IRWXU = 00700;
     /** {@hide} */ public static final int S_IRUSR = 00400;
     /** {@hide} */ public static final int S_IWUSR = 00200;
     /** {@hide} */ public static final int S_IXUSR = 00100;
-
+    //组级别
     /** {@hide} */ public static final int S_IRWXG = 00070;
     /** {@hide} */ public static final int S_IRGRP = 00040;
     /** {@hide} */ public static final int S_IWGRP = 00020;
     /** {@hide} */ public static final int S_IXGRP = 00010;
-
+    //其他人的级别
     /** {@hide} */ public static final int S_IRWXO = 00007;
     /** {@hide} */ public static final int S_IROTH = 00004;
     /** {@hide} */ public static final int S_IWOTH = 00002;

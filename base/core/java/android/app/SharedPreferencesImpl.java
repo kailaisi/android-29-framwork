@@ -828,12 +828,13 @@ final class SharedPreferencesImpl implements SharedPreferences {
             XmlUtils.writeMapXml(mcr.mapToWriteToDisk, str);
 
             writeTime = System.currentTimeMillis();
-
+            //调用flush,将流中的数据写入磁盘。但是这里不会关闭
             FileUtils.sync(str);
 
             fsyncTime = System.currentTimeMillis();
-
+            //关闭输出流
             str.close();
+            //设置对应的sp文件的权限
             ContextImpl.setFilePermissionsFromMode(mFile.getPath(), mMode, 0);
 
             if (DEBUG) {
