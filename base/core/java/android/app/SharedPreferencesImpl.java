@@ -278,7 +278,7 @@ final class SharedPreferencesImpl implements SharedPreferences {
     }
 
     /**
-     * 等待磁盘的sp键值对加载完成
+     * 等待磁盘的sp键值对加载完成。线程同步方案
      */
     @GuardedBy("mLock")
     private void awaitLoadedLocked() {
