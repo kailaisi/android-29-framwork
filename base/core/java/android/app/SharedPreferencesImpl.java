@@ -423,7 +423,7 @@ final class SharedPreferencesImpl implements SharedPreferences {
 
     public final class EditorImpl implements Editor {
         private final Object mEditorLock = new Object();
-
+        //修改过的键值信息
         @GuardedBy("mEditorLock")
         private final Map<String, Object> mModified = new HashMap<>();
 
@@ -561,7 +561,7 @@ final class SharedPreferencesImpl implements SharedPreferences {
                 }
                 mapToWriteToDisk = mMap;
                 mDiskWritesInFlight++;
-
+                //sp的变化监听
                 boolean hasListeners = mListeners.size() > 0;
                 if (hasListeners) {
                     keysModified = new ArrayList<String>();
@@ -572,7 +572,7 @@ final class SharedPreferencesImpl implements SharedPreferences {
                     //记录是否发生了数据变化
                     boolean changesMade = false;
 
-                    if (mClear) {
+                    if (mClear) {//清空
                         if (!mapToWriteToDisk.isEmpty()) {
                             changesMade = true;
                             mapToWriteToDisk.clear();
@@ -628,7 +628,7 @@ final class SharedPreferencesImpl implements SharedPreferences {
             if (DEBUG) {
                 startTime = System.currentTimeMillis();
             }
-
+            //重点方法1.  生成对应的提交类
             MemoryCommitResult mcr = commitToMemory();
             //入队
             SharedPreferencesImpl.this.enqueueDiskWrite(mcr, null /* sync write on this thread okay */);
@@ -719,7 +719,7 @@ final class SharedPreferencesImpl implements SharedPreferences {
                 return;
             }
         }
-        //这里会将写入的放入到队列中进行处理
+        //这里会将写入磁盘的runnable放入到队列中进行处理
         QueuedWork.queue(writeToDiskRunnable, !isFromSyncCommit);
     }
 
@@ -774,7 +774,7 @@ final class SharedPreferencesImpl implements SharedPreferences {
             boolean needsWrite = false;
 
             // Only need to write if the disk state is older than this commit
-            //只有当磁盘的状态比本次提交的commit信息旧，则进行提交
+            //只有当磁盘的状态比本次提交的commit信息老，则进行提交
             if (mDiskStateGeneration < mcr.memoryStateGeneration) {
                 if (isFromSyncCommit) {//commit方式
                     needsWrite = true;
@@ -782,6 +782,7 @@ final class SharedPreferencesImpl implements SharedPreferences {
                     synchronized (mLock) {
                         // No need to persist intermediate states. Just wait for the latest state to
                         // be persisted.
+                        //保证mcr中保存的编号和当前编号一致，才可执行
                         if (mCurrentMemoryStateGeneration == mcr.memoryStateGeneration) {
                             needsWrite = true;
                         }
@@ -789,7 +790,7 @@ final class SharedPreferencesImpl implements SharedPreferences {
                 }
             }
 
-            if (!needsWrite) {
+            if (!needsWrite) {//不需要写入
                 mcr.setDiskWriteResult(false, true);
                 return;
             }
@@ -806,7 +807,7 @@ final class SharedPreferencesImpl implements SharedPreferences {
                     mcr.setDiskWriteResult(false, false);
                     return;
                 }
-            } else {//备份文件存在了，原来的文件则直接删除
+            } else {//备份文件存在了，原来的文件则直接删除。
                 mFile.delete();
             }
         }
@@ -867,7 +868,7 @@ final class SharedPreferencesImpl implements SharedPreferences {
             if (DEBUG) {
                 deleteTime = System.currentTimeMillis();
             }
-
+            //将当前硬盘文件的编号修改为提交的mcr的编号
             mDiskStateGeneration = mcr.memoryStateGeneration;
             //设置写入成功，然后通知阻塞对象被打开，能够继续进行操作了
             mcr.setDiskWriteResult(true, true);
@@ -899,6 +900,7 @@ final class SharedPreferencesImpl implements SharedPreferences {
         }
 
         // Clean up an unsuccessfully written file
+        //如果走到这里，说明磁盘写入发生了异常，但是mFile文件已经写入了一些数据，但是数据存在问题。所以这里需要将损坏的文件删除
         if (mFile.exists()) {
             if (!mFile.delete()) {
                 Log.e(TAG, "Couldn't clean up partially-written file " + mFile);
