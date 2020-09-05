@@ -86,6 +86,7 @@ final class SharedPreferencesImpl implements SharedPreferences {
     @GuardedBy("mLock")
     private Throwable mThrowable;
 
+    //正在往磁盘写入
     @GuardedBy("mLock")
     private int mDiskWritesInFlight = 0;
 
@@ -105,13 +106,15 @@ final class SharedPreferencesImpl implements SharedPreferences {
     /**
      * Current memory state (always increasing)
      */
+    //用于记录当前总共有多少个需要提交
     @GuardedBy("this")
     private long mCurrentMemoryStateGeneration;
 
     /**
      * Latest memory state that was committed to disk
-     * 最后一次提交到磁盘的计数器
+     *
      */
+    //记录已经有多少个提交到磁盘了
     @GuardedBy("mWritingToDiskLock")
     private long mDiskStateGeneration;
 

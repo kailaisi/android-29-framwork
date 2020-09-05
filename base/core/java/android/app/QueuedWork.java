@@ -33,16 +33,16 @@ import java.util.LinkedList;
 /**
  * Internal utility class to keep track of process-global work that's outstanding and hasn't been
  * finished yet.
- *
+ * <p>
  * New work will be {@link #queue queued}.
- *
+ * <p>
  * It is possible to add 'finisher'-runnables that are {@link #waitToFinish guaranteed to be run}.
  * This is used to make sure the work has been finished.
- *
+ * <p>
  * This was created for writing SharedPreference edits out asynchronously so we'd have a mechanism
  * to wait for the writes in Activity.onPause and similar places, but we may use this mechanism for
  * other things in the future.
- *
+ * <p>
  * The queued asynchronous work is performed on a separate, dedicated thread.
  *
  * @hide
@@ -51,42 +51,58 @@ public class QueuedWork {
     private static final String LOG_TAG = QueuedWork.class.getSimpleName();
     private static final boolean DEBUG = false;
 
-    /** Delay for delayed runnables, as big as possible but low enough to be barely perceivable */
+    /**
+     * Delay for delayed runnables, as big as possible but low enough to be barely perceivable
+     */
     private static final long DELAY = 100;
 
-    /** If a {@link #waitToFinish()} takes more than {@value #MAX_WAIT_TIME_MILLIS} ms, warn */
+    /**
+     * If a {@link #waitToFinish()} takes more than {@value #MAX_WAIT_TIME_MILLIS} ms, warn
+     */
     private static final long MAX_WAIT_TIME_MILLIS = 512;
 
-    /** Lock for this class */
+    /**
+     * Lock for this class
+     */
     private static final Object sLock = new Object();
 
     /**
      * Used to make sure that only one thread is processing work items at a time. This means that
      * they are processed in the order added.
-     *
+     * <p>
      * This is separate from {@link #sLock} as this is held the whole time while work is processed
      * and we do not want to stall the whole class.
      */
     private static Object sProcessingWork = new Object();
 
-    /** Finishers {@link #addFinisher added} and not yet {@link #removeFinisher removed} */
+    /**
+     * Finishers {@link #addFinisher added} and not yet {@link #removeFinisher removed}
+     */
     @GuardedBy("sLock")
     @UnsupportedAppUsage
     private static final LinkedList<Runnable> sFinishers = new LinkedList<>();
 
-    /** {@link #getHandler() Lazily} created handler */
+    /**
+     * {@link #getHandler() Lazily} created handler
+     */
     @GuardedBy("sLock")
     private static Handler sHandler = null;
 
-    /** Work queued via {@link #queue} */
+    /**
+     * Work queued via {@link #queue}
+     */
     @GuardedBy("sLock")
     private static final LinkedList<Runnable> sWork = new LinkedList<>();
 
-    /** If new work can be delayed or not */
+    /**
+     * If new work can be delayed or not
+     */
     @GuardedBy("sLock")
     private static boolean sCanDelay = true;
 
-    /** Time (and number of instances) waited for work to get processed */
+    /**
+     * Time (and number of instances) waited for work to get processed
+     */
     @GuardedBy("sLock")
     private final static ExponentiallyBucketedHistogram
             mWaitTimes = new ExponentiallyBucketedHistogram(
@@ -102,10 +118,9 @@ public class QueuedWork {
     private static Handler getHandler() {
         synchronized (sLock) {
             if (sHandler == null) {
-                HandlerThread handlerThread = new HandlerThread("queued-work-looper",
-                        Process.THREAD_PRIORITY_FOREGROUND);
+                //HandlerThread，一种含有Handler的线程，可以进行handler消息的处理
+                HandlerThread handlerThread = new HandlerThread("queued-work-looper", Process.THREAD_PRIORITY_FOREGROUND);
                 handlerThread.start();
-
                 sHandler = new QueuedWorkHandler(handlerThread.getLooper());
             }
             return sHandler;
@@ -114,9 +129,9 @@ public class QueuedWork {
 
     /**
      * Add a finisher-runnable to wait for {@link #queue asynchronously processed work}.
-     *
+     * <p>
      * Used by SharedPreferences$Editor#startCommit().
-     *
+     * <p>
      * Note that this doesn't actually start it running.  This is just a scratch set for callers
      * doing async work to keep updated with what's in-flight. In the common case, caller code
      * (e.g. SharedPreferences) will pretty quickly call remove() after an add(). The only time
@@ -147,7 +162,7 @@ public class QueuedWork {
      * Trigger queued work to be processed immediately. The queued work is processed on a separate
      * thread asynchronous. While doing that run and process all finishers on this thread. The
      * finishers can be implemented in a way to check weather the queued work is finished.
-     *
+     * <p>
      * Is called from the Activity base class's onPause(), after BroadcastReceiver's onReceive,
      * after Service command handling, etc. (so async work is never lost)
      */
@@ -214,7 +229,7 @@ public class QueuedWork {
     /**
      * Queue a work-runnable for processing asynchronously.
      *
-     * @param work The new runnable to process
+     * @param work        The new runnable to process
      * @param shouldDelay If the message should be delayed
      */
     @UnsupportedAppUsage
@@ -222,8 +237,9 @@ public class QueuedWork {
         Handler handler = getHandler();
 
         synchronized (sLock) {
+            //放入到队列中
             sWork.add(work);
-
+            //是否需要延迟（commit()方法不会进行延迟）
             if (shouldDelay && sCanDelay) {
                 handler.sendEmptyMessageDelayed(QueuedWorkHandler.MSG_RUN, DELAY);
             } else {
@@ -251,13 +267,13 @@ public class QueuedWork {
             startTime = System.currentTimeMillis();
         }
 
-        synchronized (sProcessingWork) {
+        synchronized (sProcessingWork) {//保证同一时间只有一个线程在执行操作
             LinkedList<Runnable> work;
 
             synchronized (sLock) {
+                //复制之后，将原队列清空
                 work = (LinkedList<Runnable>) sWork.clone();
                 sWork.clear();
-
                 // Remove all msg-s as all work will be processed now
                 getHandler().removeMessages(QueuedWorkHandler.MSG_RUN);
             }
@@ -285,6 +301,7 @@ public class QueuedWork {
 
         public void handleMessage(Message msg) {
             if (msg.what == MSG_RUN) {
+                //处理队列消息
                 processPendingWork();
             }
         }
