@@ -1725,6 +1725,7 @@ public final class ViewRootImpl implements ViewParent,
             mTraversalBarrier = mHandler.getLooper().getQueue().postSyncBarrier();
 			//mChoreographer能够接收系统的时间脉冲，统一动画、输入和绘制时机,实现了按帧进行绘制的机制
 			//这里增加了一个事件回调的类型。在绘制时，会调用mTraversalRunnable方法
+            //postCallback的时候，顺便请求vnsc垂直同步信号scheduleVsyncLocked
             mChoreographer.postCallback(Choreographer.CALLBACK_TRAVERSAL, mTraversalRunnable, null);
             if (!mUnbufferedInputDispatch) {
                 scheduleConsumeBatchedInput();

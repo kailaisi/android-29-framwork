@@ -78,6 +78,7 @@ import java.io.PrintWriter;
  * to which the choreographer belongs.
  * </p>
  */
+//同意动画、输入和绘制时机。
 public final class Choreographer {
     private static final String TAG = "Choreographer";
 
@@ -101,10 +102,10 @@ public final class Choreographer {
     private static volatile long sFrameDelay = DEFAULT_FRAME_DELAY;
 
     // Thread local storage for the choreographer.
-    private static final ThreadLocal<Choreographer> sThreadInstance =
-            new ThreadLocal<Choreographer>() {
+    private static final ThreadLocal<Choreographer> sThreadInstance = new ThreadLocal<Choreographer>() {
         @Override
         protected Choreographer initialValue() {
+            //获取对应的looper
             Looper looper = Looper.myLooper();
             if (looper == null) {
                 throw new IllegalStateException("The current thread must have a looper!");
@@ -160,12 +161,13 @@ public final class Choreographer {
     private final Object mLock = new Object();
 
     private final Looper mLooper;
+    //
     private final FrameHandler mHandler;
 
     // The display event receiver can only be accessed by the looper thread to which
     // it is attached.  We take care to ensure that we post message to the looper
     // if appropriate when interacting with the display event receiver.
-    //注册的VSYnc信号的接收器
+    //注册的VSYnc信号的接收器。用来
     @UnsupportedAppUsage
     private final FrameDisplayEventReceiver mDisplayEventReceiver;
 
@@ -209,14 +211,14 @@ public final class Choreographer {
      * Callback type: Input callback.  Runs first.
      * @hide
      */
-    public static final int CALLBACK_INPUT = 0;
+    public static final int CALLBACK_INPUT = 0;//输入
 
     /**
      * Callback type: Animation callback.  Runs before {@link #CALLBACK_INSETS_ANIMATION}.
      * @hide
      */
     @TestApi
-    public static final int CALLBACK_ANIMATION = 1;
+    public static final int CALLBACK_ANIMATION = 1;//动画
 
     /**
      * Callback type: Animation callback to handle inset updates. This is separate from
@@ -231,14 +233,14 @@ public final class Choreographer {
      * Runs before traversals.
      * @hide
      */
-    public static final int CALLBACK_INSETS_ANIMATION = 2;
+    public static final int CALLBACK_INSETS_ANIMATION = 2;//
 
     /**
      * Callback type: Traversal callback.  Handles layout and draw.  Runs
      * after all other asynchronous messages have been handled.
      * @hide
      */
-    public static final int CALLBACK_TRAVERSAL = 3;
+    public static final int CALLBACK_TRAVERSAL = 3;//视图绘制
 
     /**
      * Callback type: Commit callback.  Handles post-draw operations for the frame.
@@ -250,22 +252,25 @@ public final class Choreographer {
      * to the view hierarchy state) actually took effect.
      * @hide
      */
-    public static final int CALLBACK_COMMIT = 4;
+    public static final int CALLBACK_COMMIT = 4;//提交
 
     private static final int CALLBACK_LAST = CALLBACK_COMMIT;
 
     private Choreographer(Looper looper, int vsyncSource) {
 		
         mLooper = looper;
-		//创建消息处理Handler
+		//创建消息处理Handler。用不处理对应的
         mHandler = new FrameHandler(looper);
+
         mDisplayEventReceiver = USE_VSYNC? new FrameDisplayEventReceiver(looper, vsyncSource): null;
+        //上一次帧的绘制时间点
         mLastFrameTimeNanos = Long.MIN_VALUE;
-		
+		//帧间时长，一般等于16.7ms
         mFrameIntervalNanos = (long)(1000000000 / getRefreshRate());
 		//回调数组
         mCallbackQueues = new CallbackQueue[CALLBACK_LAST + 1];
         for (int i = 0; i <= CALLBACK_LAST; i++) {
+            //每个都是一个queue，也就是每种都是一个列表
             mCallbackQueues[i] = new CallbackQueue();
         }
         // b/68769804: For low FPS experiments.
@@ -455,6 +460,7 @@ public final class Choreographer {
         synchronized (mLock) {
             final long now = SystemClock.uptimeMillis();
             final long dueTime = now + delayMillis;
+            //将callback放入到对应的队列中
             mCallbackQueues[callbackType].addCallbackLocked(dueTime, action, token);
             if (dueTime <= now) {
 				//需要立即进行绘制
@@ -463,6 +469,7 @@ public final class Choreographer {
             	//延期绘制的消息，通过handler来进行处理
                 Message msg = mHandler.obtainMessage(MSG_DO_SCHEDULE_CALLBACK, action);
                 msg.arg1 = callbackType;
+                //设置为异步消息，如果这里设置了同步屏障，则会优先于其他的消息执行。
                 msg.setAsynchronous(true);
                 mHandler.sendMessageAtTime(msg, dueTime);
             }
@@ -892,6 +899,7 @@ public final class Choreographer {
         public void doFrame(long frameTimeNanos);
     }
 
+    //对发送的消息进行处理
     private final class FrameHandler extends Handler {
         public FrameHandler(Looper looper) {
             super(looper);
@@ -912,7 +920,8 @@ public final class Choreographer {
             }
         }
     }
-	//屏幕帧机制接收器
+
+	//屏幕帧机制接收器,用来接收同步脉冲信号 VSYNC
     private final class FrameDisplayEventReceiver extends DisplayEventReceiver
             implements Runnable {
         private boolean mHavePendingVsync;

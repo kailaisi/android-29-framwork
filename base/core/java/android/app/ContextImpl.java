@@ -454,7 +454,7 @@ class ContextImpl extends Context {
         synchronized (ContextImpl.class) {
             //获取缓存的SharedPreferencesImpl
             final ArrayMap<File, SharedPreferencesImpl> cache = getSharedPreferencesCacheLocked();
-            sp = cache.get(file);
+            sp = cache.get(file);o
             if (sp == null) {
                 //权限校验，在android N中  全局可用的mode已经不能使用了，这里会做拦截
                 checkMode(mode);
