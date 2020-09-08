@@ -762,6 +762,7 @@ public final class Choreographer {
             // for earlier processing phases in a frame to post callbacks that should run
             // in a following phase, such as an input event that causes an animation to start.
             final long now = System.nanoTime();
+            //获取到对应的需要执行的record列表信息
             callbacks = mCallbackQueues[callbackType].extractDueCallbacksLocked(now / TimeUtils.NANOS_PER_MS);
             if (callbacks == null) {
                 return;
@@ -780,8 +781,7 @@ public final class Choreographer {
                 final long jitterNanos = now - frameTimeNanos;
                 Trace.traceCounter(Trace.TRACE_TAG_VIEW, "jitterNanos", (int) jitterNanos);
                 if (jitterNanos >= 2 * mFrameIntervalNanos) {
-                    final long lastFrameOffset = jitterNanos % mFrameIntervalNanos
-                            + mFrameIntervalNanos;
+                    final long lastFrameOffset = jitterNanos % mFrameIntervalNanos + mFrameIntervalNanos;
                     if (DEBUG_JANK) {
                         Log.d(TAG, "Commit callback delayed by " + (jitterNanos * 0.000001f)
                                 + " ms which is more than twice the frame interval of "
@@ -888,7 +888,7 @@ public final class Choreographer {
          * that are performed by different callbacks.
          * </p><p>
          * Please note that the framework already takes care to process animations and
-         * drawing using the frame time as a stable time base.  Most applications should
+         * drawing using the frame time as a stable time base.  Most applications shouldvi
          * not need to use the frame time information directly.
          * </p>
          *
@@ -935,6 +935,7 @@ public final class Choreographer {
         // TODO(b/116025192): physicalDisplayId is ignored because SF only emits VSYNC events for
         // the internal display and DisplayEventReceiver#scheduleVsync only allows requesting VSYNC
         // for the internal display implicitly.
+        //底层每16.6ms会调用onVsync方法来执行对应的UI。这个方法的调用不一定是在主线程上。
         @Override
         public void onVsync(long timestampNanos, long physicalDisplayId, int frame) {
             // Post the vsync event to the Handler.
@@ -956,7 +957,7 @@ public final class Choreographer {
             } else {
                 mHavePendingVsync = true;
             }
-
+            //所以这里需要通过handler来提交到主线程进行处理
             mTimestampNanos = timestampNanos;
             mFrame = frame;
             Message msg = Message.obtain(mHandler, this);
