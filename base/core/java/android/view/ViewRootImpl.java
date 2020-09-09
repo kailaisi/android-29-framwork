@@ -352,7 +352,7 @@ public final class ViewRootImpl implements ViewParent,
     @UnsupportedAppUsage
     boolean mStopped = false;
 
-    // Set to true if the owner of this window is in ambient mode,
+    // Set to true if the owner of this window is in ambient mode,scheduleTraversals
     // which means it won't receive input events.
     boolean mIsAmbientMode = false;
 
@@ -1726,6 +1726,7 @@ public final class ViewRootImpl implements ViewParent,
 			//mChoreographer能够接收系统的时间脉冲，统一动画、输入和绘制时机,实现了按帧进行绘制的机制
 			//这里增加了一个事件回调的类型。在绘制时，会调用mTraversalRunnable方法
             //postCallback的时候，顺便请求vnsc垂直同步信号scheduleVsyncLocked
+            //mTraversalRunnable这个线程会进行onMeasure，onLayout,onDraw的处理操作
             mChoreographer.postCallback(Choreographer.CALLBACK_TRAVERSAL, mTraversalRunnable, null);
             if (!mUnbufferedInputDispatch) {
                 scheduleConsumeBatchedInput();

@@ -50,7 +50,7 @@ public final class MessageQueue {
     @UnsupportedAppUsage
     @SuppressWarnings("unused")
     private long mPtr; // used by native code
-
+    //消息队列的队列头
     @UnsupportedAppUsage
     Message mMessages;
     //空闲队列
@@ -357,11 +357,13 @@ public final class MessageQueue {
                 Message prevMsg = null;
                 Message msg = mMessages;
                 if (msg != null && msg.target == null) {
-                    //通过循环找到第一个异步消息Message
+                    //这里msg的target为null，表明这是一个同步屏障。所以当我们设置了同步屏障以后，会优先执行异步消息。
+                    //如果没有找到异步消息的话，下面会设置nextPollTimeoutMillis = -1，从而导致睡眠，直到有一个异步消息为止
                     // Stalled by a barrier.  Find the next asynchronous message in the queue.
                     do {
                         prevMsg = msg;
                         msg = msg.next;
+						//通过循环找到第一个异步消息Message
                     } while (msg != null && !msg.isAsynchronous());
                 }
                 if (msg != null) {
@@ -500,13 +502,14 @@ public final class MessageQueue {
     public int postSyncBarrier() {
         return postSyncBarrier(SystemClock.uptimeMillis());
     }
-
+	//设置一个同步屏障。这个方法调用的次数必须和removeSyncBarrier同步。
     private int postSyncBarrier(long when) {
         // Enqueue a new sync barrier token.
         // We don't need to wake the queue because the purpose of a barrier is to stall it.
         synchronized (this) {
             final int token = mNextBarrierToken++;
             final Message msg = Message.obtain();
+			//插入的msg消息的target并没有进行设置，所以会是空。也就是说向任务队列中插入一个target为null的Message消息，来表示一个同步屏障的消息
             msg.markInUse();
             msg.when = when;
             msg.arg1 = token;
@@ -567,6 +570,7 @@ public final class MessageQueue {
 
             // If the loop is quitting then it is already awake.
             // We can assume mPtr != 0 when mQuitting is false.
+            //唤醒looper循环
             if (needWake && !mQuitting) {
                 nativeWake(mPtr);
             }
@@ -943,8 +947,8 @@ public final class MessageQueue {
         public int mEvents;
         public OnFileDescriptorEventListener mListener;
         public int mSeq;
-
         public FileDescriptorRecord(FileDescriptor descriptor,
+
                 int events, OnFileDescriptorEventListener listener) {
             mDescriptor = descriptor;
             mEvents = events;

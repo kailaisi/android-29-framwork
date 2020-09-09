@@ -476,6 +476,7 @@ public final class Message implements Parcelable {
      *
      * @see #setAsynchronous(boolean)
      */
+     //表示消息是否是异步消息
     public boolean isAsynchronous() {
         return (flags & FLAG_ASYNCHRONOUS) != 0;
     }
