@@ -167,7 +167,7 @@ public final class Choreographer {
     // The display event receiver can only be accessed by the looper thread to which
     // it is attached.  We take care to ensure that we post message to the looper
     // if appropriate when interacting with the display event receiver.
-    //注册的VSYnc信号的接收器。用来
+    //注册的VSYnc信号的接收器。用来接收对应的屏幕事件
     @UnsupportedAppUsage
     private final FrameDisplayEventReceiver mDisplayEventReceiver;
 
@@ -178,6 +178,7 @@ public final class Choreographer {
 
     private boolean mFrameScheduled;
     private boolean mCallbacksRunning;
+    //上次绘制的时间
     @UnsupportedAppUsage
     private long mLastFrameTimeNanos;
 	//屏幕刷新周期
@@ -233,7 +234,7 @@ public final class Choreographer {
      * Runs before traversals.
      * @hide
      */
-    public static final int CALLBACK_INSETS_ANIMATION = 2;//
+    public static final int CALLBACK_INSETS_ANIMATION = 2;//动画的重置
 
     /**
      * Callback type: Traversal callback.  Handles layout and draw.  Runs
@@ -263,7 +264,7 @@ public final class Choreographer {
         mHandler = new FrameHandler(looper);
 
         mDisplayEventReceiver = USE_VSYNC? new FrameDisplayEventReceiver(looper, vsyncSource): null;
-        //上一次帧的绘制时间点
+        //上一次帧的绘制时间点。也就是渲染的时间点
         mLastFrameTimeNanos = Long.MIN_VALUE;
 		//帧间时长，一般等于16.7ms
         mFrameIntervalNanos = (long)(1000000000 / getRefreshRate());
@@ -277,9 +278,11 @@ public final class Choreographer {
         setFPSDivisor(SystemProperties.getInt(ThreadedRenderer.DEBUG_FPS_DIVISOR, 1));
     }
 
+    //获取刷新的频率
     private static float getRefreshRate() {
-        DisplayInfo di = DisplayManagerGlobal.getInstance().getDisplayInfo(
-                Display.DEFAULT_DISPLAY);
+        //获取默认显示屏的相关信息（会存在多屏情况）
+        DisplayInfo di = DisplayManagerGlobal.getInstance().getDisplayInfo(Display.DEFAULT_DISPLAY);
+        //默认设置是VirtualDisplayDevice.REFRESH_RATE
         return di.getMode().getRefreshRate();
     }
 
@@ -627,7 +630,7 @@ public final class Choreographer {
 
 	//安排执行下一帧
     private void scheduleFrameLocked(long now) {
-    	//如果上一帧没有绘制完成，则直接结束
+    	//如果上一帧没有绘制完成，则直接结束。保证16ms以内，只有一次垂直同步信号
         if (!mFrameScheduled) {
 			//标记当前帧开始绘制
             mFrameScheduled = true;
@@ -643,7 +646,7 @@ public final class Choreographer {
                 //如果当前线程具备消息循环，则直接请求VSync信号
                 if (isRunningOnLooperThreadLocked()) {
                     scheduleVsyncLocked();
-                } else {//当前消息不具备消息循环，怎通过handler发送到主线程请求VSync
+                } else {//当前消息不具备消息循环，那么通过handler发送到主线程请求VSync
                     Message msg = mHandler.obtainMessage(MSG_DO_SCHEDULE_VSYNC);
                     msg.setAsynchronous(true);
                     mHandler.sendMessageAtFrontOfQueue(msg);
@@ -730,8 +733,8 @@ public final class Choreographer {
         try {
             Trace.traceBegin(Trace.TRACE_TAG_VIEW, "Choreographer#doFrame");
             AnimationUtils.lockAnimationClock(frameTimeNanos / TimeUtils.NANOS_PER_MS);
-			//处理输入事件，放在第一位置，也是为了能够尽快响应用户操作
             mFrameInfo.markInputHandlingStart();
+            //处理输入事件，放在第一位置，也是为了能够尽快响应用户操作
             doCallbacks(Choreographer.CALLBACK_INPUT, frameTimeNanos);
 			//处理动画
             mFrameInfo.markAnimationsStart();
@@ -767,6 +770,7 @@ public final class Choreographer {
             if (callbacks == null) {
                 return;
             }
+            //正在执行标志位
             mCallbacksRunning = true;
 
             // Update the frame time if necessary when committing the frame.
@@ -840,6 +844,7 @@ public final class Choreographer {
 
     @UnsupportedAppUsage
     private void scheduleVsyncLocked() {
+        //执行同步功能，进行一次绘制
         mDisplayEventReceiver.scheduleVsync();
     }
 
@@ -909,12 +914,15 @@ public final class Choreographer {
         public void handleMessage(Message msg) {
             switch (msg.what) {
                 case MSG_DO_FRAME:
+                    //刷新当前帧
                     doFrame(System.nanoTime(), 0);
                     break;
                 case MSG_DO_SCHEDULE_VSYNC:
+                    //做VSync同步
                     doScheduleVsync();
                     break;
                 case MSG_DO_SCHEDULE_CALLBACK:
+                    //将当前任务添加到队列中
                     doScheduleCallback(msg.arg1);
                     break;
             }
@@ -922,8 +930,7 @@ public final class Choreographer {
     }
 
 	//屏幕帧机制接收器,用来接收同步脉冲信号 VSYNC
-    private final class FrameDisplayEventReceiver extends DisplayEventReceiver
-            implements Runnable {
+    private final class FrameDisplayEventReceiver extends DisplayEventReceiver implements Runnable {
         private boolean mHavePendingVsync;
         private long mTimestampNanos;
         private int mFrame;
@@ -994,7 +1001,7 @@ public final class Choreographer {
         public boolean hasDueCallbacksLocked(long now) {
             return mHead != null && mHead.dueTime <= now;
         }
-
+        //返回截至到now的所有CallbackRecord信息，这是一个链表，返回的是一列的Record信息
         public CallbackRecord extractDueCallbacksLocked(long now) {
             CallbackRecord callbacks = mHead;
             if (callbacks == null || callbacks.dueTime > now) {
@@ -1015,6 +1022,7 @@ public final class Choreographer {
             return callbacks;
         }
 
+        //往队列中增加一个callback
         @UnsupportedAppUsage
         public void addCallbackLocked(long dueTime, Object action, Object token) {
             CallbackRecord callback = obtainCallbackLocked(dueTime, action, token);
