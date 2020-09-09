@@ -41,6 +41,7 @@ import java.util.Objects;
  * Describes the characteristics of a particular logical display.
  * @hide
  */
+//逻辑显示的描述信息
 public final class DisplayInfo implements Parcelable {
     /**
      * The surface flinger layer stack associated with this logical display.

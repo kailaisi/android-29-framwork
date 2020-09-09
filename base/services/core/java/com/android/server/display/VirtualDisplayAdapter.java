@@ -193,7 +193,7 @@ public class VirtualDisplayAdapter extends DisplayAdapter {
     private final class VirtualDisplayDevice extends DisplayDevice implements DeathRecipient {
         private static final int PENDING_SURFACE_CHANGE = 0x01;
         private static final int PENDING_RESIZE = 0x02;
-
+        //默认的刷新帧率
         private static final float REFRESH_RATE = 60.0f;
 
         private final IBinder mAppToken;
