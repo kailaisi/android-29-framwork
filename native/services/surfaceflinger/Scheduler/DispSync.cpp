@@ -484,12 +484,14 @@ void DispSync::init(bool hasSyncFramework, int64_t dispSyncPresentTimeOffset) {
     mThread->run("DispSync", PRIORITY_URGENT_DISPLAY + PRIORITY_MORE_FAVORABLE);
 
     // set DispSync to SCHED_FIFO to minimize jitter
+    //设置优先级为最高优先级
     struct sched_param param = {0};
+	
     param.sched_priority = 2;
     if (sched_setscheduler(mThread->getTid(), SCHED_FIFO, &param) != 0) {
         ALOGE("Couldn't set SCHED_FIFO for DispSyncThread");
     }
-
+	//初始化Vsync中的参数信息
     beginResync();
 
     if (mTraceDetailedInfo && kEnableZeroPhaseTracer) {

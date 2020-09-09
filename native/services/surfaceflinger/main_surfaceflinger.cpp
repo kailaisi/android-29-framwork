@@ -82,15 +82,19 @@ int main(int, char**) {
 
     // When SF is launched in its own process, limit the number of
     // binder threads to 4.
+    //设置线程池最多只能有4个Binder线程
     ProcessState::self()->setThreadPoolMaxThreadCount(4);
 
     // start the thread pool
+    //创建进行的ProcessState对象，打开Binder设备，同时创建并映射一部分Binder共享内存
     sp<ProcessState> ps(ProcessState::self());
+	//开启Binder线程，里面会循环不断的talkWithDriver
     ps->startThreadPool();
 
     // instantiate surfaceflinger
+    //创建Surfaceflinger
     sp<SurfaceFlinger> flinger = surfaceflinger::createSurfaceFlinger();
-
+	//设置Surfaceflinger的优先级
     setpriority(PRIO_PROCESS, 0, PRIORITY_URGENT_DISPLAY);
 
     set_sched_policy(0, SP_FOREGROUND);
@@ -101,10 +105,13 @@ int main(int, char**) {
     if (cpusets_enabled()) set_cpuset_policy(0, SP_SYSTEM);
 
     // initialize before clients can connect
+    //初始化Surfaceflinger对象信息
     flinger->init();
 
     // publish surface flinger
+    //获取一个SM对象
     sp<IServiceManager> sm(defaultServiceManager());
+	//向ServiceManager守护进行注册SurfaceFling服务，
     sm->addService(String16(SurfaceFlinger::getServiceName()), flinger, false,
                    IServiceManager::DUMP_FLAG_PRIORITY_CRITICAL | IServiceManager::DUMP_FLAG_PROTO);
 
