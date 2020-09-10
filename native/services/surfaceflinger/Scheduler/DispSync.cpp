@@ -481,6 +481,7 @@ DispSync::~DispSync() {
 void DispSync::init(bool hasSyncFramework, int64_t dispSyncPresentTimeOffset) {
     mIgnorePresentFences = !hasSyncFramework;
     mPresentTimeOffset = dispSyncPresentTimeOffset;
+	//初始化DispSyncThread
     mThread->run("DispSync", PRIORITY_URGENT_DISPLAY + PRIORITY_MORE_FAVORABLE);
 
     // set DispSync to SCHED_FIFO to minimize jitter
