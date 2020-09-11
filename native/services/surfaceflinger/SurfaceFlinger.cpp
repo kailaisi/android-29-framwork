@@ -407,6 +407,7 @@ SurfaceFlinger::SurfaceFlinger(Factory& factory) : SurfaceFlinger(factory, SkipI
 
 void SurfaceFlinger::onFirstRef()
 {
+	//初始化消息队列，创建对应的loop和handler
     mEventQueue->init(this);
 }
 
@@ -620,17 +621,18 @@ void SurfaceFlinger::init() {
 
     Mutex::Autolock _l(mStateLock);
     // start the EventThread
-    mScheduler =
-            getFactory().createScheduler([this](bool enabled) { setPrimaryVsyncEnabled(enabled); },
+    //启动EventThread
+    mScheduler = getFactory().createScheduler([this](bool enabled) { setPrimaryVsyncEnabled(enabled); },
                                          mRefreshRateConfigs);
-    auto resyncCallback =
-            mScheduler->makeResyncCallback(std::bind(&SurfaceFlinger::getVsyncPeriod, this));
+    auto resyncCallback = mScheduler->makeResyncCallback(std::bind(&SurfaceFlinger::getVsyncPeriod, this));
 
+	//App-
     mAppConnectionHandle =
             mScheduler->createConnection("app", mVsyncModulator.getOffsets().app,
                                          mPhaseOffsets->getOffsetThresholdForNextVsync(),
                                          resyncCallback,
                                          impl::EventThread::InterceptVSyncsCallback());
+	//Sf  sf和EventThread的关联
     mSfConnectionHandle =
             mScheduler->createConnection("sf", mVsyncModulator.getOffsets().sf,
                                          mPhaseOffsets->getOffsetThresholdForNextVsync(),
@@ -638,9 +640,9 @@ void SurfaceFlinger::init() {
                                              mInterceptor->saveVSyncEvent(timestamp);
                                          });
 
+	//创建sf与EventThread之间的connection									 
     mEventQueue->setEventConnection(mScheduler->getEventConnection(mSfConnectionHandle));
-    mVsyncModulator.setSchedulerAndHandles(mScheduler.get(), mAppConnectionHandle.get(),
-                                           mSfConnectionHandle.get());
+    mVsyncModulator.setSchedulerAndHandles(mScheduler.get(), mAppConnectionHandle.get(), mSfConnectionHandle.get());
 
     mRegionSamplingThread =
             new RegionSamplingThread(*this, *mScheduler,
@@ -687,6 +689,7 @@ void SurfaceFlinger::init() {
                 signalTransaction();
             }));
         };
+		//VR功能
         mVrFlinger = dvr::VrFlinger::Create(getHwComposer().getComposer(),
                                             getHwComposer()
                                                     .fromPhysicalDisplayId(*display->getId())
@@ -698,9 +701,11 @@ void SurfaceFlinger::init() {
     }
 
     // initialize our drawing state
+    //初始化绘制的状态
     mDrawingState = mCurrentState;
 
     // set initial conditions (e.g. unblank default device)
+    //初始化Displays
     initializeDisplays();
 
     getRenderEngine().primeCache();
@@ -1424,6 +1429,7 @@ sp<IDisplayEventConnection> SurfaceFlinger::createDisplayEventConnection(
 // ----------------------------------------------------------------------------
 
 void SurfaceFlinger::waitForEvent() {
+	//调用waitMessage.
     mEventQueue->waitMessage();
 }
 

@@ -844,7 +844,7 @@ public final class Choreographer {
 
     @UnsupportedAppUsage
     private void scheduleVsyncLocked() {
-        //执行同步功能，进行一次绘制
+        //执行同步功能，进行一次绘制。这里会进行一个VSYNC事件的监听注册，如果有有
         mDisplayEventReceiver.scheduleVsync();
     }
 
@@ -929,7 +929,7 @@ public final class Choreographer {
         }
     }
 
-	//屏幕帧机制接收器,用来接收同步脉冲信号 VSYNC
+	//屏幕帧机制接收器,用来接收同步脉冲信号 VSYNC。
     private final class FrameDisplayEventReceiver extends DisplayEventReceiver implements Runnable {
         private boolean mHavePendingVsync;
         private long mTimestampNanos;
@@ -943,6 +943,8 @@ public final class Choreographer {
         // the internal display and DisplayEventReceiver#scheduleVsync only allows requesting VSYNC
         // for the internal display implicitly.
         //底层每16.6ms会调用onVsync方法来执行对应的UI。这个方法的调用不一定是在主线程上。
+        //只有调用了nativeScheduleVsync这个方法，底层才会在有垂直脉冲的时候调用这个方法。
+        //所以，如果我们的应该没有发生绘制的话，其实就不会调用nativeScheduleVsync方法，那么对应的页面也不会进行刷新
         @Override
         public void onVsync(long timestampNanos, long physicalDisplayId, int frame) {
             // Post the vsync event to the Handler.
@@ -967,6 +969,7 @@ public final class Choreographer {
             //所以这里需要通过handler来提交到主线程进行处理
             mTimestampNanos = timestampNanos;
             mFrame = frame;
+			//创建一个Runnable,然后在主线程中会执行对应的run方法
             Message msg = Message.obtain(mHandler, this);
             msg.setAsynchronous(true);
             mHandler.sendMessageAtTime(msg, timestampNanos / TimeUtils.NANOS_PER_MS);

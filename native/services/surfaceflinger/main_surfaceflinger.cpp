@@ -105,16 +105,16 @@ int main(int, char**) {
     if (cpusets_enabled()) set_cpuset_policy(0, SP_SYSTEM);
 
     // initialize before clients can connect
-    //初始化Surfaceflinger对象信息
+    //初始化Surfaceflinger对象信息。位置：SurfaceFlinger.cpp
     flinger->init();
 
     // publish surface flinger
-    //获取一个SM对象
+    //获取一个SM对象，相当于是new BpServiceManager(new BpBinder(0))
     sp<IServiceManager> sm(defaultServiceManager());
 	//向ServiceManager守护进行注册SurfaceFling服务，
     sm->addService(String16(SurfaceFlinger::getServiceName()), flinger, false,
                    IServiceManager::DUMP_FLAG_PRIORITY_CRITICAL | IServiceManager::DUMP_FLAG_PROTO);
-
+	//在SurfaceFlinger调用init方法的时候，会初始化Display的相关信息
     startDisplayService(); // dependency on SF getting registered above
 
     struct sched_param param = {0};
@@ -124,6 +124,7 @@ int main(int, char**) {
     }
 
     // run surface flinger in this thread
+    //运行flinger
     flinger->run();
 
     return 0;

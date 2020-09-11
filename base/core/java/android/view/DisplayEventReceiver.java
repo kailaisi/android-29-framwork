@@ -170,6 +170,9 @@ public abstract class DisplayEventReceiver {
      * Schedules a single vertical sync pulse to be delivered when the next
      * display frame begins.
      */
+     //调度一个垂直帧（底层实现）。当有垂直同步信号来的时候，会调用该类的dispatchVsync方法、
+     //SurfaceFlinger进程收到vsync信号后，转发给请求过的应用，应用的socket接收到vsync，
+     //调用DisplayEventReceiver#dispatchVsync方法，然后就调用了onVsync方法
     @UnsupportedAppUsage
     public void scheduleVsync() {
         if (mReceiverPtr == 0) {
