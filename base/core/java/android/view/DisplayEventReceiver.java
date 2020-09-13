@@ -64,6 +64,8 @@ public abstract class DisplayEventReceiver {
     // GC'd while the native peer of the receiver is using them.
     private MessageQueue mMessageQueue;
 
+
+	//frameworks\base\core\jni\android_view_DisplayEventReceiver.cpp
     private static native long nativeInit(WeakReference<DisplayEventReceiver> receiver,
             MessageQueue messageQueue, int vsyncSource);
     private static native void nativeDispose(long receiverPtr);
@@ -77,6 +79,7 @@ public abstract class DisplayEventReceiver {
      */
     @UnsupportedAppUsage
     public DisplayEventReceiver(Looper looper) {
+    	//这里注册的是VSYNC_SOURCE_APP这种，也就是说是APP层请求的Vsync
         this(looper, VSYNC_SOURCE_APP);
     }
 
@@ -92,8 +95,8 @@ public abstract class DisplayEventReceiver {
         }
 
         mMessageQueue = looper.getQueue();
-        mReceiverPtr = nativeInit(new WeakReference<DisplayEventReceiver>(this), mMessageQueue,
-                vsyncSource);
+		//调用底层初始化，并将本身以及对应的mMessageQueue传入进去
+        mReceiverPtr = nativeInit(new WeakReference<DisplayEventReceiver>(this), mMessageQueue,vsyncSource);
 
         mCloseGuard.open("dispose");
     }

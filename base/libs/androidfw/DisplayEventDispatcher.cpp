@@ -33,19 +33,21 @@ namespace android {
 // using just a few large reads.
 static const size_t EVENT_BUFFER_SIZE = 100;
 
-DisplayEventDispatcher::DisplayEventDispatcher(const sp<Looper>& looper,
-        ISurfaceComposer::VsyncSource vsyncSource) :
+DisplayEventDispatcher::DisplayEventDispatcher(const sp<Looper>& looper,ISurfaceComposer::VsyncSource vsyncSource) :
+        //Vsync的来源传递给了mReceiver。这里相当于调用了mReceiver(DisplayEventReceiver)的构造函数
         mLooper(looper), mReceiver(vsyncSource), mWaitingForVsync(false) {
     ALOGV("dispatcher %p ~ Initializing display event dispatcher.", this);
 }
 
 status_t DisplayEventDispatcher::initialize() {
+	//异常检测
     status_t result = mReceiver.initCheck();
     if (result) {
         ALOGW("Failed to initialize display event receiver, status=%d", result);
         return result;
     }
-
+	//这里的Looper就是应用app进程的主线程Looper，这一步就是将创建的BitTube信道的
+	//fd添加到Looper的监听。这里DisplayEventDispatcher继承了LooperCallback，所以这里的this方法就是指handleEvent
     int rc = mLooper->addFd(mReceiver.getFd(), 0, Looper::EVENT_INPUT,
             this, NULL);
     if (rc < 0) {

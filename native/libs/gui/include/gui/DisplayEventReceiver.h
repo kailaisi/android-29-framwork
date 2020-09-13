@@ -91,6 +91,7 @@ public:
      * To receive Config Changed events specify this in the constructor.
      * Other events start being delivered immediately.
      */
+    //DisplayEventReceiver的主要作用是建立与SurfaceFlinger的连接
     explicit DisplayEventReceiver(
             ISurfaceComposer::VsyncSource vsyncSource = ISurfaceComposer::eVsyncSourceApp,
             ISurfaceComposer::ConfigChanged configChanged =

@@ -135,16 +135,19 @@ sp<Scheduler::ConnectionHandle> Scheduler::createConnection(
         const char* connectionName, nsecs_t phaseOffsetNs, nsecs_t offsetThresholdForNextVsync,
         ResyncCallback resyncCallback,
         impl::EventThread::InterceptVSyncsCallback interceptCallback) {
+    //对应的id，累加的
     const int64_t id = sNextId++;
     ALOGV("Creating a connection handle with ID: %" PRId64 "\n", id);
-
+	//创建一个EventThread,名称为传入的connectionName
     std::unique_ptr<EventThread> eventThread =
             makeEventThread(connectionName, mPrimaryDispSync.get(), phaseOffsetNs,
                             offsetThresholdForNextVsync, std::move(interceptCallback));
-
+	//创建EventThreadConnection
     auto eventThreadConnection =
             createConnectionInternal(eventThread.get(), std::move(resyncCallback),
                                      ISurfaceComposer::eConfigChangedSuppress);
+	//创建ConnectionHandle,入参是id，
+	//然后将创建的connection并存入到map中。key是id。
     mConnections.emplace(id,
                          std::make_unique<Connection>(new ConnectionHandle(id),
                                                       eventThreadConnection,
@@ -166,6 +169,7 @@ std::unique_ptr<EventThread> Scheduler::makeEventThread(
 sp<EventThreadConnection> Scheduler::createConnectionInternal(
         EventThread* eventThread, ResyncCallback&& resyncCallback,
         ISurfaceComposer::ConfigChanged configChanged) {
+        //调用EventThread的方法,创建事件连接器
     return eventThread->createEventConnection(std::move(resyncCallback), configChanged);
 }
 
@@ -173,6 +177,7 @@ sp<IDisplayEventConnection> Scheduler::createDisplayEventConnection(
         const sp<Scheduler::ConnectionHandle>& handle, ResyncCallback resyncCallback,
         ISurfaceComposer::ConfigChanged configChanged) {
     RETURN_VALUE_IF_INVALID(nullptr);
+	//传入了handle.id。能够表明连接是app还是surfaceFlinger
     return createConnectionInternal(mConnections[handle->id]->thread.get(),
                                     std::move(resyncCallback), configChanged);
 }

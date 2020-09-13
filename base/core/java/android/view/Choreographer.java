@@ -110,6 +110,7 @@ public final class Choreographer {
             if (looper == null) {
                 throw new IllegalStateException("The current thread must have a looper!");
             }
+			//注意这里使用的VSYNC_SOURCE_APP
             Choreographer choreographer = new Choreographer(looper, VSYNC_SOURCE_APP);
             if (looper == Looper.getMainLooper()) {
                 mMainInstance = choreographer;
@@ -262,7 +263,7 @@ public final class Choreographer {
         mLooper = looper;
 		//创建消息处理Handler。用不处理对应的
         mHandler = new FrameHandler(looper);
-
+		//这个在创建的时候，vsyncSource传入的是VSYNC_SOURCE_APP 
         mDisplayEventReceiver = USE_VSYNC? new FrameDisplayEventReceiver(looper, vsyncSource): null;
         //上一次帧的绘制时间点。也就是渲染的时间点
         mLastFrameTimeNanos = Long.MIN_VALUE;

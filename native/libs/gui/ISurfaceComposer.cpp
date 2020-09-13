@@ -278,12 +278,12 @@ public:
         return NO_ERROR;
     }
 
-    virtual sp<IDisplayEventConnection> createDisplayEventConnection(VsyncSource vsyncSource,
-                                                                     ConfigChanged configChanged) {
+    virtual sp<IDisplayEventConnection> createDisplayEventConnection(VsyncSource vsyncSource,ConfigChanged configChanged) {
         Parcel data, reply;
         sp<IDisplayEventConnection> result;
-        int err = data.writeInterfaceToken(
-                ISurfaceComposer::getInterfaceDescriptor());
+		//binder机制调用SurfaceFling的createDisplayEventConnection方法
+		//SurfaceFlinger.cpp	frameworks\native\services\surfaceflinger
+        int err = data.writeInterfaceToken(ISurfaceComposer::getInterfaceDescriptor());
         if (err != NO_ERROR) {
             return result;
         }

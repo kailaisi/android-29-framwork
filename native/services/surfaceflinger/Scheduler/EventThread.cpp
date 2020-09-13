@@ -123,6 +123,7 @@ EventThreadConnection::~EventThreadConnection() {
     // when the main thread wakes up
 }
 
+//这个方法，在创建EventThreadConnection的时候就会调用
 void EventThreadConnection::onFirstRef() {
     // NOTE: mEventThread doesn't hold a strong reference on us
     mEventThread->registerDisplayEventConnection(this);
@@ -226,8 +227,9 @@ status_t EventThread::registerDisplayEventConnection(const sp<EventThreadConnect
         mCondition.notify_all();
         return ALREADY_EXISTS;
     }
-
+	//将连接放入到需要通知的列表中。
     mDisplayEventConnections.push_back(connection);
+	//有新的连接了，就需要唤醒AppEventThread线程使能Vsync信号了。
     mCondition.notify_all();
     return NO_ERROR;
 }

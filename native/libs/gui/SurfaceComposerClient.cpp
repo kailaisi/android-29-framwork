@@ -66,12 +66,14 @@ ComposerService::ComposerService()
 
 void ComposerService::connectLocked() {
     const String16 name("SurfaceFlinger");
+	//通过getService方法获取SurfaceFlinger服务，并将获取到的服务保存到mComposerService变量中
     while (getService(name, &mComposerService) != NO_ERROR) {
         usleep(250000);
     }
     assert(mComposerService != nullptr);
 
     // Create the death listener.
+    //创建死亡回调
     class DeathObserver : public IBinder::DeathRecipient {
         ComposerService& mComposerService;
         virtual void binderDied(const wp<IBinder>& who) {
@@ -89,8 +91,9 @@ void ComposerService::connectLocked() {
 
 /*static*/ sp<ISurfaceComposer> ComposerService::getComposerService() {
     ComposerService& instance = ComposerService::getInstance();
-    Mutex::Autolock _l(instance.mLock);
+    Mutex::Autolock _l(instance.mLock);//加锁
     if (instance.mComposerService == nullptr) {
+		//重点方法   获取SurfaceFling服务，并保存在ComposerService中
         ComposerService::getInstance().connectLocked();
         assert(instance.mComposerService != nullptr);
         ALOGD("ComposerService reconnected");

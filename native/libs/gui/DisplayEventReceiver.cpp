@@ -31,14 +31,20 @@
 namespace android {
 
 // ---------------------------------------------------------------------------
-
+////DisplayEventReceiver的主要作用是建立与SurfaceFlinger的连接
 DisplayEventReceiver::DisplayEventReceiver(ISurfaceComposer::VsyncSource vsyncSource,
                                            ISurfaceComposer::ConfigChanged configChanged) {
+    //方法1   	获取SurfaceFling服务,并保存在ComposerService中                             
     sp<ISurfaceComposer> sf(ComposerService::getComposerService());
     if (sf != nullptr) {
+		//方法2   通过binder，最后跨进程调用surfaceFling的createDisplayEventConnection方法
+		//方法位置 ISurfaceComposer.cpp	frameworks\native\libs\gui
         mEventConnection = sf->createDisplayEventConnection(vsyncSource, configChanged);
         if (mEventConnection != nullptr) {
+			//方法3    创建的gui::BitTube对象
             mDataChannel = std::make_unique<gui::BitTube>();
+			//方法4	 将surfaceFling中创建的connection的ReceiveFd复制给mDataChannel。这样相当于app的EventReceiver持有了fd文件
+			//而SurfaceFlinger持有了mSendFd文件，二者通过socket就可以实现通讯了
             mEventConnection->stealReceiveChannel(mDataChannel.get());
         }
     }

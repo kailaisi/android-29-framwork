@@ -624,15 +624,16 @@ void SurfaceFlinger::init() {
     //启动EventThread
     mScheduler = getFactory().createScheduler([this](bool enabled) { setPrimaryVsyncEnabled(enabled); },
                                          mRefreshRateConfigs);
+	//ResyncCallback
     auto resyncCallback = mScheduler->makeResyncCallback(std::bind(&SurfaceFlinger::getVsyncPeriod, this));
 
-	//App-
+	//通过createConnection创建应用app使用的ConnectionHandler
     mAppConnectionHandle =
             mScheduler->createConnection("app", mVsyncModulator.getOffsets().app,
                                          mPhaseOffsets->getOffsetThresholdForNextVsync(),
                                          resyncCallback,
                                          impl::EventThread::InterceptVSyncsCallback());
-	//Sf  sf和EventThread的关联
+	//创建SurfaceFling使用的ConnectionHandler
     mSfConnectionHandle =
             mScheduler->createConnection("sf", mVsyncModulator.getOffsets().sf,
                                          mPhaseOffsets->getOffsetThresholdForNextVsync(),
@@ -771,7 +772,8 @@ void SurfaceFlinger::readPersistentProperties() {
     mForceColorMode = static_cast<ColorMode>(atoi(value));
 }
 
-void SurfaceFlinger::startBootAnim() {
+void SurfaceFlinger::startBootAnim() { 
+
     // Start boot animation service by setting a property mailbox
     // if property setting thread is already running, Start() will be just a NOP
     mStartPropertySetThread->Start();
@@ -1411,17 +1413,18 @@ status_t SurfaceFlinger::notifyPowerHint(int32_t hintId) {
 }
 
 // ----------------------------------------------------------------------------
-
+//创建显示事件连接
 sp<IDisplayEventConnection> SurfaceFlinger::createDisplayEventConnection(
         ISurfaceComposer::VsyncSource vsyncSource, ISurfaceComposer::ConfigChanged configChanged) {
+    //makeResyncCallback是一个方法，定义在EventThread.h中。using ResyncCallback = std::function<void()>;
+    //创建一个resyncCallback
     auto resyncCallback = mScheduler->makeResyncCallback([this] {
         Mutex::Autolock lock(mStateLock);
         return getVsyncPeriod();
     });
-
-    const auto& handle =
-            vsyncSource == eVsyncSourceSurfaceFlinger ? mSfConnectionHandle : mAppConnectionHandle;
-
+	//根据传入的Vsync类型，返回不同的Handler。如果是应用中注册的，则返回mAppConnectionHandle
+    const auto& handle = vsyncSource == eVsyncSourceSurfaceFlinger ? mSfConnectionHandle : mAppConnectionHandle;
+	//调用createDisplayEventConnection，传入了对应的handle,mScheduler是Scheduler.cpp结构体
     return mScheduler->createDisplayEventConnection(handle, std::move(resyncCallback),
                                                     configChanged);
 }

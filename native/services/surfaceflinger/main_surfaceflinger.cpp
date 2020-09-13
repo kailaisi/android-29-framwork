@@ -74,7 +74,7 @@ static status_t startDisplayService() {
 
 int main(int, char**) {
     signal(SIGPIPE, SIG_IGN);
-
+	//初始化硬件的RPC的线程池信息
     hardware::configureRpcThreadpool(1 /* maxThreads */,
             false /* callerWillJoin */);
 
@@ -92,7 +92,8 @@ int main(int, char**) {
     ps->startThreadPool();
 
     // instantiate surfaceflinger
-    //创建Surfaceflinger
+    //通过工厂方法，创建Surfaceflinger。这里会初始化很多线程信息。
+    //这里使用了sp强指针，而且SurfaceFlinger->DeathRecipient->RefBase的继承关系，所以在赋值给sp指针后，会立即调用其onFirstRef方法
     sp<SurfaceFlinger> flinger = surfaceflinger::createSurfaceFlinger();
 	//设置Surfaceflinger的优先级
     setpriority(PRIO_PROCESS, 0, PRIORITY_URGENT_DISPLAY);
@@ -124,7 +125,7 @@ int main(int, char**) {
     }
 
     // run surface flinger in this thread
-    //运行flinger
+    //运行flinger。这里并不是Thread的start方法哦，只是个run方法
     flinger->run();
 
     return 0;

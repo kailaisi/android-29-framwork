@@ -48,6 +48,7 @@ void BitTube::init(size_t rcvbuf, size_t sndbuf) {
     int sockets[2];
     if (socketpair(AF_UNIX, SOCK_SEQPACKET, 0, sockets) == 0) {
         size_t size = DEFAULT_SOCKET_BUFFER_SIZE;
+		//创建对应一对socket：0和1，一个用来读，一个用来写。
         setsockopt(sockets[0], SOL_SOCKET, SO_RCVBUF, &rcvbuf, sizeof(rcvbuf));
         setsockopt(sockets[1], SOL_SOCKET, SO_SNDBUF, &sndbuf, sizeof(sndbuf));
         // since we don't use the "return channel", we keep it small...
@@ -55,6 +56,8 @@ void BitTube::init(size_t rcvbuf, size_t sndbuf) {
         setsockopt(sockets[1], SOL_SOCKET, SO_RCVBUF, &size, sizeof(size));
         fcntl(sockets[0], F_SETFL, O_NONBLOCK);
         fcntl(sockets[1], F_SETFL, O_NONBLOCK);
+		//将mReceiveFd文件和socket进行绑定。当Vsync到来的时候，会通过mSendFd文件来写入消息，通过socket对app文件的消息写入监听，
+		//完成了对Vsync信号的监听
         mReceiveFd.reset(sockets[0]);
         mSendFd.reset(sockets[1]);
     } else {

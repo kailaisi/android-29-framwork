@@ -69,6 +69,7 @@ private:
 
 NativeDisplayEventReceiver::NativeDisplayEventReceiver(JNIEnv* env,
         jobject receiverWeak, const sp<MessageQueue>& messageQueue, jint vsyncSource) :
+        //继承了DisplayEventDispatcher，并传入了对应的messagequeue，将vsyncSource转化为了底层使用的变量
         DisplayEventDispatcher(messageQueue->getLooper(),
                 static_cast<ISurfaceComposer::VsyncSource>(vsyncSource)),
         mReceiverWeakGlobal(env->NewGlobalRef(receiverWeak)),
@@ -137,18 +138,20 @@ void NativeDisplayEventReceiver::dispatchConfigChanged(nsecs_t timestamp,
 
 static jlong nativeInit(JNIEnv* env, jclass clazz, jobject receiverWeak,
         jobject messageQueueObj, jint vsyncSource) {
+    //申请对应的MessageQueue
     sp<MessageQueue> messageQueue = android_os_MessageQueue_getMessageQueue(env, messageQueueObj);
     if (messageQueue == NULL) {
         jniThrowRuntimeException(env, "MessageQueue is not initialized.");
         return 0;
     }
-
+	//重点方法1       创建NativeDisplayEventReceiver
     sp<NativeDisplayEventReceiver> receiver = new NativeDisplayEventReceiver(env,
             receiverWeak, messageQueue, vsyncSource);
+	//重点方法2        进行初始化NativeDisplayEventReceiver,并返回对应的初始化结果
     status_t status = receiver->initialize();
-    if (status) {
-        String8 message;
-        message.appendFormat("Failed to initialize display event receiver.  status=%d", status);
+    if (status) {//初始化出现异常
+        String8 message;led to initialize display event receiver.  status
+        message.appendFormat("Fai=%d", status);
         jniThrowRuntimeException(env, message.string());
         return 0;
     }
