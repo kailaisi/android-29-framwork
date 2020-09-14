@@ -102,12 +102,14 @@ ssize_t BitTube::write(void const* vaddr, size_t size) {
 ssize_t BitTube::read(void* vaddr, size_t size) {
     ssize_t err, len;
     do {
+		//将mReceiveFd接收到的数据，放入到size大小的vaddr缓冲区。并返回实际接收到的数据大小len
         len = ::recv(mReceiveFd, vaddr, size, MSG_DONTWAIT);
         err = len < 0 ? errno : 0;
     } while (err == EINTR);
     if (err == EAGAIN || err == EWOULDBLOCK) {
         // EAGAIN means that we have non-blocking I/O but there was no data to be read. Nothing the
         // client should care about.
+        //如果接收出现异常，返回0
         return 0;
     }
     return err == 0 ? len : -err;
@@ -148,6 +150,7 @@ ssize_t BitTube::sendObjects(BitTube* tube, void const* events, size_t count, si
 
 ssize_t BitTube::recvObjects(BitTube* tube, void* events, size_t count, size_t objSize) {
     char* vaddr = reinterpret_cast<char*>(events);
+	//通过socket读取数据
     ssize_t size = tube->read(vaddr, count * objSize);
 
     // should never happen because of SOCK_SEQPACKET

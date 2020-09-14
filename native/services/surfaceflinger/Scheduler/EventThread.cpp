@@ -260,10 +260,12 @@ void EventThread::requestNextVsync(const sp<EventThreadConnection>& connection) 
     if (connection->resyncCallback) {
         connection->resyncCallback();
     }
-
+	//线程锁机制
     std::lock_guard<std::mutex> lock(mMutex);
-
+	//vsyncRequest默认值是None.定义在EventThread.h文件中
     if (connection->vsyncRequest == VSyncRequest::None) {
+		//之所以Vsync是一次性的，是因为，当我们当前是None之后，会将这个字段设置为Single。
+		//后续硬件再有Vsync信号过来的时候，不会再执行这个方法
         connection->vsyncRequest = VSyncRequest::Single;
         mCondition.notify_all();
     }

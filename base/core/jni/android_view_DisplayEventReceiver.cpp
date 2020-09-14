@@ -170,6 +170,7 @@ static void nativeDispose(JNIEnv* env, jclass clazz, jlong receiverPtr) {
 static void nativeScheduleVsync(JNIEnv* env, jclass clazz, jlong receiverPtr) {
     sp<NativeDisplayEventReceiver> receiver =
             reinterpret_cast<NativeDisplayEventReceiver*>(receiverPtr);
+	//调用Recivier的调度方法
     status_t status = receiver->scheduleVsync();
     if (status) {
         String8 message;

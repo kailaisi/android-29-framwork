@@ -64,7 +64,9 @@ void DisplayEventDispatcher::dispose() {
     }
 }
 
+//调度Vsync
 status_t DisplayEventDispatcher::scheduleVsync() {
+	//如果当前正在等待Vsync信号，那么直接返回
     if (!mWaitingForVsync) {
         ALOGV("dispatcher %p ~ Scheduling vsync.", this);
 
@@ -72,17 +74,18 @@ status_t DisplayEventDispatcher::scheduleVsync() {
         nsecs_t vsyncTimestamp;
         PhysicalDisplayId vsyncDisplayId;
         uint32_t vsyncCount;
+		//重点方法1   处理对应的准备事件，如果获取到了Vsync信号的话，这里会返回true
         if (processPendingEvents(&vsyncTimestamp, &vsyncDisplayId, &vsyncCount)) {
             ALOGE("dispatcher %p ~ last event processed while scheduling was for %" PRId64 "",
                     this, ns2ms(static_cast<nsecs_t>(vsyncTimestamp)));
         }
-
+		//重点方法2   请求下一个Vsync信号
         status_t status = mReceiver.requestNextVsync();
         if (status) {
             ALOGW("Failed to request next vsync, status=%d", status);
             return status;
         }
-
+		//设置正在等待Vsync信号
         mWaitingForVsync = true;
     }
     return OK;
@@ -119,16 +122,19 @@ int DisplayEventDispatcher::handleEvent(int, int events, void*) {
 bool DisplayEventDispatcher::processPendingEvents(
         nsecs_t* outTimestamp, PhysicalDisplayId* outDisplayId, uint32_t* outCount) {
     bool gotVsync = false;
+	//创建一个buff
     DisplayEventReceiver::Event buf[EVENT_BUFFER_SIZE];
     ssize_t n;
+	//获取对应的事件
     while ((n = mReceiver.getEvents(buf, EVENT_BUFFER_SIZE)) > 0) {
         ALOGV("dispatcher %p ~ Read %d events.", this, int(n));
         for (ssize_t i = 0; i < n; i++) {
             const DisplayEventReceiver::Event& ev = buf[i];
             switch (ev.header.type) {
-            case DisplayEventReceiver::DISPLAY_EVENT_VSYNC:
+            case DisplayEventReceiver::DISPLAY_EVENT_VSYNC://Vsync类型
                 // Later vsync events will just overwrite the info from earlier
                 // ones. That's fine, we only care about the most recent.
+                //获取到最新的Vsync信号，然后将时间戳等信息保存下来
                 gotVsync = true;
                 *outTimestamp = ev.header.timestamp;
                 *outDisplayId = ev.header.displayId;

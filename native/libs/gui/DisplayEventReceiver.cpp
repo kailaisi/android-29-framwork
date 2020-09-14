@@ -78,7 +78,10 @@ status_t DisplayEventReceiver::setVsyncRate(uint32_t count) {
 }
 
 status_t DisplayEventReceiver::requestNextVsync() {
+	//校验当前连接存在
     if (mEventConnection != nullptr) {
+		//通过连接请求下一个Vsync信号。这个mEventConnection。是在DisplayEventReceiver初始化的时候创建的
+		//具体的是EventThreadConnection（位于EventThread中）
         mEventConnection->requestNextVsync();
         return NO_ERROR;
     }
@@ -86,8 +89,8 @@ status_t DisplayEventReceiver::requestNextVsync() {
 }
 
 
-ssize_t DisplayEventReceiver::getEvents(DisplayEventReceiver::Event* events,
-        size_t count) {
+ssize_t DisplayEventReceiver::getEvents(DisplayEventReceiver::Event* events,size_t count) {
+	//这里的mDataChannel是在init中创建的，用来接收Vsync信号
     return DisplayEventReceiver::getEvents(mDataChannel.get(), events, count);
 }
 
