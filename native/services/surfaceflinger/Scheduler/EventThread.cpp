@@ -173,9 +173,10 @@ EventThread::EventThread(VSyncSource* src, std::unique_ptr<VSyncSource> uniqueSr
         mVSyncSource = mVSyncSourceUnique.get();
     }
     mVSyncSource->setCallback(this);
-
+	//创建了mThread线程
     mThread = std::thread([this]() NO_THREAD_SAFETY_ANALYSIS {
         std::unique_lock<std::mutex> lock(mMutex);
+		//创建线程的时候调用了threadMain函数
         threadMain(lock);
     });
 
