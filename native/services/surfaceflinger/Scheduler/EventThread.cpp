@@ -218,7 +218,8 @@ sp<EventThreadConnection> EventThread::createEventConnection(
 }
 
 status_t EventThread::registerDisplayEventConnection(const sp<EventThreadConnection>& connection) {
-    std::lock_guard<std::mutex> lock(mMutex);
+    std::lock_guard<std::mutex> lock(mMutex)
+		
 
     // this should never happen
     auto it = std::find(mDisplayEventConnections.cbegin(),
@@ -314,9 +315,10 @@ void EventThread::onConfigChanged(PhysicalDisplayId displayId, int32_t configId)
     mCondition.notify_all();
 }
 
+//在创建EventThread的时候会调用该方法。会不断的遍历
 void EventThread::threadMain(std::unique_lock<std::mutex>& lock) {
     DisplayEventConsumers consumers;
-
+	//只要没有退出，则一直遍历循环
     while (mState != State::Quit) {
         std::optional<DisplayEventReceiver::Event> event;
 
@@ -362,6 +364,7 @@ void EventThread::threadMain(std::unique_lock<std::mutex>& lock) {
         }
 
         if (!consumers.empty()) {
+			//进行事件的分发。最终会调用gui::BitTube::sendObjects函数
             dispatchEvent(*event, consumers);
             consumers.clear();
         }
@@ -389,6 +392,7 @@ void EventThread::threadMain(std::unique_lock<std::mutex>& lock) {
         }
 
         // Wait for event or client registration/request.
+        //空闲状态，则等待事件请求
         if (mState == State::Idle) {
             mCondition.wait(lock);
         } else {
