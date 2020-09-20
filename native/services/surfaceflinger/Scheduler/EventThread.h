@@ -154,7 +154,7 @@ public:
 
 private:
     friend EventThreadTest;
-
+	//vector对象，
     using DisplayEventConsumers = std::vector<sp<EventThreadConnection>>;
 
     // TODO(b/128863962): Once the Scheduler is complete this constructor will become obsolete.
@@ -184,8 +184,10 @@ private:
     std::thread mThread;
     mutable std::mutex mMutex;
     mutable std::condition_variable mCondition;
-
+	//vector，里面保存了EventThreadConnection。存储了所有和SurfaceFlinger进程建立了连接的connection
     std::vector<wp<EventThreadConnection>> mDisplayEventConnections GUARDED_BY(mMutex);
+	//deque队列
+	//GUARDED_BY，用来保证线程安全，类似于java的同步锁Synchronized
     std::deque<DisplayEventReceiver::Event> mPendingEvents GUARDED_BY(mMutex);
 
     // VSYNC state of connected display.
@@ -206,7 +208,7 @@ private:
     std::optional<VSyncState> mVSyncState GUARDED_BY(mMutex);
 
     // State machine for event loop.
-    enum class State {
+    enum class State {//EventThread的线程状态
         Idle,
         Quit,
         SyntheticVSync,

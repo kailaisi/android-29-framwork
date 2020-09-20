@@ -172,6 +172,7 @@ EventThread::EventThread(VSyncSource* src, std::unique_ptr<VSyncSource> uniqueSr
     if (src == nullptr) {
         mVSyncSource = mVSyncSourceUnique.get();
     }
+	//设置回调，回调方法就是onVSyncEvent
     mVSyncSource->setCallback(this);
 	//创建了mThread线程
     mThread = std::thread([this]() NO_THREAD_SAFETY_ANALYSIS {
@@ -317,16 +318,19 @@ void EventThread::onConfigChanged(PhysicalDisplayId displayId, int32_t configId)
 
 //在创建EventThread的时候会调用该方法。会不断的遍历
 void EventThread::threadMain(std::unique_lock<std::mutex>& lock) {
+	//用于存储所有请求了Vsync的connection。
     DisplayEventConsumers consumers;
 	//只要没有退出，则一直遍历循环
     while (mState != State::Quit) {
+		//待分发的Event
         std::optional<DisplayEventReceiver::Event> event;
 
         // Determine next event to dispatch.
         if (!mPendingEvents.empty()) {
+			//头部
             event = mPendingEvents.front();
             mPendingEvents.pop_front();
-
+			//根据Event的类型进行不同的处理。
             switch (event->header.type) {
                 case DisplayEventReceiver::DISPLAY_EVENT_HOTPLUG:
                     if (event->hotplug.connected && !mVSyncState) {
@@ -345,20 +349,24 @@ void EventThread::threadMain(std::unique_lock<std::mutex>& lock) {
             }
         }
 
+		//是否有Vsync请求
         bool vsyncRequested = false;
 
         // Find connections that should consume this event.
+        //查询所有的连接，其实这里一个连接就是一个监听
         auto it = mDisplayEventConnections.begin();
         while (it != mDisplayEventConnections.end()) {
             if (const auto connection = it->promote()) {
+				//如果一个connection的vsyncRequest不是NONE，则表明vsyncReques是true
                 vsyncRequested |= connection->vsyncRequest != VSyncRequest::None;
-
+				//遍历，将需要通知的监听放入到consumers中
                 if (event && shouldConsumeEvent(*event, connection)) {
                     consumers.push_back(connection);
                 }
 
                 ++it;
             } else {
+				//connetions已经销毁的话，则直接移除
                 it = mDisplayEventConnections.erase(it);
             }
         }
@@ -440,6 +448,7 @@ bool EventThread::shouldConsumeEvent(const DisplayEventReceiver::Event& event,
 
 void EventThread::dispatchEvent(const DisplayEventReceiver::Event& event,
                                 const DisplayEventConsumers& consumers) {
+    //这里的DisplayEventConsumers是vector，内部保存的是EventThreadConnection。                            
     for (const auto& consumer : consumers) {
         switch (consumer->postEvent(event)) {
             case NO_ERROR:

@@ -103,6 +103,7 @@ ssize_t DisplayEventReceiver::getEvents(gui::BitTube* dataChannel,
 ssize_t DisplayEventReceiver::sendEvents(gui::BitTube* dataChannel,
         Event const* events, size_t count)
 {
+	//这里会发送Vsync信号，往BitTube所对应的
     return gui::BitTube::sendObjects(dataChannel, events, count);
 }
 
