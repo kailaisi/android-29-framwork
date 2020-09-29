@@ -47,7 +47,8 @@ status_t DisplayEventDispatcher::initialize() {
         return result;
     }
 	//这里的Looper就是应用app进程的主线程Looper，这一步就是将创建的BitTube信道的
-	//fd添加到Looper的监听。这里DisplayEventDispatcher继承了LooperCallback，所以这里的this方法就是指handleEvent
+	//这里DisplayEventDispatcher继承了LooperCallback，所以这里的this方法就是指handleEvent
+	//fd添加到Looper的监听。所以当fd文件符的数据发生变化的时候，会自动调用handleEvent方法
     int rc = mLooper->addFd(mReceiver.getFd(), 0, Looper::EVENT_INPUT,
             this, NULL);
     if (rc < 0) {
@@ -79,7 +80,7 @@ status_t DisplayEventDispatcher::scheduleVsync() {
             ALOGE("dispatcher %p ~ last event processed while scheduling was for %" PRId64 "",
                     this, ns2ms(static_cast<nsecs_t>(vsyncTimestamp)));
         }
-		//重点方法2   请求下一个Vsync信号
+		//重点方法2   请求下一个Vsync信号。
         status_t status = mReceiver.requestNextVsync();
         if (status) {
             ALOGW("Failed to request next vsync, status=%d", status);
@@ -91,6 +92,7 @@ status_t DisplayEventDispatcher::scheduleVsync() {
     return OK;
 }
 
+//mReceiveFd能接收到对应写入的数据，然后调用此方法。
 int DisplayEventDispatcher::handleEvent(int, int events, void*) {
     if (events & (Looper::EVENT_ERROR | Looper::EVENT_HANGUP)) {
         ALOGE("Display event receiver pipe was closed or an error occurred.  "
@@ -112,7 +114,9 @@ int DisplayEventDispatcher::handleEvent(int, int events, void*) {
         ALOGV("dispatcher %p ~ Vsync pulse: timestamp=%" PRId64 ", displayId=%"
                 ANDROID_PHYSICAL_DISPLAY_ID_FORMAT ", count=%d",
                 this, ns2ms(vsyncTimestamp), vsyncDisplayId, vsyncCount);
+		//这里已经获取到一个Vsync信息，所以将正在等待Vsync标志位置为false。
         mWaitingForVsync = false;
+		//进行分发。这个的具体是现在DisplayEventDispater（android_view_DisplayEventReceiver中定义的）的子类NativeDisplayEventReceiver中
         dispatchVsync(vsyncTimestamp, vsyncDisplayId, vsyncCount);
     }
 

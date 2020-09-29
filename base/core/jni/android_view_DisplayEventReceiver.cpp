@@ -90,11 +90,14 @@ void NativeDisplayEventReceiver::dispose() {
 
 void NativeDisplayEventReceiver::dispatchVsync(nsecs_t timestamp, PhysicalDisplayId displayId,
                                                uint32_t count) {
+    //JNI的上下文环境                                           
     JNIEnv* env = AndroidRuntime::getJNIEnv();
-
+	//这里的mReceiverWeakGlobal
     ScopedLocalRef<jobject> receiverObj(env, jniGetReferent(env, mReceiverWeakGlobal));
     if (receiverObj.get()) {
         ALOGV("receiver %p ~ Invoking vsync handler.", this);
+		//通过JNI方法，调用dispatchVsync方法，参数传入了对应的时间戳、显示屏和对应的Vsync的个数
+		//实际上就是DisplayEventReceiver的dispatchVsync方法
         env->CallVoidMethod(receiverObj.get(),
                 gDisplayEventReceiverClassInfo.dispatchVsync, timestamp, displayId, count);
         ALOGV("receiver %p ~ Returned from vsync handler.", this);
@@ -193,6 +196,7 @@ static const JNINativeMethod gMethods[] = {
             (void*)nativeScheduleVsync }
 };
 
+//JNI的动态注册
 int register_android_view_DisplayEventReceiver(JNIEnv* env) {
     int res = RegisterMethodsOrDie(env, "android/view/DisplayEventReceiver", gMethods,
                                    NELEM(gMethods));

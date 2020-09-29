@@ -92,7 +92,8 @@ public abstract class DisplayEventReceiver {
     public DisplayEventReceiver(Looper looper, int vsyncSource) {
         if (looper == null) {
             throw new IllegalArgumentException("looper must not be null");
-        }
+        }  
+		
 
         mMessageQueue = looper.getQueue();
 		//调用底层初始化，并将本身以及对应的mMessageQueue传入进去

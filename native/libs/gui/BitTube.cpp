@@ -136,6 +136,8 @@ status_t BitTube::readFromParcel(const Parcel* parcel) {
 
 ssize_t BitTube::sendObjects(BitTube* tube, void const* events, size_t count, size_t objSize) {
     const char* vaddr = reinterpret_cast<const char*>(events);
+	//往vaddr中写数据。当mSendFd写入文件以后以后,与之对应的mReceiveFd则能接收到数据。
+	//然后mReceiveFd则会调用对应的回调函数
     ssize_t size = tube->write(vaddr, count * objSize);
 
     // should never happen because of SOCK_SEQPACKET
