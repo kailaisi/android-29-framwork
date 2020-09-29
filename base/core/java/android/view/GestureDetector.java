@@ -61,7 +61,7 @@ public class GestureDetector {
          * Notified when a tap occurs with the down {@link MotionEvent}
          * that triggered it. This will be triggered immediately for
          * every down event. All other events should be preceded by this.
-         *
+         *	每次按下时触发
          * @param e The down motion event.
          */
         boolean onDown(MotionEvent e);
@@ -71,7 +71,7 @@ public class GestureDetector {
          * a move or up yet. This event is commonly used to provide visual
          * feedback to the user to let them know that their action has been
          * recognized i.e. highlight an element.
-         *
+         *	用于显示按下事件已经触发了。180ms如果没有滑动或者松开，则会给客户一个视觉效果，来表示触发了对应的点击事件。
          * @param e The down motion event
          */
         void onShowPress(MotionEvent e);
@@ -105,7 +105,7 @@ public class GestureDetector {
         /**
          * Notified when a long press occurs with the initial on down {@link MotionEvent}
          * that trigged it.
-         *
+         *	长按触发
          * @param e The initial on down motion event that started the longpress.
          */
         void onLongPress(MotionEvent e);
@@ -405,6 +405,7 @@ public class GestureDetector {
             mHandler = new GestureHandler();
         }
         mListener = listener;
+		//这里一个类可能同时继承了多个接口，所以也会存在listener也实现了OnDoubleTapListener的情况
         if (listener instanceof OnDoubleTapListener) {
             setOnDoubleTapListener((OnDoubleTapListener) listener);
         }
