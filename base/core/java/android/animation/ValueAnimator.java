@@ -1055,6 +1055,7 @@ public class ValueAnimator extends Animator implements AnimationHandler.Animatio
                 mSeekFraction = 1 + mRepeatCount - mSeekFraction;
             }
         }
+		//启动动画
         mStarted = true;
         mPaused = false;
         mRunning = false;
@@ -1065,13 +1066,16 @@ public class ValueAnimator extends Animator implements AnimationHandler.Animatio
         mLastFrameTime = -1;
         mFirstFrameTime = -1;
         mStartTime = -1;
+		//添加执行的动画列表。
         addAnimationCallback(0);
 
         if (mStartDelay == 0 || mSeekFraction >= 0 || mReversing) {
             // If there's no start delay, init the animation and notify start listeners right away
             // to be consistent with the previous behavior. Otherwise, postpone this until the first
             // frame after the start delay.
+            //立即执行
             startAnimation();
+			//设置当前执行的帧
             if (mSeekFraction == -1) {
                 // No seek, start at play time 0. Note that the reason we are not using fraction 0
                 // is because for animations with 0 duration, we want to be consistent with pre-N
@@ -1261,6 +1265,7 @@ public class ValueAnimator extends Animator implements AnimationHandler.Animatio
         }
 
         mAnimationEndRequested = false;
+		//进行初始化
         initAnimation();
         mRunning = true;
         if (mSeekFraction >= 0) {
@@ -1269,6 +1274,7 @@ public class ValueAnimator extends Animator implements AnimationHandler.Animatio
             mOverallFraction = 0f;
         }
         if (mListeners != null) {
+			//调用回调方法，onStart
             notifyStartListeners();
         }
     }

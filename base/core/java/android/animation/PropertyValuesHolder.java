@@ -35,6 +35,7 @@ import java.util.List;
  * animations with ValueAnimator or ObjectAnimator that operate on several different properties
  * in parallel.
  */
+ //属性动画核心类，用于保存轮要处理的类属性和对应的get\set方法
 public class PropertyValuesHolder implements Cloneable {
 
     /**
@@ -75,6 +76,7 @@ public class PropertyValuesHolder implements Cloneable {
     /**
      * The set of keyframes (time/value pairs) that define this animation.
      */
+     //执行的属性集合
     Keyframes mKeyframes = null;
 
 
@@ -1202,6 +1204,7 @@ public class PropertyValuesHolder implements Cloneable {
             mIntKeyframes = (Keyframes.IntKeyframes) mKeyframes;
         }
 
+		//计算某个时刻的属性值
         @Override
         void calculateValue(float fraction) {
             mIntAnimatedValue = mIntKeyframes.getIntValue(fraction);
@@ -1226,6 +1229,7 @@ public class PropertyValuesHolder implements Cloneable {
          * according to the name of the property.
          * @param target The target object on which the value is set
          */
+         //设置动画目标值
         @Override
         void setAnimatedValue(Object target) {
             if (mIntProperty != null) {

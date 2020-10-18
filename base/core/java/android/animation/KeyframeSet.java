@@ -55,6 +55,7 @@ public class KeyframeSet implements Keyframes {
         return mKeyframes;
     }
 
+	//根据属性值保存具体的list数据
     public static KeyframeSet ofInt(int... values) {
         int numKeyframes = values.length;
         IntKeyframe keyframes[] = new IntKeyframe[Math.max(numKeyframes,2)];
