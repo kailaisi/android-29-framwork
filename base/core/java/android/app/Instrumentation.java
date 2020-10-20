@@ -71,6 +71,7 @@ import java.util.List;
  * implementation is described to the system through an AndroidManifest.xml's
  * &lt;instrumentation&gt; tag.
  */
+ //主要负责用户生命周期的管理和对应的app，activity的创建等工作
 public class Instrumentation {
 
     /**

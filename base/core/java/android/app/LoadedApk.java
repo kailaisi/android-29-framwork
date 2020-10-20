@@ -1214,9 +1214,10 @@ public final class LoadedApk {
                 initializeJavaContextClassLoader();
                 Trace.traceEnd(Trace.TRACE_TAG_ACTIVITY_MANAGER);
             }
+			//创建对应的ContextImpl
             ContextImpl appContext = ContextImpl.createAppContext(mActivityThread, this);
-            app = mActivityThread.mInstrumentation.newApplication(
-                    cl, appClass, appContext);
+			//创建application
+            app = mActivityThread.mInstrumentation.newApplication(cl, appClass, appContext);
             appContext.setOuterContext(app);
         } catch (Exception e) {
             if (!mActivityThread.mInstrumentation.onException(app, e)) {

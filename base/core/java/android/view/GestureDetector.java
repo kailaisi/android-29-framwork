@@ -293,6 +293,7 @@ public class GestureDetector {
             InputEventConsistencyVerifier.isInstrumentationEnabled() ?
                     new InputEventConsistencyVerifier(this, 0) : null;
 
+	//手势处理使用的Handler
     private class GestureHandler extends Handler {
         GestureHandler() {
             super();
@@ -402,6 +403,9 @@ public class GestureDetector {
         if (handler != null) {
             mHandler = new GestureHandler(handler);
         } else {
+        	//如果不给的话，那么这里的handler其实是GestureDector构造函数所在的线程，
+        	//如果是子线程，那么Handler必须先调用Looper.prepare()
+        	//而且对应的点击listener也是在子线程。
             mHandler = new GestureHandler();
         }
         mListener = listener;
@@ -434,6 +438,7 @@ public class GestureDetector {
     }
 
     private void init(Context context) {
+    	//OnGestureListener入参是必须的
         if (mListener == null) {
             throw new NullPointerException("OnGestureListener must not be null");
         }
@@ -536,27 +541,31 @@ public class GestureDetector {
 
         // Determine focal point
         float sumX = 0, sumY = 0;
+		//触摸点数
         final int count = ev.getPointerCount();
         for (int i = 0; i < count; i++) {
             if (skipIndex == i) continue;
             sumX += ev.getX(i);
             sumY += ev.getY(i);
         }
+		//数量
         final int div = pointerUp ? count - 1 : count;
+		//平均值
         final float focusX = sumX / div;
         final float focusY = sumY / div;
 
         boolean handled = false;
 
         switch (action & MotionEvent.ACTION_MASK) {
-            case MotionEvent.ACTION_POINTER_DOWN:
+            case MotionEvent.ACTION_POINTER_DOWN://按下
                 mDownFocusX = mLastFocusX = focusX;
                 mDownFocusY = mLastFocusY = focusY;
                 // Cancel long press and taps
+                //取消长按和tap
                 cancelTaps();
                 break;
 
-            case MotionEvent.ACTION_POINTER_UP:
+            case MotionEvent.ACTION_POINTER_UP://抬起
                 mDownFocusX = mLastFocusX = focusX;
                 mDownFocusY = mLastFocusY = focusY;
 
