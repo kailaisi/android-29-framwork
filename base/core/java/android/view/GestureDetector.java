@@ -79,10 +79,12 @@ public class GestureDetector {
         /**
          * Notified when a tap occurs with the up {@link MotionEvent}
          * that triggered it.
-         *
+         * 一次单独的轻敲。
          * @param e The up motion event that completed the first tap
          * @return true if the event is consumed, else false
          */
+         //快速敲击：onDown->onSingleTapUp->onSingleTapConfirmed
+         //缓慢敲击：onDown->onShowPress->onSingleTapUp->onSingleTapConfirmed
         boolean onSingleTapUp(MotionEvent e);
 
         /**
@@ -99,7 +101,11 @@ public class GestureDetector {
          *              call to onScroll. This is NOT the distance between {@code e1}
          *              and {@code e2}.
          * @return true if the event is consumed, else false
+         * 
          */
+         //屏幕滑动，或者快速滑动后松开，会调用此方法。
+         //手指缓慢移动：onDown->onShowPress->多个onScroll
+         //手指快速略过：onDown->多个onScroll->onFling
         boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY);
 
         /**
@@ -108,6 +114,7 @@ public class GestureDetector {
          *	长按触发
          * @param e The initial on down motion event that started the longpress.
          */
+         //手指在屏幕上长按触发这个方法
         void onLongPress(MotionEvent e);
 
         /**
@@ -123,6 +130,7 @@ public class GestureDetector {
          *              along the y axis.
          * @return true if the event is consumed, else false
          */
+         //手指快速在屏幕上略过（快速滑动后松开）
         boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY);
     }
 
@@ -142,6 +150,10 @@ public class GestureDetector {
          * @param e The down motion event of the single-tap.
          * @return true if the event is consumed, else false
          */
+         //手指在屏幕上单击时，执行的方法
+    //onSingleTapUp方法和onSingleConfirmed方法的区别是：不管是双击还是单击，手机离开屏幕的第一次，
+	//都会触发onSingleUp方法，如果手指单击屏幕，则会触发onSingleConfirmed方法，用于确定这次的手势就是单击
+	//如果手指双击屏幕，则不会触发onSinlgeConfirmed方法
         boolean onSingleTapConfirmed(MotionEvent e);
  
         /**
@@ -150,6 +162,8 @@ public class GestureDetector {
          * @param e The down motion event of the first tap of the double-tap.
          * @return true if the event is consumed, else false
          */
+         //双击屏幕时执行的方法。
+         //触发顺序：onDown->onSingleTapUp->onDouleUp
         boolean onDoubleTap(MotionEvent e);
 
         /**
@@ -159,6 +173,7 @@ public class GestureDetector {
          * @param e The motion event that occurred during the double-tap gesture.
          * @return true if the event is consumed, else false
          */
+         //当手指双击屏幕时，如果在onDoubleUp方法触发后发生了down,move,up等事件，则会执行这个方法
         boolean onDoubleTapEvent(MotionEvent e);
     }
 
@@ -167,6 +182,7 @@ public class GestureDetector {
      * context click ensure that you call {@link #onGenericMotionEvent(MotionEvent)} in
      * {@link View#onGenericMotionEvent(MotionEvent)}.
      */
+     //监听外部设备的手势
     public interface OnContextClickListener {
         /**
          * Notified when a context click occurs.
@@ -247,9 +263,12 @@ public class GestureDetector {
     private static final int TAP = 3;
 
     private final Handler mHandler;
+	//只能设置一次
     @UnsupportedAppUsage
     private final OnGestureListener mListener;
+	//双击事件
     private OnDoubleTapListener mDoubleTapListener;
+	//外部设备的手势
     private OnContextClickListener mContextClickListener;
 
     private boolean mStillDown;
@@ -305,6 +324,7 @@ public class GestureDetector {
 
         @Override
         public void handleMessage(Message msg) {
+        	//会通过相应的回调方法，实现对于对应事件的监听
             switch (msg.what) {
                 case SHOW_PRESS:
                     mListener.onShowPress(mCurrentDownEvent);
@@ -312,11 +332,13 @@ public class GestureDetector {
 
                 case LONG_PRESS:
                     recordGestureClassification(msg.arg1);
+					//长按的处理
                     dispatchLongPress();
                     break;
 
                 case TAP:
                     // If the user's finger is still down, do not count it as a tap
+                    //这里是onDoubleListener的回调
                     if (mDoubleTapListener != null) {
                         if (!mStillDown) {
                             recordGestureClassification(
@@ -405,8 +427,7 @@ public class GestureDetector {
         } else {
         	//如果不给的话，那么这里的handler其实是GestureDector构造函数所在的线程，
         	//如果是子线程，那么Handler必须先调用Looper.prepare()
-        	//而且对应的点击listener也是在子线程。
-            mHandler = new GestureHandler();
+        	//而且对应的点击listener也是在子线程。            mHandler = new GestureHandler();
         }
         mListener = listener;
 		//这里一个类可能同时继承了多个接口，所以也会存在listener也实现了OnDoubleTapListener的情况
@@ -448,8 +469,11 @@ public class GestureDetector {
         int touchSlop, doubleTapSlop, doubleTapTouchSlop;
         if (context == null) {
             //noinspection deprecation
+            //表示滑动的时候，大于这个距离才开始移动控件(默认是8)
             touchSlop = ViewConfiguration.getTouchSlop();
+			//手指移动大于这个距离，就被认为不是双击事件
             doubleTapTouchSlop = touchSlop; // Hack rather than adding a hidden method for this
+            //两次双击的位置距离大于这个，就表示不是双击事件（默认是100）
             doubleTapSlop = ViewConfiguration.getDoubleTapSlop();
             //noinspection deprecation
             mMinimumFlingVelocity = ViewConfiguration.getMinimumFlingVelocity();
@@ -462,6 +486,7 @@ public class GestureDetector {
             mMinimumFlingVelocity = configuration.getScaledMinimumFlingVelocity();
             mMaximumFlingVelocity = configuration.getScaledMaximumFlingVelocity();
         }
+		//做对应的平方运算。
         mTouchSlopSquare = touchSlop * touchSlop;
         mDoubleTapTouchSlopSquare = doubleTapTouchSlop * doubleTapTouchSlop;
         mDoubleTapSlopSquare = doubleTapSlop * doubleTapSlop;
