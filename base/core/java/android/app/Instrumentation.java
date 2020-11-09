@@ -71,7 +71,7 @@ import java.util.List;
  * implementation is described to the system through an AndroidManifest.xml's
  * &lt;instrumentation&gt; tag.
  */
- //主要负责用户生命周期的管理和对应的app，activity的创建等工作
+ //主要负责用户生命周期的管理和对应的app，activity的创建等工作。在ActivityThread的main方法中进行创建
 public class Instrumentation {
 
     /**
@@ -1154,6 +1154,7 @@ public class Instrumentation {
             ClassNotFoundException {
         Application app = getFactory(context.getPackageName())
                 .instantiateApplication(cl, className);
+		//调用attach方法设置对应的context
         app.attach(context);
         return app;
     }

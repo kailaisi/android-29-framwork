@@ -30,6 +30,7 @@ import android.os.Build;
  * A context wrapper that allows you to modify or replace the theme of the
  * wrapped context.
  */
+ //包含有系统主题的Context类信息
 public class ContextThemeWrapper extends ContextWrapper {
     @UnsupportedAppUsage
     private int mThemeResource;

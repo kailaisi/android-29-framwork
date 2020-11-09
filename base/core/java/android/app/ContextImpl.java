@@ -2423,7 +2423,7 @@ class ContextImpl extends Context {
     public void setContentCaptureOptions(ContentCaptureOptions options) {
         mContentCaptureOptions = options;
     }
-
+	//静态方法，根据对应的ActivityThread来创建contextImpl
     @UnsupportedAppUsage
     static ContextImpl createSystemContext(ActivityThread mainThread) {
         LoadedApk packageInfo = new LoadedApk(mainThread);
@@ -2464,12 +2464,14 @@ class ContextImpl extends Context {
     static ContextImpl createAppContext(ActivityThread mainThread, LoadedApk packageInfo) {
         return createAppContext(mainThread, packageInfo, null);
     }
-
+	//创建Application对应的Context对象
     static ContextImpl createAppContext(ActivityThread mainThread, LoadedApk packageInfo,
             String opPackageName) {
         if (packageInfo == null) throw new IllegalArgumentException("packageInfo");
+		//创建Impl对象。对象持有了ActivityThread，所以可以通过该对象访问系统级别的相关资源
         ContextImpl context = new ContextImpl(null, mainThread, packageInfo, null, null, null, 0,
                 null, opPackageName);
+		//设置对应的Resource资源信息，通过packageInof获取
         context.setResources(packageInfo.getResources());
         return context;
     }
@@ -2495,7 +2497,7 @@ class ContextImpl extends Context {
                 Trace.traceEnd(Trace.TRACE_TAG_RESOURCES);
             }
         }
-
+		//创建
         ContextImpl context = new ContextImpl(null, mainThread, packageInfo, activityInfo.splitName,
                 activityToken, null, 0, classLoader, null);
 
@@ -2510,6 +2512,7 @@ class ContextImpl extends Context {
 
         // Create the base resources for which all configuration contexts for this Activity
         // will be rebased upon.
+        //设置Resource资源。所以我们在Activity中是可以通过getResource来获取资源文件的。
         context.setResources(resourcesManager.createBaseActivityResources(activityToken,
                 packageInfo.getResDir(),
                 splitDirs,

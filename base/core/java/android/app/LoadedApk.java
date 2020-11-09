@@ -96,6 +96,7 @@ final class ServiceConnectionLeaked extends AndroidRuntimeException {
  * Local state maintained about a currently loaded .apk.
  * @hide
  */
+ //当前正在加载的APK的信息.
 public final class LoadedApk {
     static final String TAG = "LoadedApk";
     static final boolean DEBUG = false;
@@ -210,6 +211,7 @@ public final class LoadedApk {
      * Create information about the system package.
      * Must call {@link #installSystemApplicationInfo} later.
      */
+    //创建对应的APP的信息
     LoadedApk(ActivityThread activityThread) {
         mActivityThread = activityThread;
         mApplicationInfo = new ApplicationInfo();
@@ -1181,7 +1183,7 @@ public final class LoadedApk {
                 // This should never fail.
                 throw new AssertionError("null split not found");
             }
-
+			//
             mResources = ResourcesManager.getInstance().getResources(null, mResDir,
                     splitPaths, mOverlayDirs, mApplicationInfo.sharedLibraryFiles,
                     Display.DEFAULT_DISPLAY, null, getCompatibilityInfo(),
@@ -1193,6 +1195,7 @@ public final class LoadedApk {
     @UnsupportedAppUsage
     public Application makeApplication(boolean forceDefaultAppClass,
             Instrumentation instrumentation) {
+        //已经创建，直接返回
         if (mApplication != null) {
             return mApplication;
         }
@@ -1214,10 +1217,11 @@ public final class LoadedApk {
                 initializeJavaContextClassLoader();
                 Trace.traceEnd(Trace.TRACE_TAG_ACTIVITY_MANAGER);
             }
-			//创建对应的ContextImpl
+			//1. 创建applicaton对应的ContextImpl
             ContextImpl appContext = ContextImpl.createAppContext(mActivityThread, this);
-			//创建application
+			//2. 通过mInstrumentation创建application
             app = mActivityThread.mInstrumentation.newApplication(cl, appClass, appContext);
+			//3. 把application的引用赋值给ContextImpl。这样，ContextImpl就可以方便的访问Application对象了
             appContext.setOuterContext(app);
         } catch (Exception e) {
             if (!mActivityThread.mInstrumentation.onException(app, e)) {
@@ -1228,10 +1232,12 @@ public final class LoadedApk {
             }
         }
         mActivityThread.mAllApplications.add(app);
+		//赋值给mApplication
         mApplication = app;
 
         if (instrumentation != null) {
             try {
+				//调用onCteate方法
                 instrumentation.callApplicationOnCreate(app);
             } catch (Exception e) {
                 if (!instrumentation.onException(app, e)) {

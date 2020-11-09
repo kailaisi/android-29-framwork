@@ -297,8 +297,10 @@ public final class ActivityThread extends ClientTransactionHandler {
     @GuardedBy("mNetworkPolicyLock")
     private long mNetworkBlockSeq = INVALID_PROC_STATE_SEQ;
 
+	//系统上下文
     @UnsupportedAppUsage
     private ContextImpl mSystemContext;
+	//系统UI上下文
     private ContextImpl mSystemUiContext;
 
     @UnsupportedAppUsage
@@ -3338,7 +3340,7 @@ public final class ActivityThread extends ClientTransactionHandler {
         if (r.activityInfo.targetActivity != null) {
             component = new ComponentName(r.activityInfo.packageName, r.activityInfo.targetActivity);
         }
-
+		//重点方法       创建对应的ContextImpl
         ContextImpl appContext = createBaseContextForActivity(r);
         Activity activity = null;
         try {
@@ -3365,7 +3367,7 @@ public final class ActivityThread extends ClientTransactionHandler {
         }
 
         try {
-            //创建包名所对应的Application对象，如果存在，则直接返回
+            //创建包名所对应的Application对象，如果存在，则直接返回。这里如果是点击桌面应用的话，可能会创建？
             Application app = r.packageInfo.makeApplication(false, mInstrumentation);
 
             if (localLOGV) Slog.v(TAG, "Performing launch of " + r);
@@ -3390,6 +3392,7 @@ public final class ActivityThread extends ClientTransactionHandler {
                 }
                 appContext.setOuterContext(activity);
                 //进行attach绑定，主要是为oncreate进行一些准备工作。包括phonewindow，mdecorview等
+                //这里会进行ContextImpl的赋值工作
                 activity.attach(appContext, this, getInstrumentation(), r.token, r.ident, app, r.intent, r.activityInfo, title, r.parent, r.embeddedID, r.lastNonConfigurationInstances, config, r.referrer, r.voiceInteractor, window, r.configCallback, r.assistToken);
 
                 if (customIntent != null) {
@@ -3522,6 +3525,7 @@ public final class ActivityThread extends ClientTransactionHandler {
             throw e.rethrowFromSystemServer();
         }
 
+		//创建ContextImpl
         ContextImpl appContext = ContextImpl.createActivityContext(
                 this, r.packageInfo, r.activityInfo, r.token, displayId, r.overrideConfig);
 
@@ -6538,7 +6542,7 @@ public final class ActivityThread extends ClientTransactionHandler {
         } else {
             ii = null;
         }
-
+		//创建application对应的Context
         final ContextImpl appContext = ContextImpl.createAppContext(this, data.info);
         updateLocaleListFromAppContext(appContext,
                 mResourcesManager.getConfiguration().getLocales());
@@ -7310,9 +7314,12 @@ public final class ActivityThread extends ClientTransactionHandler {
             try {
                 mInstrumentation = new Instrumentation();
                 mInstrumentation.basicInit(this);
+				//创建application对应的context对象。getSystemContext会创建第一个contextImpl，里面进行Loadedapk信息的初始化
                 ContextImpl context = ContextImpl.createAppContext(
-                        this, getSystemContext().mPackageInfo);
+				this, getSystemContext().mPackageInfo);
+				//创建application
                 mInitialApplication = context.mPackageInfo.makeApplication(true, null);
+				//调用oncreate方法
                 mInitialApplication.onCreate();
             } catch (Exception e) {
                 throw new RuntimeException(

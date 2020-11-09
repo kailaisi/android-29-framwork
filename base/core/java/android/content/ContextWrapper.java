@@ -70,6 +70,7 @@ public class ContextWrapper extends Context {
      * 
      * @param base The new base context for this wrapper.
      */
+    //用来指定真正的Context对象
     protected void attachBaseContext(Context base) {
         if (mBase != null) {
             throw new IllegalStateException("Base context already set");

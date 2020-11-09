@@ -348,6 +348,7 @@ public class Application extends ContextWrapper implements ComponentCallbacks2 {
      */
     @UnsupportedAppUsage
     /* package */ final void attach(Context context) {
+    	//这里的context参数，是创建的ContextImpl。把ContextImpl赋值给Application的mBase属性
         attachBaseContext(context);
         mLoadedApk = ContextImpl.getImpl(context).mPackageInfo;
     }

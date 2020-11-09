@@ -91,6 +91,7 @@ import java.util.concurrent.Executor;
  * up-calls for application-level operations such as launching activities,
  * broadcasting and receiving intents, etc.
  */
+ /应用程序的全局信息的接口。抽象类，允许访问特定的系统资源类和向上调用系统级别的信息
 public abstract class Context {
     /** @hide */
     @IntDef(flag = true, prefix = { "MODE_" }, value = {
