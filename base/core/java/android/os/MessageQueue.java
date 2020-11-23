@@ -600,6 +600,8 @@ public final class MessageQueue {
             boolean needWake;
             if (p == null || when == 0 || when < p.when) {
                 // New head, wake up the event queue if blocked.
+                //如果当前队列没有要处理的消息，或者新入队的消息需要立即处理或者如对消息的发送时间比当前要处理的小时发送时间早
+                //那么将消息放入到队列头，并唤醒消息
                 msg.next = p;
                 mMessages = msg;
                 needWake = mBlocked;
@@ -607,6 +609,7 @@ public final class MessageQueue {
                 // Inserted within the middle of the queue.  Usually we don't have to wake
                 // up the event queue unless there is a barrier at the head of the queue
                 // and the message is the earliest asynchronous message in the queue.
+                //将消息放入到队列queue中。并不需要唤醒消息
                 needWake = mBlocked && p.target == null && msg.isAsynchronous();
                 Message prev;
                 for (;;) {
@@ -625,6 +628,7 @@ public final class MessageQueue {
 
             // We can assume mPtr != 0 because mQuitting is false.
             if (needWake) {
+				//如果需要唤醒队列对消息的处理，通过nativeWake可以唤醒 nativePollOnce （这个会在queue.next()中调用，使对于消息的处理进行休眠操作）的沉睡
                 nativeWake(mPtr);
             }
         }

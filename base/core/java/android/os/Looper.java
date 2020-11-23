@@ -154,6 +154,7 @@ public final class Looper {
         if (me == null) {
             throw new RuntimeException("No Looper; Looper.prepare() wasn't called on this thread.");
         }
+		//获取当前Looper的消息队列
         final MessageQueue queue = me.mQueue;
 
         // Make sure the identity of this thread is that of the local process,
@@ -172,6 +173,7 @@ public final class Looper {
         boolean slowDeliveryDetected = false;
 
         for (;;) {
+			//获取到下一个消息，这里会进行阻塞
             Message msg = queue.next(); // might block
             if (msg == null) {
                 // No message indicates that the message queue is quitting.
