@@ -60,18 +60,25 @@ import java.util.Map;
  * of <a href="http://developer.android.com/sdk/compatibility-library.html">Android's
  * Support Package</a> for earlier releases.
  */
+ //强引用缓存，每次使用数据的时候，会将数据保存到队列的头部，如果队列满了的话，位于队列尾部的就会被进行回收
+ //
 public class LruCache<K, V> {
+	//基于链表实现的HashMap
     @UnsupportedAppUsage
     private final LinkedHashMap<K, V> map;
 
     /** Size of this cache in units. Not necessarily the number of elements. */
+	//缓存的大小，这里并不一定是元素的个数。
     private int size;
     private int maxSize;
-
+	//保存的数据的数量
     private int putCount;
     private int createCount;
+	//移除的数据个数
     private int evictionCount;
+	//命中缓存次数
     private int hitCount;
+	//未命中缓存次数
     private int missCount;
 
     /**
@@ -84,6 +91,7 @@ public class LruCache<K, V> {
             throw new IllegalArgumentException("maxSize <= 0");
         }
         this.maxSize = maxSize;
+		//LinkedHashMap的最后一个入参true:表示每次get数据的时候，会将get的数据放到队列头
         this.map = new LinkedHashMap<K, V>(0, 0.75f, true);
     }
 
@@ -92,6 +100,7 @@ public class LruCache<K, V> {
      *
      * @param maxSize The new maximum size.
      */
+     //设置最大数据量
     public void resize(int maxSize) {
         if (maxSize <= 0) {
             throw new IllegalArgumentException("maxSize <= 0");
@@ -130,7 +139,7 @@ public class LruCache<K, V> {
          * added to the map while create() was working, we leave that value in
          * the map and release the created value.
          */
-
+         //未命中缓存的时候，会使用默认的create方法创建新的数据。并保存到缓存中
         V createdValue = create(key);
         if (createdValue == null) {
             return null;
@@ -163,6 +172,7 @@ public class LruCache<K, V> {
      *
      * @return the previous value mapped by {@code key}.
      */
+     //数据的保存
     public final V put(K key, V value) {
         if (key == null || value == null) {
             throw new NullPointerException("key == null || value == null");
@@ -171,14 +181,17 @@ public class LruCache<K, V> {
         V previous;
         synchronized (this) {
             putCount++;
+			//结算保存的新数据的大小
             size += safeSizeOf(key, value);
+			//返回之前保存的数据
             previous = map.put(key, value);
             if (previous != null) {
+				//这里需要减去之前保存的数据的大小，因为会覆盖
                 size -= safeSizeOf(key, previous);
             }
         }
 
-        if (previous != null) {
+        if (previous != null) {//调用钩子函数
             entryRemoved(false, key, previous, value);
         }
 
@@ -193,6 +206,7 @@ public class LruCache<K, V> {
      * @param maxSize the maximum size of the cache before returning. May be -1
      *            to evict even 0-sized elements.
      */
+     //移除旧数据
     public void trimToSize(int maxSize) {
         while (true) {
             K key;
@@ -206,7 +220,7 @@ public class LruCache<K, V> {
                 if (size <= maxSize) {
                     break;
                 }
-
+				//已有的数据大小超过了限制的大小
                 Map.Entry<K, V> toEvict = map.eldest();
                 if (toEvict == null) {
                     break;
@@ -214,6 +228,7 @@ public class LruCache<K, V> {
 
                 key = toEvict.getKey();
                 value = toEvict.getValue();
+				//移除数据
                 map.remove(key);
                 size -= safeSizeOf(key, value);
                 evictionCount++;
@@ -263,6 +278,7 @@ public class LruCache<K, V> {
      *     this removal was caused by a {@link #put}. Otherwise it was caused by
      *     an eviction or a {@link #remove}.
      */
+     //钩子函数，留给子类来监听数据的添加或者移除工作
     protected void entryRemoved(boolean evicted, K key, V oldValue, V newValue) {}
 
     /**
@@ -299,6 +315,8 @@ public class LruCache<K, V> {
      *
      * <p>An entry's size must not change while it is in the cache.
      */
+     //用于计算实体的大小，这里默认返回1，
+     //如果我们保存图片信息的时候，这里可以返回图片的实际大小。从而可以计算已经保存的内存的大小，从而限制使用的内存情况
     protected int sizeOf(K key, V value) {
         return 1;
     }
@@ -306,6 +324,7 @@ public class LruCache<K, V> {
     /**
      * Clear the cache, calling {@link #entryRemoved} on each removed entry.
      */
+     //清空缓存
     public final void evictAll() {
         trimToSize(-1); // -1 will evict 0-sized elements
     }
@@ -315,6 +334,7 @@ public class LruCache<K, V> {
      * of entries in the cache. For all other caches, this returns the sum of
      * the sizes of the entries in this cache.
      */
+     //返回缓存的大小（对于没有重新sizeOf的，直接返回实体的个数）
     public synchronized final int size() {
         return size;
     }
