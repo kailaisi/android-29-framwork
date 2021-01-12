@@ -561,6 +561,7 @@ public class ListView extends AbsListView {
     @Override
     public void setAdapter(ListAdapter adapter) {
         if (mAdapter != null && mDataSetObserver != null) {
+			//移除之前的数据变化的监听
             mAdapter.unregisterDataSetObserver(mDataSetObserver);
         }
 
@@ -609,7 +610,7 @@ public class ListView extends AbsListView {
             // Nothing selected
             checkSelectionChanged();
         }
-
+		//重新绘制
         requestLayout();
     }
 

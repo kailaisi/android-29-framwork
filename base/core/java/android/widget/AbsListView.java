@@ -6772,6 +6772,8 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
      * @see android.widget.AbsListView#setRecyclerListener(android.widget.AbsListView.RecyclerListener)
      * @see android.widget.AbsListView.RecyclerListener
      */
+     //负责view的复用机制。包含两个ActiveViews和ScrapViews。ActiveViews是在屏幕展示的数据，而ScrapViews则是滚出屏幕之后
+     //缓存起来的数据，可以进行重复使用，而不需要每次都进行不必要的新的view的申请
     class RecycleBin {
         @UnsupportedAppUsage
         private RecyclerListener mRecyclerListener;
@@ -6874,10 +6876,11 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
         /**
          * Fill ActiveViews with all of the children of the AbsListView.
          *
-         * @param childCount The minimum number of views mActiveViews should hold
-         * @param firstActivePosition The position of the first view that will be stored in
-         *        mActiveViews
+         * @param childCount The minimum number of views mActiveViews should hold 存储的view的数量
+         * @param firstActivePosition The position of the first view that will be stored in 
+         *        mActiveViews  第一个可见的view的位置。
          */
+         //填充所有的View。
         void fillActiveViews(int childCount, int firstActivePosition) {
             if (mActiveViews.length < childCount) {
                 mActiveViews = new View[childCount];
@@ -6977,7 +6980,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
         }
 
         /**
-         * Puts a view into the list of scrap views.
+         * Puts a view into the list of scrap views.  将一个废弃的view进行缓存
          * <p>
          * If the list data hasn't changed or the adapter has stable IDs, views
          * with transient state will be preserved for later retrieval.
