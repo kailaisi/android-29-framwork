@@ -2190,15 +2190,15 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
         super.onLayout(changed, l, t, r, b);
 
         mInLayout = true;
-
+		//获取绘制的View的数量
         final int childCount = getChildCount();
-        if (changed) {
+        if (changed) {//如果listview大小或者位置发生了变化，那么就直接强制所有的子布局进行Layout重绘制。
             for (int i = 0; i < childCount; i++) {
                 getChildAt(i).forceLayout();
             }
             mRecycler.markChildrenDirty();
         }
-
+		//进行条目的绘制。
         layoutChildren();
 
         mOverscrollMax = (b - t) / OVERSCROLL_LIMIT_DIVISOR;
@@ -6759,6 +6759,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
          *
          * @param view
          */
+         //数据移到Scrap的监听器
         void onMovedToScrapHeap(View view);
     }
 
@@ -6781,6 +6782,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
         /**
          * The position of the first view stored in mActiveViews.
          */
+         //mActiveView中存储的view的第一个位置
         private int mFirstActivePosition;
 
         /**
@@ -6789,10 +6791,12 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
          * Views in mActiveViews represent a contiguous range of Views, with position of the first
          * view store in mFirstActivePosition.
          */
+         //屏幕中可见的View，是可以在屏幕上进行操作的
         private View[] mActiveViews = new View[0];
 
         /**
          * Unsorted views that can be used by the adapter as a convert view.
+         * 屏幕上不可见的View，不再处于交互状态了。这里是个数组，不同的type是保存在不同list中的。
          */
         private ArrayList<View>[] mScrapViews;
 
@@ -6910,6 +6914,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
          * @param position The position to look up in mActiveViews
          * @return The view if it is found, null otherwise
          */
+         //获取具体位置的view信息，如果对应的view没有找到，那么就会从mActiveViews中移除
         View getActiveView(int position) {
             int index = position - mFirstActivePosition;
             final View[] activeViews = mActiveViews;

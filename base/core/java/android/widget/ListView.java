@@ -243,7 +243,7 @@ public class ListView extends AbsListView {
         if (entries != null) {
             setAdapter(new ArrayAdapter<>(context, R.layout.simple_list_item_1, entries));
         }
-
+		//设置的分割线
         final Drawable d = a.getDrawable(R.styleable.ListView_divider);
         if (d != null) {
             // Use an implicit divider height which may be explicitly
@@ -251,6 +251,7 @@ public class ListView extends AbsListView {
             setDivider(d);
         }
 
+		//设置对应的footer和header
         final Drawable osHeader = a.getDrawable(R.styleable.ListView_overScrollHeader);
         if (osHeader != null) {
             setOverscrollHeader(osHeader);
@@ -1639,11 +1640,13 @@ public class ListView extends AbsListView {
 
     @Override
     protected void layoutChildren() {
+    	//在绘制过程中，不进行绘制。
         final boolean blockLayoutRequests = mBlockLayoutRequests;
         if (blockLayoutRequests) {
             return;
         }
-
+		//标志位置为true。防止重复进入
+		
         mBlockLayoutRequests = true;
 
         try {
@@ -1651,7 +1654,7 @@ public class ListView extends AbsListView {
 
             invalidate();
 
-            if (mAdapter == null) {
+            if (mAdapter == null) {//没有设置Adapter，那么清空所有的View
                 resetList();
                 invokeOnItemScrollListener();
                 return;
@@ -1670,7 +1673,7 @@ public class ListView extends AbsListView {
             View newSel = null;
 
             // Remember stuff we will need down below
-            switch (mLayoutMode) {
+            switch (mLayoutMode) {//布局模式，默认是Layout_Normal
             case LAYOUT_SET_SELECTION:
                 index = mNextSelectedPosition - mFirstPosition;
                 if (index >= 0 && index < childCount) {
