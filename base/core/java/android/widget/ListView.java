@@ -567,14 +567,16 @@ public class ListView extends AbsListView {
         }
 
         resetList();
+		//清空复用栈的信息
         mRecycler.clear();
 
         if (mHeaderViewInfos.size() > 0|| mFooterViewInfos.size() > 0) {
+			//如果存在着Header或者Footer，那么就用包装者模式将adapter进行重新包装。
             mAdapter = wrapHeaderListAdapterInternal(mHeaderViewInfos, mFooterViewInfos, adapter);
         } else {
             mAdapter = adapter;
         }
-
+		//
         mOldSelectedPosition = INVALID_POSITION;
         mOldSelectedRowId = INVALID_ROW_ID;
 
@@ -584,12 +586,13 @@ public class ListView extends AbsListView {
         if (mAdapter != null) {
             mAreAllItemsSelectable = mAdapter.areAllItemsEnabled();
             mOldItemCount = mItemCount;
+			//adapter要绘制的View的数量
             mItemCount = mAdapter.getCount();
             checkFocus();
-
+			//创建并注册数据设置监听器
             mDataSetObserver = new AdapterDataSetObserver();
             mAdapter.registerDataSetObserver(mDataSetObserver);
-
+			//设置类型个数
             mRecycler.setViewTypeCount(mAdapter.getViewTypeCount());
 
             int position;
@@ -784,20 +787,23 @@ public class ListView extends AbsListView {
      * @return The view that is currently selected, if it happens to be in the
      *         range that we draw.
      */
+     //从pos开始，向下开始绘制
     @UnsupportedAppUsage(maxTargetSdk = Build.VERSION_CODES.P)
     private View fillDown(int pos, int nextTop) {
         View selectedView = null;
-
+		//end表示listview的高度
         int end = (mBottom - mTop);
         if ((mGroupFlags & CLIP_TO_PADDING_MASK) == CLIP_TO_PADDING_MASK) {
+			//去除掉底部的padding
             end -= mListPadding.bottom;
         }
-
+		//nextTop<end保证只要绘制到listview高度的数据即可。
+		//mItemCount保证所有的item都有对应的数据源。
         while (nextTop < end && pos < mItemCount) {
             // is this the selected item?
             boolean selected = pos == mSelectedPosition;
             View child = makeAndAddView(pos, nextTop, true, mListPadding.left, selected);
-
+			//下一个要绘制的view的top位置
             nextTop = child.getBottom() + mDividerHeight;
             if (selected) {
                 selectedView = child;
@@ -1784,20 +1790,26 @@ public class ListView extends AbsListView {
 
             // Pull all children into the RecycleBin.
             // These views will be reused if possible
+            //这是显示的第一个条信息对应的position
             final int firstPosition = mFirstPosition;
             final RecycleBin recycleBin = mRecycler;
+			//1. 这里将界面所有的view存放到回收器中的过程。也就是childview->recycleBin
             if (dataChanged) {
+				//调用了notifydatachanged。将现在页面上显示的所有的view都回收到ScrapView中。
                 for (int i = 0; i < childCount; i++) {
                     recycleBin.addScrapView(getChildAt(i), firstPosition+i);
                 }
             } else {
+            	//如果没有，那么就将所有的View放回到ActiveView中
                 recycleBin.fillActiveViews(childCount, firstPosition);
             }
 
             // Clear out old views
+            //将所有的view从listview清除。
             detachAllViewsFromParent();
             recycleBin.removeSkippedScrap();
 
+			//2.  从RecycleBin->childView的过程
             switch (mLayoutMode) {
             case LAYOUT_SET_SELECTION:
                 if (newSel != null) {
@@ -1809,11 +1821,11 @@ public class ListView extends AbsListView {
             case LAYOUT_SYNC:
                 sel = fillSpecific(mSyncPosition, mSpecificTop);
                 break;
-            case LAYOUT_FORCE_BOTTOM:
+            case LAYOUT_FORCE_BOTTOM://由底部向上绘制。
                 sel = fillUp(mItemCount - 1, childrenBottom);
                 adjustViewsUpOrDown();
                 break;
-            case LAYOUT_FORCE_TOP:
+            case LAYOUT_FORCE_TOP://强制从第一个位置开始绘制。
                 mFirstPosition = 0;
                 sel = fillFromTop(childrenTop);
                 adjustViewsUpOrDown();
@@ -2056,15 +2068,17 @@ public class ListView extends AbsListView {
      *                 otherwise
      * @return the view that was added
      */
+     //
     @UnsupportedAppUsage
-    private View makeAndAddView(int position, int y, boolean flow, int childrenLeft,
-            boolean selected) {
+    private View makeAndAddView(int position, int y, boolean flow, int childrenLeft, boolean selected) {
         if (!mDataChanged) {
             // Try to use an existing view for this position.
+            //尝试从active中获取一个数据
             final View activeView = mRecycler.getActiveView(position);
             if (activeView != null) {
                 // Found it. We're reusing an existing child, so it just needs
                 // to be positioned like a scrap view.
+                //发现了可用的view。那么就将对应的view
                 setupChild(activeView, position, y, flow, childrenLeft, selected, true);
                 return activeView;
             }
@@ -2072,6 +2086,8 @@ public class ListView extends AbsListView {
 
         // Make a new view for this position, or convert an unused view if
         // possible.
+        //如果无法从activeView中复用，那么就通过obtainView方法来获取对应的View。
+        //该方法会尝试从mScrapViews中去获取，或者从getView中去获取
         final View child = obtainView(position, mIsScrap);
 
         // This needs to be positioned and measured.
@@ -2115,6 +2131,7 @@ public class ListView extends AbsListView {
         if (p == null) {
             p = (AbsListView.LayoutParams) generateDefaultLayoutParams();
         }
+		//获取对应位置的viewtype
         p.viewType = mAdapter.getItemViewType(position);
         p.isEnabled = mAdapter.isEnabled(position);
 

@@ -2198,7 +2198,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
             }
             mRecycler.markChildrenDirty();
         }
-		//进行条目的绘制。
+		//进行条目的绘制。由具体的子类实现
         layoutChildren();
 
         mOverscrollMax = (b - t) / OVERSCROLL_LIMIT_DIVISOR;
@@ -6809,6 +6809,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
         private SparseArray<View> mTransientStateViews;
         private LongSparseArray<View> mTransientStateViewsById;
 
+		//设置veiwType的类型个数，这里会根据count创建对应个数的list来保存缓存的view
         public void setViewTypeCount(int viewTypeCount) {
             if (viewTypeCount < 1) {
                 throw new IllegalArgumentException("Can't have a viewTypeCount < 1");
