@@ -2087,10 +2087,11 @@ public class ListView extends AbsListView {
         // Make a new view for this position, or convert an unused view if
         // possible.
         //如果无法从activeView中复用，那么就通过obtainView方法来获取对应的View。
-        //该方法会尝试从mScrapViews中去获取，或者从getView中去获取
+        //该方法会尝试复用mScrapViews中的View，如果复用失败，则通过getView创建一个新的View出来。
         final View child = obtainView(position, mIsScrap);
 
         // This needs to be positioned and measured.
+        //将child添加到ListView的children数组中，并对child进行测量和定位。
         setupChild(child, position, y, flow, childrenLeft, selected, mIsScrap[0]);
 
         return child;
@@ -2112,6 +2113,7 @@ public class ListView extends AbsListView {
      *                           to the window, e.g. whether it was reused, or
      *                           {@code false} otherwise
      */
+     //测量并将view定位到某个位置
     private void setupChild(View child, int position, int y, boolean flowDown, int childrenLeft,
             boolean selected, boolean isAttachedToWindow) {
         Trace.traceBegin(Trace.TRACE_TAG_VIEW, "setupListItem");

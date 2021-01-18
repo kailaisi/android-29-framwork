@@ -2385,9 +2385,12 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
 
             // If the view type hasn't changed, attempt to re-bind the data.
             if (params.viewType == mAdapter.getItemViewType(position)) {
+				//通过getView获取一个对应的View
                 final View updatedView = mAdapter.getView(position, transientView, this);
 
                 // If we failed to re-bind the data, scrap the obtained view.
+                //如果重新绑定失败，则获取的view进行缓存。
+                //这里有个点就是如果我们的getView返回的view，不是contentView的话，那么相当于之前的View不再进行复用了。
                 if (updatedView != transientView) {
                     setItemViewLayoutParams(updatedView, position);
                     mRecycler.addScrapView(updatedView, position);
@@ -2406,6 +2409,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
         if (scrapView != null) {
             if (child != scrapView) {
                 // Failed to re-bind the data, return scrap to the heap.
+                //重新绑定失败
                 mRecycler.addScrapView(scrapView, position);
             } else if (child.isTemporarilyDetached()) {
                 outMetadata[0] = true;
@@ -6705,6 +6709,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
          * @hide
          */
         @UnsupportedAppUsage
+        //记录滑出屏幕的时候，是从哪个position回收的
         int scrappedFromPosition;
 
         /**
@@ -6776,6 +6781,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
      //负责view的复用机制。包含两个ActiveViews和ScrapViews。ActiveViews是在屏幕展示的数据，而ScrapViews则是滚出屏幕之后
      //缓存起来的数据，可以进行重复使用，而不需要每次都进行不必要的新的view的申请
     class RecycleBin {
+    	//复用的View被移出屏幕的时候的回调接口，可以做一些数据的回收处理等。
         @UnsupportedAppUsage
         private RecyclerListener mRecyclerListener;
 
@@ -6799,9 +6805,9 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
          * 屏幕上不可见的View，不再处于交互状态了。这里是个数组，不同的type是保存在不同list中的。
          */
         private ArrayList<View>[] mScrapViews;
-
+		//类型个数
         private int mViewTypeCount;
-
+		//
         private ArrayList<View> mCurrentScrap;
 
         private ArrayList<View> mSkippedScrap;
@@ -6824,6 +6830,8 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
             mScrapViews = scrapViews;
         }
 
+		//强制设置所有的view都为脏数据，这里只是设置了标志位，在下次进行复用的时候会重新进行绑定和绘制工作。
+		//注意，这里只是设置了标志位，并不会直接进行layout，而是等到下次复用才会重新layout
         public void markChildrenDirty() {
             if (mViewTypeCount == 1) {
                 final ArrayList<View> scrap = mCurrentScrap;
@@ -6855,13 +6863,15 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
             }
         }
 
+		//判断viewType是否可以回收，header和footer是不进行回收的。如果不想被回收，可以将type设置为负数，但是可能会导致OOM
         public boolean shouldRecycleViewType(int viewType) {
             return viewType >= 0;
         }
 
         /**
          * Clears the scrap heap.
-         */
+		 */
+         //清空废弃的View堆
         @UnsupportedAppUsage
         void clear() {
             if (mViewTypeCount == 1) {
@@ -6927,6 +6937,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
             return null;
         }
 
+		//
         View getTransientStateView(int position) {
             if (mAdapter != null && mAdapterHasStableIds && mTransientStateViewsById != null) {
                 long id = mAdapter.getItemId(position);
@@ -6949,6 +6960,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
          * Dumps and fully detaches any currently saved views with transient
          * state.
          */
+         //清理当前处于transient状态的所有View
         void clearTransientStateViews() {
             final SparseArray<View> viewsByPos = mTransientStateViews;
             if (viewsByPos != null) {
@@ -6986,7 +6998,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
         }
 
         /**
-         * Puts a view into the list of scrap views.  将一个废弃的view进行缓存
+         * Puts a view into the list of scrap views.  将一个移除视图范围的view进行缓存
          * <p>
          * If the list data hasn't changed or the adapter has stable IDs, views
          * with transient state will be preserved for later retrieval.
@@ -7263,8 +7275,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
                 // Traverse backwards to find the most recently used scrap view
                 for (int i = size - 1; i >= 0; i--) {
                     final View view = scrapViews.get(i);
-                    final AbsListView.LayoutParams params =
-                            (AbsListView.LayoutParams) view.getLayoutParams();
+                    final AbsListView.LayoutParams params = (AbsListView.LayoutParams) view.getLayoutParams();
 
                     if (mAdapterHasStableIds) {
                         final long id = mAdapter.getItemId(position);
@@ -7272,11 +7283,13 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
                             return scrapViews.remove(i);
                         }
                     } else if (params.scrappedFromPosition == position) {
+                    //如果当前位置和回收的view的位置一样，则直接返回。比如说上滑A滑出页面，然后再下滑，A显示出来，这时候是可以直接使用的
                         final View scrap = scrapViews.remove(i);
                         clearScrapForRebind(scrap);
                         return scrap;
                     }
                 }
+				//如果没有找到，则直接返回最近加入的那个View
                 final View scrap = scrapViews.remove(size - 1);
                 clearScrapForRebind(scrap);
                 return scrap;
