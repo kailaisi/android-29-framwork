@@ -1498,6 +1498,7 @@ public class ListView extends AbsListView {
      * @return The selected view, or null if the selected view is outside the
      *         visible area.
      */
+     //优先将指定位置的子View绘制到屏幕上，然后从该位置开始往上或者往下绘制其他子View
     @UnsupportedAppUsage(maxTargetSdk = Build.VERSION_CODES.P)
     private View fillSpecific(int position, int top) {
         boolean tempIsSelected = position == mSelectedPosition;
@@ -1793,7 +1794,7 @@ public class ListView extends AbsListView {
             //这是显示的第一个条信息对应的position
             final int firstPosition = mFirstPosition;
             final RecycleBin recycleBin = mRecycler;
-			//1. 这里将界面所有的view存放到回收器中的过程。也就是childview->recycleBin
+			//重点方法1. 这里将界面所有的view存放到回收器中的过程。也就是childview->recycleBin
             if (dataChanged) {
 				//调用了notifydatachanged。将现在页面上显示的所有的view都回收到ScrapView中。
                 for (int i = 0; i < childCount; i++) {
@@ -1809,7 +1810,7 @@ public class ListView extends AbsListView {
             detachAllViewsFromParent();
             recycleBin.removeSkippedScrap();
 
-			//2.  从RecycleBin->childView的过程
+			//重点方法2.  从RecycleBin->childView的过程
             switch (mLayoutMode) {
             case LAYOUT_SET_SELECTION:
                 if (newSel != null) {
@@ -1863,11 +1864,9 @@ public class ListView extends AbsListView {
                     }
                 } else {
                     if (mSelectedPosition >= 0 && mSelectedPosition < mItemCount) {
-                        sel = fillSpecific(mSelectedPosition,
-                                oldSel == null ? childrenTop : oldSel.getTop());
+                        sel = fillSpecific(mSelectedPosition,oldSel == null ? childrenTop : oldSel.getTop());
                     } else if (mFirstPosition < mItemCount) {
-                        sel = fillSpecific(mFirstPosition,
-                                oldFirst == null ? childrenTop : oldFirst.getTop());
+                        sel = fillSpecific(mFirstPosition,oldFirst == null ? childrenTop : oldFirst.getTop());
                     } else {
                         sel = fillSpecific(0, childrenTop);
                     }
@@ -1876,9 +1875,11 @@ public class ListView extends AbsListView {
             }
 
             // Flush any cached views that did not get reused above
+            //页面已经处理完成，那么剩下的ActiveViews没用了，可以直接放入到scrapView中了
             recycleBin.scrapActiveViews();
 
             // remove any header/footer that has been temp detached and not re-attached
+            //移除所有的Header和Footer的view信息
             removeUnusedFixedViews(mHeaderViewInfos);
             removeUnusedFixedViews(mFooterViewInfos);
 
@@ -2078,7 +2079,7 @@ public class ListView extends AbsListView {
             if (activeView != null) {
                 // Found it. We're reusing an existing child, so it just needs
                 // to be positioned like a scrap view.
-                //发现了可用的view。那么就将对应的view
+                //发现了可用的view。那么就将对应的view布局到position的位置
                 setupChild(activeView, position, y, flow, childrenLeft, selected, true);
                 return activeView;
             }
@@ -2113,9 +2114,8 @@ public class ListView extends AbsListView {
      *                           to the window, e.g. whether it was reused, or
      *                           {@code false} otherwise
      */
-     //测量并将view定位到某个位置
-    private void setupChild(View child, int position, int y, boolean flowDown, int childrenLeft,
-            boolean selected, boolean isAttachedToWindow) {
+     //测量并将view布局到某个位置
+    private void setupChild(View child, int position, int y, boolean flowDown, int childrenLeft,boolean selected, boolean isAttachedToWindow) {
         Trace.traceBegin(Trace.TRACE_TAG_VIEW, "setupListItem");
 
         final boolean isSelected = selected && shouldShowSelector();
@@ -2124,8 +2124,8 @@ public class ListView extends AbsListView {
         final boolean isPressed = mode > TOUCH_MODE_DOWN && mode < TOUCH_MODE_SCROLL
                 && mMotionPosition == position;
         final boolean updateChildPressed = isPressed != child.isPressed();
-        final boolean needToMeasure = !isAttachedToWindow || updateChildSelected
-                || child.isLayoutRequested();
+		//是否需要测量，
+        final boolean needToMeasure = !isAttachedToWindow || updateChildSelected|| child.isLayoutRequested();
 
         // Respect layout params that are already in the view. Otherwise make
         // some up...
@@ -2157,15 +2157,13 @@ public class ListView extends AbsListView {
             }
         }
 
-        if ((isAttachedToWindow && !p.forceAdd) || (p.recycledHeaderFooter
-                && p.viewType == AdapterView.ITEM_VIEW_TYPE_HEADER_OR_FOOTER)) {
+        if ((isAttachedToWindow && !p.forceAdd) || (p.recycledHeaderFooter && p.viewType == AdapterView.ITEM_VIEW_TYPE_HEADER_OR_FOOTER)) {
+			//在滑动的过程中，所有的view会detach。不再需要通过addView来处理了，只要重新attachViewToParent就可以了。
             attachViewToParent(child, flowDown ? -1 : 0, p);
 
             // If the view was previously attached for a different position,
             // then manually jump the drawables.
-            if (isAttachedToWindow
-                    && (((AbsListView.LayoutParams) child.getLayoutParams()).scrappedFromPosition)
-                            != position) {
+            if (isAttachedToWindow && (((AbsListView.LayoutParams) child.getLayoutParams()).scrappedFromPosition) != position) {
                 child.jumpDrawablesToCurrentState();
             }
         } else {
@@ -2173,12 +2171,14 @@ public class ListView extends AbsListView {
             if (p.viewType == AdapterView.ITEM_VIEW_TYPE_HEADER_OR_FOOTER) {
                 p.recycledHeaderFooter = true;
             }
+			//重点方法      将child添加到ListView中。该方法和addView的区别是，addView之后会立即调用onLayout进行重新绘制。但是addViewInLayout，并不会绘制，只有手动执行了requestLayout的时候才会进行重新绘制。
             addViewInLayout(child, flowDown ? -1 : 0, p, true);
             // add view in layout will reset the RTL properties. We have to re-resolve them
             child.resolveRtlPropertiesIfNeeded();
         }
 
         if (needToMeasure) {
+			//测量
             final int childWidthSpec = ViewGroup.getChildMeasureSpec(mWidthMeasureSpec,
                     mListPadding.left + mListPadding.right, p.width);
             final int lpHeight = p.height;
@@ -2186,8 +2186,7 @@ public class ListView extends AbsListView {
             if (lpHeight > 0) {
                 childHeightSpec = MeasureSpec.makeMeasureSpec(lpHeight, MeasureSpec.EXACTLY);
             } else {
-                childHeightSpec = MeasureSpec.makeSafeMeasureSpec(getMeasuredHeight(),
-                        MeasureSpec.UNSPECIFIED);
+                  childHeightSpec = MeasureSpec.makeSafeMeasureSpec(getMeasuredHeight(), MeasureSpec.UNSPECIFIED);
             }
             child.measure(childWidthSpec, childHeightSpec);
         } else {
