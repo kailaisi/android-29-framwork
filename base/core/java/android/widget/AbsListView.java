@@ -3648,6 +3648,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
                 // No need to do all this work if we're not going to move anyway
                 boolean atEdge = false;
                 if (incrementalDeltaY != 0) {
+					//
                     atEdge = trackMotionScroll(deltaY, incrementalDeltaY);
                 }
 
@@ -5170,6 +5171,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
      * @param incrementalDeltaY Change in deltaY from the previous event.
      * @return true if we're already at the beginning/end of the list and have nothing to do.
      */
+     //跟踪手指的滑动，进行页面的滑动处理
     @UnsupportedAppUsage(maxTargetSdk = Build.VERSION_CODES.P, trackingBug = 124051739)
     boolean trackMotionScroll(int deltaY, int incrementalDeltaY) {
         final int childCount = getChildCount();
@@ -5204,7 +5206,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
             deltaY = Math.min(height - 1, deltaY);
         }
 
-        if (incrementalDeltaY < 0) {
+        if (incrementalDeltaY < 0) {//距离上次滑动的距离
             incrementalDeltaY = Math.max(-(height - 1), incrementalDeltaY);
         } else {
             incrementalDeltaY = Math.min(height - 1, incrementalDeltaY);
@@ -5213,6 +5215,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
         final int firstPosition = mFirstPosition;
 
         // Update our guesses for where the first and last views are
+        
         if (firstPosition == 0) {
             mFirstPositionDistanceGuess = firstTop - listPadding.top;
         } else {
@@ -5253,9 +5256,12 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
             }
             for (int i = 0; i < childCount; i++) {
                 final View child = getChildAt(i);
+				
                 if (child.getBottom() >= top) {
                     break;
                 } else {
+               		 //重点处理      根据滑动的距离进行边界判断，如果item的底部位置比top还高，那么item相当于划出了页面。
+               		 //这时候将View放入到scrapView中，并将count计数器加1，计数器用于记录有多少个子View被移出了屏幕
                     count++;
                     int position = firstPosition + i;
                     if (position >= headerViewsCount && position < footerViewsStart) {
@@ -5294,6 +5300,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
         mBlockLayoutRequests = true;
 
         if (count > 0) {
+			//移除的View进行一个detach操作
             detachViewsFromParent(start, count);
             mRecycler.removeSkippedScrap();
         }
