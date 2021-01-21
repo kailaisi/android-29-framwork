@@ -2228,6 +2228,7 @@ public class ListView extends AbsListView {
      *
      * @param position Index (starting at 0) of the data item to be selected.
      */
+     //设置position位置的数据选中。
     @Override
     public void setSelection(int position) {
         setSelectionFromTop(position, 0);

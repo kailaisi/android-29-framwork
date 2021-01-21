@@ -3887,7 +3887,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
                 break;
             }
 
-            case MotionEvent.ACTION_UP: {
+            case MotionEvent.ACTION_UP: {//判断是否是itemClick，longClick或者scrolling..
                 onTouchUp(ev);
                 break;
             }
@@ -6579,9 +6579,11 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
         mRecycler.mRecyclerListener = listener;
     }
 
+	//listview增加的数据监听器，当滑动的过程中，如果数据发生变化，则
     class AdapterDataSetObserver extends AdapterView<ListAdapter>.AdapterDataSetObserver {
         @Override
         public void onChanged() {
+        	//在super中会调用requestLayout()方法，重新进行数据的刷新绑定
             super.onChanged();
             if (mFastScroll != null) {
                 mFastScroll.onSectionsChanged();
@@ -7382,6 +7384,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
             if (mPositionScroller != null) {
                 mPositionScroller.stop();
             }
+			//重新布局
             requestLayout();
         }
     }

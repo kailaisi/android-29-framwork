@@ -21,6 +21,7 @@ package android.database;
  * that provides methods for sending notifications to a list of
  * {@link DataSetObserver} objects.
  */
+ //观察者模式，当数据变化的时候，通知数据变化
 public class DataSetObservable extends Observable<DataSetObserver> {
     /**
      * Invokes {@link DataSetObserver#onChanged} on each observer.

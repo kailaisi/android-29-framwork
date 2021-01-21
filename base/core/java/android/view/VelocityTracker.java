@@ -29,6 +29,7 @@ import android.util.Pools.SynchronizedPool;
  * {@link #computeCurrentVelocity(int)} and then call {@link #getXVelocity(int)}
  * and {@link #getYVelocity(int)} to retrieve the velocity for each pointer id.
  */
+ //跟踪触摸屏事件(fling事件或者其他gesture手势)的速率
 public final class VelocityTracker {
     private static final SynchronizedPool<VelocityTracker> sPool =
             new SynchronizedPool<VelocityTracker>(2);

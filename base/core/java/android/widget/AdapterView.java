@@ -1244,6 +1244,7 @@ public abstract class AdapterView<T extends Adapter> extends ViewGroup {
     @UnsupportedAppUsage
     void setNextSelectedPositionInt(int position) {
         mNextSelectedPosition = position;
+		//获取数据对应的id
         mNextSelectedRowId = getItemIdAtPosition(position);
         // If we are trying to sync to the selection, update that too
         if (mNeedSync && mSyncMode == SYNC_SELECTED_POSITION && position >= 0) {
