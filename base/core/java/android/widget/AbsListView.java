@@ -3961,6 +3961,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
         } else {
             final int x = (int) ev.getX();
             final int y = (int) ev.getY();
+			//获取当前点击的位置所对应的position
             int motionPosition = pointToPosition(x, y);
 
             if (!mDataChanged) {
