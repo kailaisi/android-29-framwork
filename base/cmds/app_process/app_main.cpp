@@ -31,8 +31,7 @@ static void app_usage()
         "Usage: app_process [java-options] cmd-dir start-class-name [options]\n");
 }
 
-class AppRuntime : public AndroidRuntime
-{
+class AppRuntime : public AndroidRuntime{
 public:
     AppRuntime(char* argBlockStart, const size_t argBlockLength)
         : AndroidRuntime(argBlockStart, argBlockLength)
@@ -263,12 +262,13 @@ int main(int argc, char* const argv[])
     ++i;  // Skip unused "parent dir" argument.
     while (i < argc) {
         const char* arg = argv[i++];
-        if (strcmp(arg, "--zygote") == 0) {
+        if (strcmp(arg, "--zygote") == 0) {//是否有--zygote参数。这个是启动zygote进程的时候的参数
             zygote = true;
+			//进程名称，设置为zygote
             niceName = ZYGOTE_NICE_NAME;
-        } else if (strcmp(arg, "--start-system-server") == 0) {
+        } else if (strcmp(arg, "--start-system-server") == 0) {//是否有--start-system-server
             startSystemServer = true;
-        } else if (strcmp(arg, "--application") == 0) {
+        } else if (strcmp(arg, "--application") == 0) {//
             application = true;
         } else if (strncmp(arg, "--nice-name=", 12) == 0) {
             niceName.setTo(arg + 12);
@@ -282,7 +282,7 @@ int main(int argc, char* const argv[])
     }
 
     Vector<String8> args;
-    if (!className.isEmpty()) {
+    if (!className.isEmpty()) {//非zygote模式
         // We're not in zygote mode, the only argument we need to pass
         // to RuntimeInit is the application argument.
         //
@@ -302,11 +302,12 @@ int main(int argc, char* const argv[])
           }
           ALOGV("Class name = %s, args = %s", className.string(), restOfArgs.string());
         }
-    } else {
+    } else {//zygote模式下
         // We're in zygote mode.
+        //创建虚拟机
         maybeCreateDalvikCache();
 
-        if (startSystemServer) {
+        if (startSystemServer) {//有--start-system-server
             args.add(String8("start-system-server"));
         }
 
@@ -333,6 +334,7 @@ int main(int argc, char* const argv[])
     }
 
     if (zygote) {
+		//最最重要方法   如果是zygote进程，则启动ZygoteInit
         runtime.start("com.android.internal.os.ZygoteInit", args, zygote);
     } else if (className) {
         runtime.start("com.android.internal.os.RuntimeInit", args, zygote);

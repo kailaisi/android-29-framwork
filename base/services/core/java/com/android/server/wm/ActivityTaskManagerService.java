@@ -698,7 +698,9 @@ public class ActivityTaskManagerService extends IActivityTaskManager.Stub {
             mHasHeavyWeightFeature = mContext.getPackageManager().hasSystemFeature(
                     PackageManager.FEATURE_CANT_SAVE_STATE);
             mAssistUtils = new AssistUtils(mContext);
+			//VR
             mVrController.onSystemReady();
+			//
             mRecentTasks.onSystemReadyLocked();
             mStackSupervisor.onSystemReady();
         }

@@ -1165,6 +1165,7 @@ void AndroidRuntime::start(const char* className, const Vector<String8>& options
     JniInvocation jni_invocation;
     jni_invocation.Init(NULL);
     JNIEnv* env;
+	//重点方法     创建VM虚拟机，参数是指针，可以用于获取返回的值，可以使用env来和Java层来做交互
     if (startVm(&mJavaVM, &env, zygote) != 0) {
         return;
     }
@@ -1173,6 +1174,7 @@ void AndroidRuntime::start(const char* className, const Vector<String8>& options
     /*
      * Register android functions.
      */
+    //重点方法      给虚拟机注册一些JNI函数，（系统so库、用户自定义so库       	        、加载函数等。）
     if (startReg(env) < 0) {
         ALOGE("Unable to register all android natives\n");
         return;
@@ -1191,6 +1193,7 @@ void AndroidRuntime::start(const char* className, const Vector<String8>& options
     assert(stringClass != NULL);
     strArray = env->NewObjectArray(options.size() + 1, stringClass, NULL);
     assert(strArray != NULL);
+	//类名
     classNameStr = env->NewStringUTF(className);
     assert(classNameStr != NULL);
     env->SetObjectArrayElement(strArray, 0, classNameStr);
@@ -1205,18 +1208,21 @@ void AndroidRuntime::start(const char* className, const Vector<String8>& options
      * Start VM.  This thread becomes the main thread of the VM, and will
      * not return until the VM exits.
      */
+     
     char* slashClassName = toSlashClassName(className != NULL ? className : "");
     jclass startClass = env->FindClass(slashClassName);
     if (startClass == NULL) {
         ALOGE("JavaVM unable to locate class '%s'\n", slashClassName);
         /* keep going */
     } else {
+    	//找到类的main方法，并调用。如果是zygote的话，这里就会启动ZygoteInit类的main方法
         jmethodID startMeth = env->GetStaticMethodID(startClass, "main",
             "([Ljava/lang/String;)V");
         if (startMeth == NULL) {
             ALOGE("JavaVM unable to find main() in '%s'\n", className);
             /* keep going */
         } else {
+        	//调用main方法。这里通过JNI调用Java方法之后，Zygote(Native层)就进入了Java的世界，从而开启了Android中Java的世界。
             env->CallStaticVoidMethod(startClass, startMeth, strArray);
 
 #if 0

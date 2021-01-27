@@ -537,6 +537,7 @@ public class ZygoteInit {
             /*
              * Pass the remaining arguments to SystemServer.
              */
+            //重点方法          将参数传递给init方法，进行创建初始化
             return ZygoteInit.zygoteInit(parsedArgs.mTargetSdkVersion,
                     parsedArgs.mRemainingArgs, cl);
         }
@@ -779,6 +780,7 @@ public class ZygoteInit {
             }
 
             /* Request to fork the system server process */
+			//重点方法1         通过Zygote创建一个SystemServer进程。
             pid = Zygote.forkSystemServer(
                     parsedArgs.mUid, parsedArgs.mGid,
                     parsedArgs.mGids,
@@ -788,7 +790,7 @@ public class ZygoteInit {
                     parsedArgs.mEffectiveCapabilities);
         } catch (IllegalArgumentException ex) {
             throw new RuntimeException(ex);
-        }
+        } 
 
         /* For child process */
         if (pid == 0) {
@@ -797,6 +799,7 @@ public class ZygoteInit {
             }
 
             zygoteServer.closeServerSocket();
+			//重点方法2            启动SystemServer的对应对应逻辑
             return handleSystemServerProcess(parsedArgs);
         }
 
@@ -827,6 +830,7 @@ public class ZygoteInit {
 
         // Zygote goes into its own process group.
         try {
+			//设置pid信息
             Os.setpgid(0, 0);
         } catch (ErrnoException ex) {
             throw new RuntimeException("Failed to setpgid(0,0)", ex);
@@ -876,6 +880,7 @@ public class ZygoteInit {
                 bootTimingsTraceLog.traceBegin("ZygotePreload");
                 EventLog.writeEvent(LOG_BOOT_PROGRESS_PRELOAD_START,
                         SystemClock.uptimeMillis());
+				//预加信息。。。这里会预加载类和资源信息
                 preload(bootTimingsTraceLog);
                 EventLog.writeEvent(LOG_BOOT_PROGRESS_PRELOAD_END,
                         SystemClock.uptimeMillis());
@@ -983,9 +988,11 @@ public class ZygoteInit {
 
         Trace.traceBegin(Trace.TRACE_TAG_ACTIVITY_MANAGER, "ZygoteInit");
         RuntimeInit.redirectLogStreams();
-
+		//重点方法   常规初始化，设置当前进程名为“system_server”，创建 PathClassLoader 类加载器。
         RuntimeInit.commonInit();
+		//启动binder机制。方法经过层层调用，会进入 app_main.cpp 中的 onZygoteInit() 方法。
         ZygoteInit.nativeZygoteInit();
+		//这里会返回一个SystesServer.main方法，作为Runable，会被执行，从而进入到main方法中
         return RuntimeInit.applicationInit(targetSdkVersion, argv, classLoader);
     }
 
