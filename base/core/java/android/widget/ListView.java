@@ -348,6 +348,7 @@ public class ListView extends AbsListView {
      * @param data Data to associate with this view
      * @param isSelectable whether the item is selectable
      */
+     //增加一个表头信息
     public void addHeaderView(View v, Object data, boolean isSelectable) {
         if (v.getParent() != null && v.getParent() != this) {
             if (Log.isLoggable(TAG, Log.WARN)) {
@@ -355,6 +356,7 @@ public class ListView extends AbsListView {
                            + "You must call removeView() on the child's parent first.");
             }
         }
+		//包装一下
         final FixedViewInfo info = new FixedViewInfo();
         info.view = v;
         info.data = data;
@@ -390,6 +392,7 @@ public class ListView extends AbsListView {
      *
      * @param v The view to add.
      */
+     //增加一个Header布局
     public void addHeaderView(View v) {
         addHeaderView(v, null, true);
     }
@@ -2225,6 +2228,7 @@ public class ListView extends AbsListView {
      *
      * @param position Index (starting at 0) of the data item to be selected.
      */
+     //设置position位置的数据选中。
     @Override
     public void setSelection(int position) {
         setSelectionFromTop(position, 0);

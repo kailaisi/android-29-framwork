@@ -30,6 +30,7 @@ import java.util.ArrayList;
  *<p>This is intended as a base class; you will probably not need to
  * use this class directly in your own code.
  */
+ //当ListAdapter含有header或者footer的时候，使用的Adapter，会对原来的Adapter进行包装
 public class HeaderViewListAdapter implements WrapperListAdapter, Filterable {
 
     @UnsupportedAppUsage
@@ -44,8 +45,7 @@ public class HeaderViewListAdapter implements WrapperListAdapter, Filterable {
 
     // Used as a placeholder in case the provided info views are indeed null.
     // Currently only used by some CTS tests, which may be removed.
-    static final ArrayList<ListView.FixedViewInfo> EMPTY_INFO_LIST =
-        new ArrayList<ListView.FixedViewInfo>();
+    static final ArrayList<ListView.FixedViewInfo> EMPTY_INFO_LIST = new ArrayList<ListView.FixedViewInfo>();
 
     boolean mAreAllFixedViewsSelectable;
 
@@ -168,6 +168,8 @@ public class HeaderViewListAdapter implements WrapperListAdapter, Filterable {
         return mFooterViewInfos.get(adjPosition - adapterCount).isSelectable;
     }
 
+
+	//获取对应位置的object。这里会处理header或者footer
     public Object getItem(int position) {
         // Header (negative positions will throw an IndexOutOfBoundsException)
         int numHeaders = getHeadersCount();
