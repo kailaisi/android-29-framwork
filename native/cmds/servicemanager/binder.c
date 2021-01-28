@@ -98,20 +98,20 @@ struct binder_state *binder_open(const char* driver, size_t mapsize)
 {
     struct binder_state *bs;
     struct binder_version vers;
-
+	//申请对应的内存空间
     bs = malloc(sizeof(*bs));
     if (!bs) {
         errno = ENOMEM;
         return NULL;
     }
-
+	//打开binder设备文件，这种属于设备驱动的操作方法
     bs->fd = open(driver, O_RDWR | O_CLOEXEC);
     if (bs->fd < 0) {
         fprintf(stderr,"binder: cannot open %s (%s)\n",
                 driver, strerror(errno));
         goto fail_open;
     }
-
+	//通过ioctl获取binder的版本号
     if ((ioctl(bs->fd, BINDER_VERSION, &vers) == -1) ||
         (vers.protocol_version != BINDER_CURRENT_PROTOCOL_VERSION)) {
         fprintf(stderr,
@@ -121,7 +121,8 @@ struct binder_state *binder_open(const char* driver, size_t mapsize)
     }
 
     bs->mapsize = mapsize;
-	//mmap一定的空间
+	//mmap进行内存映射，将Binder设备文件映射到进程的对应地址空间，地址空间大小为128k
+	//映射之后，会将地址空间的起始地址和大小保存到结构体中，
     bs->mapped = mmap(NULL, mapsize, PROT_READ, MAP_PRIVATE, bs->fd, 0);
     if (bs->mapped == MAP_FAILED) {
         fprintf(stderr,"binder: cannot map device (%s)\n",
@@ -161,6 +162,9 @@ int binder_write(struct binder_state *bs, void *data, size_t len)
     bwr.read_size = 0;
     bwr.read_consumed = 0;
     bwr.read_buffer = 0;
+	//BINDER_WRITE_READ既可以读也可以写。关键在于read_size和write_size。
+	//如果write_size>0。则是写。如果read_size>0则是读。
+	//如果都大于0，则先写，再读
     res = ioctl(bs->fd, BINDER_WRITE_READ, &bwr);
     if (res < 0) {
         fprintf(stderr,"binder_write: ioctl failed (%s)\n",
@@ -396,22 +400,26 @@ void binder_loop(struct binder_state *bs, binder_handler func)
     bwr.write_size = 0;
     bwr.write_consumed = 0;
     bwr.write_buffer = 0;
-
+	//当前线程注册为Binder的指令
     readbuf[0] = BC_ENTER_LOOPER;
+	//将BC_ENTER_LOOPER指令写入到Binder驱动，
+	//将当前的ServiceManager线程注册为了一个Binder线程(注意ServiceManager本身也是一个Binder线程)。
+	//注册为Binder线程之后，就可以处理进程间的请求了
     binder_write(bs, readbuf, sizeof(uint32_t));
-
+	//不断的循环遍历
     for (;;) {
         bwr.read_size = sizeof(readbuf);
         bwr.read_consumed = 0;
         bwr.read_buffer = (uintptr_t) readbuf;
-
+		//使用BINDER_WRITE_READ指令查询Binder驱动中是否有请求。
+		//如果有请求，就走到下面的binder_parse部分处理，如果没有，当前的ServiceManager线程就会在Binder驱动中水命，等待新的进程间请求
         res = ioctl(bs->fd, BINDER_WRITE_READ, &bwr);
 
         if (res < 0) {
             ALOGE("binder_loop: ioctl failed (%s)\n", strerror(errno));
             break;
         }
-
+		//走到这里说明有请求信息。将请求的信息用binder_parse来处理
         res = binder_parse(bs, 0, (uintptr_t) readbuf, bwr.read_consumed, func);
         if (res == 0) {
             ALOGE("binder_loop: unexpected reply?!\n");

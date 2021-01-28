@@ -37,12 +37,11 @@ public abstract class ServiceManagerNative extends Binder implements IServiceMan
         if (obj == null) {
             return null;
         }
-        IServiceManager in =
-            (IServiceManager)obj.queryLocalInterface(descriptor);
+        IServiceManager in = (IServiceManager)obj.queryLocalInterface(descriptor);
         if (in != null) {
             return in;
         }
-
+		//将IBinder对象进行封装。
         return new ServiceManagerProxy(obj);
     }
 
