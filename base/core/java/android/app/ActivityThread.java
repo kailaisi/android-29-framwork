@@ -7274,11 +7274,13 @@ public final class ActivityThread extends ClientTransactionHandler {
     private void attach(boolean system, long startSeq) {
         sCurrentActivityThread = this;
         mSystemThread = system;
-        if (!system) {
+        if (!system) {//非系统给应用
             android.ddm.DdmHandleAppName.setAppName("<pre-initialized>", UserHandle.myUserId());
             RuntimeInit.setApplicationObject(mAppThread.asBinder());
+			//获取到ATMS的Binder对象
             final IActivityManager mgr = ActivityManager.getService();
             try {
+				//AMS里面的方法
                 mgr.attachApplication(mAppThread, startSeq);
             } catch (RemoteException ex) {
                 throw ex.rethrowFromSystemServer();
@@ -7315,8 +7317,7 @@ public final class ActivityThread extends ClientTransactionHandler {
                 mInstrumentation = new Instrumentation();
                 mInstrumentation.basicInit(this);
 				//创建application对应的context对象。getSystemContext会创建第一个contextImpl，里面进行Loadedapk信息的初始化
-                ContextImpl context = ContextImpl.createAppContext(
-				this, getSystemContext().mPackageInfo);
+                ContextImpl context = ContextImpl.createAppContext(this, getSystemContext().mPackageInfo);
 				//创建application
                 mInitialApplication = context.mPackageInfo.makeApplication(true, null);
 				//调用oncreate方法

@@ -205,6 +205,7 @@ public:
         data.writeStrongBinder(service);
         data.writeInt32(allowIsolated ? 1 : 0);
         data.writeInt32(dumpsysPriority);
+		//这里的remote()方法返回的是BpBinder对象
         status_t err = remote()->transact(ADD_SERVICE_TRANSACTION, data, &reply);
         return err == NO_ERROR ? reply.readExceptionCode() : err;
     }

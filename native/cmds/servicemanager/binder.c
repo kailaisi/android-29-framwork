@@ -199,6 +199,7 @@ void binder_send_reply(struct binder_state *bs,
 
     data.cmd_free = BC_FREE_BUFFER;
     data.buffer = buffer_to_free;
+	//返回指令
     data.cmd_reply = BC_REPLY;
     data.txn.target.ptr = 0;
     data.txn.cookie = 0;
@@ -209,13 +210,14 @@ void binder_send_reply(struct binder_state *bs,
         data.txn.offsets_size = 0;
         data.txn.data.ptr.buffer = (uintptr_t)&status;
         data.txn.data.ptr.offsets = 0;
-    } else {
+    } else {//svcmgr_handler执行成功，将reply数据组装到txn中
         data.txn.flags = 0;
         data.txn.data_size = reply->data - reply->data0;
         data.txn.offsets_size = ((char*) reply->offs) - ((char*) reply->offs0);
         data.txn.data.ptr.buffer = (uintptr_t)reply->data0;
         data.txn.data.ptr.offsets = (uintptr_t)reply->offs0;
     }
+	//发送数据
     binder_write(bs, &data, sizeof(data));
 }
 
@@ -252,7 +254,7 @@ int binder_parse(struct binder_state *bs, struct binder_io *bio,
                 return -1;
             }
             binder_dump_txn(txn);
-            if (func) {
+            if (func) {//func函数返回了数据。这种情况下，要讲reply返回
                 unsigned rdata[256/4];
                 struct binder_io msg;
                 struct binder_io reply;
@@ -260,10 +262,12 @@ int binder_parse(struct binder_state *bs, struct binder_io *bio,
 
                 bio_init(&reply, rdata, sizeof(rdata), 4);
                 bio_init_from_txn(&msg, txn);
+				//调用func函数
                 res = func(bs, txn, &msg, &reply);
                 if (txn->flags & TF_ONE_WAY) {
                     binder_free_buffer(bs, txn->data.ptr.buffer);
                 } else {
+                	//发送协议指令给Binder驱动，向Client端发送reply
                     binder_send_reply(bs, &reply, txn->data.ptr.buffer, res);
                 }
             }
@@ -412,7 +416,7 @@ void binder_loop(struct binder_state *bs, binder_handler func)
         bwr.read_consumed = 0;
         bwr.read_buffer = (uintptr_t) readbuf;
 		//使用BINDER_WRITE_READ指令查询Binder驱动中是否有请求。
-		//如果有请求，就走到下面的binder_parse部分处理，如果没有，当前的ServiceManager线程就会在Binder驱动中水命，等待新的进程间请求
+		//如果有请求，就走到下面的binder_parse部分处理，如果没有，当前的ServiceManager线程就会在Binder驱动中睡眠，等待新的进程间请求
         res = ioctl(bs->fd, BINDER_WRITE_READ, &bwr);
 
         if (res < 0) {
@@ -531,7 +535,7 @@ void bio_put_obj(struct binder_io *bio, void *ptr)
 void bio_put_ref(struct binder_io *bio, uint32_t handle)
 {
     struct flat_binder_object *obj;
-
+	//申请对应的地址空间
     if (handle)
         obj = bio_alloc_obj(bio);
     else
@@ -541,7 +545,9 @@ void bio_put_ref(struct binder_io *bio, uint32_t handle)
         return;
 
     obj->flags = 0x7f | FLAT_BINDER_FLAG_ACCEPTS_FDS;
+	//类型是BINDER_TYPE_HANDLE
     obj->hdr.type = BINDER_TYPE_HANDLE;
+	//记录handle
     obj->handle = handle;
     obj->cookie = 0;
 }

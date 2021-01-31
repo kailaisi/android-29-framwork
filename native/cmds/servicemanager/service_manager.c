@@ -179,8 +179,11 @@ uint16_t svcmgr_id[] = {
 };
 
 
+
+//获取对应的服务
 uint32_t do_find_service(const uint16_t *s, size_t len, uid_t uid, pid_t spid, const char* sid)
 {
+	//获取对应的服务
     struct svcinfo *si = find_svc(s, len);
 
     if (!si || !si->handle) {
@@ -191,15 +194,16 @@ uint32_t do_find_service(const uint16_t *s, size_t len, uid_t uid, pid_t spid, c
         // If this service doesn't allow access from isolated processes,
         // then check the uid to see if it is isolated.
         uid_t appid = uid % AID_USER;
+		//检查服务是否是允许孤立于进程而单独存在的
         if (appid >= AID_ISOLATED_START && appid <= AID_ISOLATED_END) {
             return 0;
         }
     }
-
+	//检测是否有selinx权限。
     if (!svc_can_find(s, len, spid, sid, uid)) {
         return 0;
     }
-
+	//返回服务的handle
     return si->handle;
 }
 
@@ -209,25 +213,28 @@ int do_add_service(struct binder_state *bs, const uint16_t *s, size_t len, uint3
 
     //ALOGI("add_service('%s',%x,%s) uid=%d\n", str8(s, len), handle,
     //        allow_isolated ? "allow_isolated" : "!allow_isolated", uid);
-
+    //服务的名称长度不能超过127字节
     if (!handle || (len == 0) || (len > 127))
         return -1;
-
+	//最终调用selinux_check_access方法，会进行权限的检测，检查服务是否有进行服务注册
     if (!svc_can_register(s, len, spid, sid, uid)) {
         ALOGE("add_service('%s',%x) uid=%d - PERMISSION DENIED\n",
              str8(s, len), handle, uid);
         return -1;
     }
-
+	//查询是否已经有包含了name的svcinfo
     si = find_svc(s, len);
     if (si) {
         if (si->handle) {
             ALOGE("add_service('%s',%x) uid=%d - ALREADY REGISTERED, OVERRIDE\n",
                  str8(s, len), handle, uid);
+			//已经注册了，释放相应的服务
             svcinfo_death(bs, si);
         }
+		//更新服务的handle
         si->handle = handle;
     } else {
+		//申请内存
         si = malloc(sizeof(*si) + (len + 1) * sizeof(uint16_t));
         if (!si) {
             ALOGE("add_service('%s',%x) uid=%d - OUT OF MEMORY\n",
@@ -242,11 +249,13 @@ int do_add_service(struct binder_state *bs, const uint16_t *s, size_t len, uint3
         si->death.ptr = si;
         si->allow_isolated = allow_isolated;
         si->dumpsys_priority = dumpsys_priority;
+		//将其注册到服务列表svclist中，这里使用的链表来保存数据
         si->next = svclist;
         svclist = si;
     }
-
+	//以handle为目标，发送BC_ACQUIRE指令。
     binder_acquire(bs, handle);
+	//以handle为目标，发送BC_REQUEST_DEATH_NOTIFICATION指令。
     binder_link_to_death(bs, handle, &si->death);
     return 0;
 }
@@ -304,21 +313,24 @@ int svcmgr_handler(struct binder_state *bs,
         }
     }
 
+	//根据传输的不同类型来进行处理。
     switch(txn->code) {
-    case SVC_MGR_GET_SERVICE:
+    case SVC_MGR_GET_SERVICE://获取服务
     case SVC_MGR_CHECK_SERVICE:
         s = bio_get_string16(msg, &len);
         if (s == NULL) {
             return -1;
         }
+		//根据pid，uid来获取服务对应的handle值
         handle = do_find_service(s, len, txn->sender_euid, txn->sender_pid,
                                  (const char*) txn_secctx->secctx);
         if (!handle)
             break;
+		//将服务的handle写入到reply中
         bio_put_ref(reply, handle);
         return 0;
 
-    case SVC_MGR_ADD_SERVICE:
+    case SVC_MGR_ADD_SERVICE://添加服务
         s = bio_get_string16(msg, &len);
         if (s == NULL) {
             return -1;
@@ -326,12 +338,13 @@ int svcmgr_handler(struct binder_state *bs,
         handle = bio_get_ref(msg);
         allow_isolated = bio_get_uint32(msg) ? 1 : 0;
         dumpsys_priority = bio_get_uint32(msg);
+		//进行服务的添加
         if (do_add_service(bs, s, len, handle, txn->sender_euid, allow_isolated, dumpsys_priority,
                            txn->sender_pid, (const char*) txn_secctx->secctx))
             return -1;
         break;
 
-    case SVC_MGR_LIST_SERVICES: {
+    case SVC_MGR_LIST_SERVICES: {//获取服务列表
         uint32_t n = bio_get_uint32(msg);
         uint32_t req_dumpsys_priority = bio_get_uint32(msg);
 
