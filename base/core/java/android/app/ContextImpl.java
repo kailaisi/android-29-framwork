@@ -1573,6 +1573,7 @@ class ContextImpl extends Context {
         }
     }
 
+	//启动Service服务
     @Override
     public ComponentName startService(Intent service) {
         warnIfCallingFromSystemProcess();
@@ -1606,6 +1607,7 @@ class ContextImpl extends Context {
         try {
             validateServiceIntent(service);
             service.prepareToLeaveProcess(this);
+			//binder机制调用AMS中的startService方法
             ComponentName cn = ActivityManager.getService().startService(
                 mMainThread.getApplicationThread(), service, service.resolveTypeIfNeeded(
                             getContentResolver()), requireForeground,

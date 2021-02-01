@@ -1097,6 +1097,7 @@ public final class ActivityThread extends ClientTransactionHandler {
             data.buildSerial = buildSerial;
             data.autofillOptions = autofillOptions;
             data.contentCaptureOptions = contentCaptureOptions;
+			//发送Handler消息
             sendMessage(H.BIND_APPLICATION, data);
         }
 
@@ -1963,7 +1964,7 @@ public final class ActivityThread extends ClientTransactionHandler {
         public void handleMessage(Message msg) {
             if (DEBUG_MESSAGES) Slog.v(TAG, ">>> handling: " + codeToString(msg.what));
             switch (msg.what) {
-                case BIND_APPLICATION:
+                case BIND_APPLICATION://绑定Application的消息
                     Trace.traceBegin(Trace.TRACE_TAG_ACTIVITY_MANAGER, "bindApplication");
                     AppBindData data = (AppBindData) msg.obj;
                     handleBindApplication(data);
@@ -6324,6 +6325,7 @@ public final class ActivityThread extends ClientTransactionHandler {
     @UnsupportedAppUsage
     private void handleBindApplication(AppBindData data) {
         // Register the UI Thread as a sensitive thread to the runtime.
+        //将UI线程注册为敏感线程。
         VMRuntime.registerSensitiveThread();
         // In the case the stack depth property exists, pass it down to the runtime.
         String property = SystemProperties.get("debug.allocTracker.stackDepth");
@@ -6335,6 +6337,7 @@ public final class ActivityThread extends ClientTransactionHandler {
         }
 
         // Note when this process has started.
+        //进程启动时间
         Process.setStartTimes(SystemClock.elapsedRealtime(), SystemClock.uptimeMillis());
 
         mBoundApplication = data;
@@ -6542,7 +6545,7 @@ public final class ActivityThread extends ClientTransactionHandler {
         } else {
             ii = null;
         }
-		//创建application对应的Context
+		//重点方法        创建application对应的Context
         final ContextImpl appContext = ContextImpl.createAppContext(this, data.info);
         updateLocaleListFromAppContext(appContext,
                 mResourcesManager.getConfiguration().getLocales());
@@ -6567,6 +6570,7 @@ public final class ActivityThread extends ClientTransactionHandler {
 
         // Continue loading instrumentation.
         if (ii != null) {
+			//创建对应的ApplicationInfo对象
             ApplicationInfo instrApp;
             try {
                 instrApp = getPackageManager().getApplicationInfo(ii.packageName, 0,
@@ -6631,6 +6635,7 @@ public final class ActivityThread extends ClientTransactionHandler {
         try {
             // If the app is being launched for full backup or restore, bring it up in
             // a restricted environment with the base application class.
+            //重点方法        通过LoadApk的makeApplication方法创建Application实例
             app = data.info.makeApplication(data.restrictedBackupMode, null);
 
             // Propagate autofill compat state
@@ -6652,6 +6657,7 @@ public final class ActivityThread extends ClientTransactionHandler {
             // Do this after providers, since instrumentation tests generally start their
             // test thread at this point, and we don't want that racing.
             try {
+				//钩子函数，可以自定义mInstrumentation来监听onCreate方法的调用
                 mInstrumentation.onCreate(data.instrumentationArgs);
             } catch (Exception e) {
                 throw new RuntimeException(
@@ -6659,6 +6665,7 @@ public final class ActivityThread extends ClientTransactionHandler {
                                 + data.instrumentationName + ": " + e.toString(), e);
             }
             try {
+				//重点方法      通过mInstrumentation调用Application的onCreate生命周期函数
                 mInstrumentation.callApplicationOnCreate(app);
             } catch (Exception e) {
                 if (!mInstrumentation.onException(app, e)) {
@@ -6677,6 +6684,7 @@ public final class ActivityThread extends ClientTransactionHandler {
         }
 
         // Preload fonts resources
+        //提前加载fonts的资源信息
         FontsContract.setApplicationContextForResources(appContext);
         if (!Process.isIsolated()) {
             try {
@@ -7280,7 +7288,9 @@ public final class ActivityThread extends ClientTransactionHandler {
 			//获取到ATMS的Binder对象
             final IActivityManager mgr = ActivityManager.getService();
             try {
-				//AMS里面的方法
+				//AMS里面的方法，
+				//mAppThread是个IBinder对象，
+				//这里将Ibinder对象关联到了AMS，这样AMS就可以通过这个对象进行Application的创建、生命周期的管理等等。
                 mgr.attachApplication(mAppThread, startSeq);
             } catch (RemoteException ex) {
                 throw ex.rethrowFromSystemServer();
@@ -7533,7 +7543,7 @@ public final class ActivityThread extends ClientTransactionHandler {
         TrustedCertificateStore.setDefaultUserDirectory(configDir);
 
         Process.setArgV0("<pre-initialized>");
-        //准备looper
+        //准备主线程的looper
         Looper.prepareMainLooper();
 
         // Find the value for {@link #PROC_START_SEQ_IDENT} if provided on the command line.

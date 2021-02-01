@@ -1195,7 +1195,7 @@ public final class LoadedApk {
     @UnsupportedAppUsage
     public Application makeApplication(boolean forceDefaultAppClass,
             Instrumentation instrumentation) {
-        //已经创建，直接返回
+        //已经创建，直接返回。避免多次创建
         if (mApplication != null) {
             return mApplication;
         }
@@ -1203,7 +1203,7 @@ public final class LoadedApk {
         Trace.traceBegin(Trace.TRACE_TAG_ACTIVITY_MANAGER, "makeApplication");
 
         Application app = null;
-
+		//拿到对应的类名称
         String appClass = mApplicationInfo.className;
         if (forceDefaultAppClass || (appClass == null)) {
             appClass = "android.app.Application";

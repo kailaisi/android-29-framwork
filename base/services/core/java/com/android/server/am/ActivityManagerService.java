@@ -5055,6 +5055,7 @@ public class ActivityManagerService extends IActivityManager.Stub
                         mCoreSettingsObserver.getCoreSettingsLocked(),
                         buildSerial, autofillOptions, contentCaptureOptions);
             } else {
+				//重点方法  这里的thread是IBinder对象，可以调用ApplicationThread的bindApplication方法
                 thread.bindApplication(processName, appInfo, providers, null, profilerInfo,
                         null, null, null, testMode,
                         mBinderTransactionTrackingEnabled, enableTrackAllocation,
@@ -5110,6 +5111,7 @@ public class ActivityManagerService extends IActivityManager.Stub
         // Find any services that should be running in this process...
         if (!badApp) {
             try {
+				//启动关联的services
                 didSomething |= mServices.attachApplicationLocked(app, processName);
                 checkTime(startTime, "attachApplicationLocked: after mServices.attachApplicationLocked");
             } catch (Exception e) {
@@ -5171,12 +5173,14 @@ public class ActivityManagerService extends IActivityManager.Stub
         return true;
     }
 
+	//绑定Application
     @Override
     public final void attachApplication(IApplicationThread thread, long startSeq) {
         synchronized (this) {
             int callingPid = Binder.getCallingPid();
             final int callingUid = Binder.getCallingUid();
             final long origId = Binder.clearCallingIdentity();
+			//重点方法
             attachApplicationLocked(thread, callingPid, callingUid, startSeq);
             Binder.restoreCallingIdentity(origId);
         }
