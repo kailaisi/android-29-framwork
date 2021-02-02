@@ -1610,8 +1610,7 @@ class ContextImpl extends Context {
 			//binder机制调用AMS中的startService方法
             ComponentName cn = ActivityManager.getService().startService(
                 mMainThread.getApplicationThread(), service, service.resolveTypeIfNeeded(
-                            getContentResolver()), requireForeground,
-                            getOpPackageName(), user.getIdentifier());
+                            getContentResolver()), requireForeground,getOpPackageName(), user.getIdentifier());
             if (cn != null) {
                 if (cn.getPackageName().equals("!")) {
                     throw new SecurityException(

@@ -4770,6 +4770,7 @@ public class ActivityManagerService extends IActivityManager.Stub
         long bindApplicationTimeMillis;
         if (pid != MY_PID && pid >= 0) {
             synchronized (mPidsSelfLocked) {
+				//根据进程的pid获取对应的ProcessRecord
                 app = mPidsSelfLocked.get(pid);
             }
             if (app != null && (app.startUid != callingUid || app.startSeq != startSeq)) {
@@ -5055,7 +5056,7 @@ public class ActivityManagerService extends IActivityManager.Stub
                         mCoreSettingsObserver.getCoreSettingsLocked(),
                         buildSerial, autofillOptions, contentCaptureOptions);
             } else {
-				//重点方法  这里的thread是IBinder对象，可以调用ApplicationThread的bindApplication方法
+				//重点方法       这里的thread是IBinder对象，可以调用ApplicationThread的bindApplication方法。这里会创建Application对象
                 thread.bindApplication(processName, appInfo, providers, null, profilerInfo,
                         null, null, null, testMode,
                         mBinderTransactionTrackingEnabled, enableTrackAllocation,
@@ -5111,7 +5112,7 @@ public class ActivityManagerService extends IActivityManager.Stub
         // Find any services that should be running in this process...
         if (!badApp) {
             try {
-				//启动关联的services
+				//启动关联的services，将启动的Service和对应的Application进行绑定
                 didSomething |= mServices.attachApplicationLocked(app, processName);
                 checkTime(startTime, "attachApplicationLocked: after mServices.attachApplicationLocked");
             } catch (Exception e) {
@@ -5123,6 +5124,7 @@ public class ActivityManagerService extends IActivityManager.Stub
         // Check if a next-broadcast receiver is in this process...
         if (!badApp && isPendingBroadcastProcessLocked(pid)) {
             try {
+				//启动对应的广播
                 didSomething |= sendPendingBroadcastsLocked(app);
                 checkTime(startTime, "attachApplicationLocked: after sendPendingBroadcastsLocked");
             } catch (Exception e) {
@@ -13916,6 +13918,7 @@ public class ActivityManagerService extends IActivityManager.Stub
             final long origId = Binder.clearCallingIdentity();
             ComponentName res;
             try {
+				//调用了startServiceLocked方法
                 res = mServices.startServiceLocked(caller, service,
                         resolvedType, callingPid, callingUid,
                         requireForeground, callingPackage, userId);

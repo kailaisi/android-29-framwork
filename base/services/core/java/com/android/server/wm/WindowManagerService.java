@@ -283,6 +283,9 @@ import java.util.Date;
 import java.util.List;
 
 /** {@hide} */
+//主要作用有4点:
+//1.分配surface    2.掌管surface显示顺序及位置尺寸等    3. 控制窗口动画   4.输入事件分发
+
 public class WindowManagerService extends IWindowManager.Stub
         implements Watchdog.Monitor, WindowManagerPolicy.WindowManagerFuncs {
     private static final String TAG = TAG_WITH_CLASS_NAME ? "WindowManagerService" : TAG_WM;

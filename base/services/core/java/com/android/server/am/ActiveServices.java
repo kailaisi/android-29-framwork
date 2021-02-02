@@ -413,6 +413,7 @@ public final class ActiveServices {
                 + " type=" + resolvedType + " args=" + service.getExtras());
 
         final boolean callerFg;
+		
         if (caller != null) {
             final ProcessRecord callerApp = mAm.getRecordForAppLocked(caller);
             if (callerApp == null) {
@@ -3318,8 +3319,8 @@ public final class ActiveServices {
         }
     }
 
-    boolean attachApplicationLocked(ProcessRecord proc, String processName)
-            throws RemoteException {
+	//将启动的Service和对应的Application进行绑定
+    boolean attachApplicationLocked(ProcessRecord proc, String processName)throws RemoteException {
         boolean didSomething = false;
         // Collect any services that are waiting for this process to come up.
         if (mPendingServices.size() > 0) {

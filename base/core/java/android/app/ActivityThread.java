@@ -4112,6 +4112,7 @@ public final class ActivityThread extends ClientTransactionHandler {
         Service service = null;
         try {
             java.lang.ClassLoader cl = packageInfo.getClassLoader();
+			//通过反射创建一个Service对象
             service = packageInfo.getAppFactory()
                     .instantiateService(cl, data.info.name, data.intent);
         } catch (Exception e) {
@@ -4124,11 +4125,12 @@ public final class ActivityThread extends ClientTransactionHandler {
 
         try {
             if (localLOGV) Slog.v(TAG, "Creating service " + data.info.name);
-
+			//创建一个ContextImpl对象
             ContextImpl context = ContextImpl.createAppContext(this, packageInfo);
             context.setOuterContext(service);
-
+			//这里如果Application没有创建的话，会进行创建，如果已经存在了，则不会再重复创建了。
             Application app = packageInfo.makeApplication(false, mInstrumentation);
+			//绑定
             service.attach(context, this, data.info.name, data.token, app,
                     ActivityManager.getService());
             service.onCreate();

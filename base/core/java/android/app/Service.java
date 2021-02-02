@@ -823,10 +823,8 @@ public abstract class Service extends ContextWrapper implements ComponentCallbac
      * @hide
      */
     @UnsupportedAppUsage
-    public final void attach(
-            Context context,
-            ActivityThread thread, String className, IBinder token,
-            Application application, Object activityManager) {
+    public final void attach(Context context,ActivityThread thread, String className, IBinder token,Application application, Object activityManager) {
+    	//调用attachBaseContext方法
         attachBaseContext(context);
         mThread = thread;           // NOTE:  unused - remove?
         mClassName = className;
