@@ -986,6 +986,7 @@ public final class ActivityThread extends ClientTransactionHandler {
         public final void scheduleCreateService(IBinder token,
                                                 ServiceInfo info, CompatibilityInfo compatInfo, int processState) {
             updateProcessState(processState, false);
+			//将相关参数封装为CreateServiceData，然后通过Handler发送
             CreateServiceData s = new CreateServiceData();
             s.token = token;
             s.info = info;
@@ -1020,16 +1021,15 @@ public final class ActivityThread extends ClientTransactionHandler {
 
         public final void scheduleServiceArgs(IBinder token, ParceledListSlice args) {
             List<ServiceStartArgs> list = args.getList();
-
             for (int i = 0; i < list.size(); i++) {
                 ServiceStartArgs ssa = list.get(i);
+				//封装为ServiceArgsData对象，然后发送
                 ServiceArgsData s = new ServiceArgsData();
                 s.token = token;
                 s.taskRemoved = ssa.taskRemoved;
                 s.startId = ssa.startId;
                 s.flags = ssa.flags;
                 s.args = ssa.args;
-
                 sendMessage(H.SERVICE_ARGS, s);
             }
         }
@@ -4130,9 +4130,10 @@ public final class ActivityThread extends ClientTransactionHandler {
             context.setOuterContext(service);
 			//这里如果Application没有创建的话，会进行创建，如果已经存在了，则不会再重复创建了。
             Application app = packageInfo.makeApplication(false, mInstrumentation);
-			//绑定
+			//绑定context
             service.attach(context, this, data.info.name, data.token, app,
                     ActivityManager.getService());
+			//调用onCreate()方法
             service.onCreate();
             mServices.put(data.token, service);
             try {
@@ -4258,6 +4259,7 @@ public final class ActivityThread extends ClientTransactionHandler {
     }
 
     private void handleServiceArgs(ServiceArgsData data) {
+    	//获取到对应的Service对象
         Service s = mServices.get(data.token);
         if (s != null) {
             try {
@@ -4267,6 +4269,7 @@ public final class ActivityThread extends ClientTransactionHandler {
                 }
                 int res;
                 if (!data.taskRemoved) {
+					//调用onStartCommand()方法
                     res = s.onStartCommand(data.args, data.flags, data.startId);
                 } else {
                     s.onTaskRemoved(data.args);

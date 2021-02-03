@@ -95,7 +95,7 @@ final class ServiceRecord extends Binder implements ComponentName.WithComponentN
     private final ArrayMap<IBinder, ArrayList<ConnectionRecord>> connections
             = new ArrayMap<IBinder, ArrayList<ConnectionRecord>>();
                             // IBinder -> ConnectionRecord of all bound clients
-
+    //service启动的进程
     ProcessRecord app;      // where this service is running or null.
     ProcessRecord isolatedProc; // keep track of isolated process, if requested
     ServiceState tracker; // tracking service execution, may be null
