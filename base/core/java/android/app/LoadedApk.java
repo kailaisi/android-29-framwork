@@ -1672,12 +1672,14 @@ public final class LoadedApk {
             Context context, Handler handler, Executor executor, int flags) {
         synchronized (mServices) {
             LoadedApk.ServiceDispatcher sd = null;
+			//获取context中所缓存的Service的map信息
             ArrayMap<ServiceConnection, LoadedApk.ServiceDispatcher> map = mServices.get(context);
             if (map != null) {
                 if (DEBUG) Slog.d(TAG, "Returning existing dispatcher " + sd + " for conn " + c);
                 sd = map.get(c);
             }
             if (sd == null) {
+				//创建ServiceDispatcher对象
                 if (executor != null) {
                     sd = new ServiceDispatcher(c, context, executor, flags);
                 } else {
@@ -1792,6 +1794,7 @@ public final class LoadedApk {
                     throws RemoteException {
                 LoadedApk.ServiceDispatcher sd = mDispatcher.get();
                 if (sd != null) {
+					//调用connect方法，
                     sd.connected(name, service, dead);
                 }
             }
@@ -1803,6 +1806,7 @@ public final class LoadedApk {
         @UnsupportedAppUsage
         ServiceDispatcher(ServiceConnection conn,
                 Context context, Handler activityThread, int flags) {
+                //直接创建InnerConnection
             mIServiceConnection = new InnerConnection(this);
             mConnection = conn;
             mContext = context;
@@ -1883,6 +1887,7 @@ public final class LoadedApk {
         }
 
         public void connected(ComponentName name, IBinder service, boolean dead) {
+        	//这里向主线程post了一个runnable函数
             if (mActivityExecutor != null) {
                 mActivityExecutor.execute(new RunConnection(name, service, 0, dead));
             } else if (mActivityThread != null) {
@@ -1912,6 +1917,7 @@ public final class LoadedApk {
                     // any connection received.
                     return;
                 }
+				//缓存对应的Binder对象
                 old = mActiveConnections.get(name);
                 if (old != null && old.binder == service) {
                     // Huh, already have this one.  Oh well!
@@ -1922,6 +1928,7 @@ public final class LoadedApk {
                     // A new service is being connected... set it all up.
                     info = new ConnectionInfo();
                     info.binder = service;
+					//监控服务是否撕掉
                     info.deathMonitor = new DeathMonitor(name, service);
                     try {
                         service.linkToDeath(info.deathMonitor, 0);
@@ -1945,6 +1952,7 @@ public final class LoadedApk {
 
             // If there was an old service, it is now disconnected.
             if (old != null) {
+				//之前绑定过，这里需要将其解绑
                 mConnection.onServiceDisconnected(name);
             }
             if (dead) {
@@ -1952,6 +1960,7 @@ public final class LoadedApk {
             }
             // If there is a new viable service, it is now connected.
             if (service != null) {
+				//绑定成功了，调用onServiceConnected方法
                 mConnection.onServiceConnected(name, service);
             } else {
                 // The binding machinery worked, but the remote returned null from onBind().

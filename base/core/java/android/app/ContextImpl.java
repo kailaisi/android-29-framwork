@@ -1716,6 +1716,8 @@ class ContextImpl extends Context {
     private boolean bindServiceCommon(Intent service, ServiceConnection conn, int flags,
             String instanceName, Handler handler, Executor executor, UserHandle user) {
         // Keep this in sync with DevicePolicyManager.bindDeviceAdminServiceAsUser.
+        //ServiceConnection对象是无法达到跨进程通讯功能的，所以这里生成了一个IServiceConnection对象，
+        //sd是一个IBinder对象，能够实现跨进程的通讯功能
         IServiceConnection sd;
         if (conn == null) {
             throw new IllegalArgumentException("connection is null");
@@ -1743,7 +1745,6 @@ class ContextImpl extends Context {
             service.prepareToLeaveProcess(this);
             //ActivityManager.getService()会通过ServiceManager返回IActivityManager的binder对象。
             // bindIsolatedService，会调用服务端的相应接口。也就是AMS的bindIsolatedService接口
-
             int res = ActivityManager.getService().bindIsolatedService(
                 mMainThread.getApplicationThread(), getActivityToken(), service,
                 service.resolveTypeIfNeeded(getContentResolver()),
