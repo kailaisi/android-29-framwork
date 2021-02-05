@@ -1779,6 +1779,7 @@ public final class ActiveServices {
 
             if ((flags&Context.BIND_AUTO_CREATE) != 0) {
                 s.lastActivity = SystemClock.uptimeMillis();
+				//重点方法       拉起service
                 if (bringUpServiceLocked(s, service.getFlags(), callerFg, false,
                         permissionsReviewRequired) != null) {
                     return 0;
@@ -1786,6 +1787,7 @@ public final class ActiveServices {
             }
 
             if (s.app != null) {
+				//service已经启动了
                 if ((flags&Context.BIND_TREAT_LIKE_ACTIVITY) != 0) {
                     s.app.treatLikeActivity = true;
                 }
@@ -1807,9 +1809,13 @@ public final class ActiveServices {
                     + " doRebind=" + b.intent.doRebind);
 
             if (s.app != null && b.intent.received) {
+				//s.app != null表示service已经启动了，
+				//b.intent.received表示Service对象的IBinder已经发给AMS了
                 // Service is already running, so we can immediately
                 // publish the connection.
                 try {
+					//调用connected方法。这里测c.conn是IServiceConnection对象，
+					//是我们远程调用AMS的时候，传递的可以跨进程调用的参数
                     c.conn.connected(s.name, b.intent.binder, false);
                 } catch (Exception e) {
                     Slog.w(TAG, "Failure sending service " + s.shortInstanceName
@@ -1824,6 +1830,8 @@ public final class ActiveServices {
                     requestServiceBindingLocked(s, b.intent, callerFg, true);
                 }
             } else if (!b.intent.requested) {
+				//!b.intent.requested表示没有向AMS请求过Binder对象，比如说service第一次启动的时候
+				//重点方法
                 requestServiceBindingLocked(s, b.intent, callerFg, false);
             }
 
@@ -1836,6 +1844,7 @@ public final class ActiveServices {
         return 1;
     }
 
+	//将Service对应的句柄发布到AMS中
     void publishServiceLocked(ServiceRecord r, Intent intent, IBinder service) {
         final long origId = Binder.clearCallingIdentity();
         try {
@@ -2289,15 +2298,19 @@ public final class ActiveServices {
     private final boolean requestServiceBindingLocked(ServiceRecord r, IntentBindRecord i,
             boolean execInFg, boolean rebind) throws TransactionTooLargeException {
         if (r.app == null || r.app.thread == null) {
+			//判断service是否启动
             // If service is not currently running, can't yet bind.
             return false;
         }
         if (DEBUG_SERVICE) Slog.d(TAG_SERVICE, "requestBind " + i + ": requested=" + i.requested
                 + " rebind=" + rebind);
         if ((!i.requested || rebind) && i.apps.size() > 0) {
+			//未请求过service的binder对象，或者是重新请求rebind。
+			//i.apps.size() > 0表示当前有应用要绑定service
             try {
                 bumpServiceExecutingLocked(r, execInFg, "bind");
                 r.app.forceProcessStateUpTo(ActivityManager.PROCESS_STATE_SERVICE);
+				//调用ActivityThread下的ApplicationThread下的scheduleBindService方法
                 r.app.thread.scheduleBindService(r, i.intent.getIntent(), rebind,
                         r.app.getReportedProcState());
                 if (!rebind) {
@@ -2724,6 +2737,7 @@ public final class ActiveServices {
             app.whitelistManager = true;
         }
 
+		//请求service对象发布对应的Binder句柄到AMS
         requestServiceBindingsLocked(r, execInFg);
 
         updateServiceClientActivitiesLocked(app, null, true);
@@ -2740,7 +2754,7 @@ public final class ActiveServices {
                     null, null, 0));
         }
 
-		//这里会调用onBind方法
+		//这里会调用onStartCommand方法
         sendServiceArgsLocked(r, execInFg, true);
 
         if (r.delayed) {

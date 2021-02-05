@@ -14072,6 +14072,7 @@ public class ActivityManagerService extends IActivityManager.Stub
         }
 
         synchronized(this) {
+			//重点方法   mServices是ActiveServices对象
             return mServices.bindServiceLocked(caller, token, service,
                     resolvedType, connection, flags, instanceName, callingPackage, userId);
         }
