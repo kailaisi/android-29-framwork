@@ -1671,11 +1671,13 @@ public final class LoadedApk {
     private IServiceConnection getServiceDispatcherCommon(ServiceConnection c,
             Context context, Handler handler, Executor executor, int flags) {
         synchronized (mServices) {
+			
             LoadedApk.ServiceDispatcher sd = null;
-			//获取context中所缓存的Service的map信息
+			//获取缓存的Service的map信息。这里的map是和context作为主键的。所以不同的activity，其保存的serviceConnext是不一样的
             ArrayMap<ServiceConnection, LoadedApk.ServiceDispatcher> map = mServices.get(context);
             if (map != null) {
                 if (DEBUG) Slog.d(TAG, "Returning existing dispatcher " + sd + " for conn " + c);
+				//查找对应的ServiceConnection是否有对应的缓存的ServiceDispatcher对象
                 sd = map.get(c);
             }
             if (sd == null) {
@@ -1686,6 +1688,7 @@ public final class LoadedApk {
                     sd = new ServiceDispatcher(c, context, handler, flags);
                 }
                 if (DEBUG) Slog.d(TAG, "Creating new dispatcher " + sd + " for conn " + c);
+				//放入到缓存
                 if (map == null) {
                     map = new ArrayMap<>();
                     mServices.put(context, map);
@@ -1694,6 +1697,7 @@ public final class LoadedApk {
             } else {
                 sd.validate(context, handler, executor);
             }
+			//返回sd中的IServiceConnection对象
             return sd.getIServiceConnection();
         }
     }
@@ -1783,7 +1787,10 @@ public final class LoadedApk {
         }
 
         private static class InnerConnection extends IServiceConnection.Stub {
+        	//实现了.stub接口，能够实现跨进程传递。会将这个对象传递给AMS，然后AMS就可以调用该对象的
+        	//connected方法，从而实现对于sd方法的调用
             @UnsupportedAppUsage
+			//弱引用。
             final WeakReference<LoadedApk.ServiceDispatcher> mDispatcher;
 
             InnerConnection(LoadedApk.ServiceDispatcher sd) {
@@ -1887,12 +1894,13 @@ public final class LoadedApk {
         }
 
         public void connected(ComponentName name, IBinder service, boolean dead) {
-        	//这里向主线程post了一个runnable函数
+        	//这里向主线程post了一个runnable函数，其本质也是调用doConnected方法
             if (mActivityExecutor != null) {
                 mActivityExecutor.execute(new RunConnection(name, service, 0, dead));
             } else if (mActivityThread != null) {
                 mActivityThread.post(new RunConnection(name, service, 0, dead));
             } else {
+				//进行连接操作
                 doConnected(name, service, dead);
             }
         }
@@ -1907,6 +1915,7 @@ public final class LoadedApk {
             }
         }
 
+		//最后调用的方法，
         public void doConnected(ComponentName name, IBinder service, boolean dead) {
             ServiceDispatcher.ConnectionInfo old;
             ServiceDispatcher.ConnectionInfo info;

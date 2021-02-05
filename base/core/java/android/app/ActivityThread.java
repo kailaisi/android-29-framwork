@@ -4152,6 +4152,7 @@ public final class ActivityThread extends ClientTransactionHandler {
     }
 
     private void handleBindService(BindServiceData data) {
+    	//根据token获取应用中的service对象
         Service s = mServices.get(data.token);
         if (DEBUG_SERVICE)
             Slog.v(TAG, "handleBindService s=" + s + " rebind=" + data.rebind);
@@ -4160,8 +4161,9 @@ public final class ActivityThread extends ClientTransactionHandler {
                 data.intent.setExtrasClassLoader(s.getClassLoader());
                 data.intent.prepareToEnterProcess();
                 try {
-                    if (!data.rebind) {
+                    if (!data.rebind) {//控制标识
                         IBinder binder = s.onBind(data.intent);
+						//将Service对象的Binder句柄发布到AMS中
                         ActivityManager.getService().publishService(
                                 data.token, data.intent, binder);
                     } else {
