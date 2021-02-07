@@ -14501,6 +14501,7 @@ public class ActivityManagerService extends IActivityManager.Stub
                 // Original caller already died
                 return null;
             }
+			//一个BroadcastFilter的列表，用于进行条件的过滤
             ReceiverList rl = mRegisteredReceivers.get(receiver.asBinder());
             if (rl == null) {
                 rl = new ReceiverList(this, callerApp, callingPid, callingUid,
@@ -14538,8 +14539,10 @@ public class ActivityManagerService extends IActivityManager.Stub
                         + " was previously registered for user " + rl.userId
                         + " callerPackage is " + callerPackage);
             }
+			//创建一个filter
             BroadcastFilter bf = new BroadcastFilter(filter, rl, callerPackage,
                     permission, callingUid, userId, instantApp, visibleToInstantApps);
+			//将filter添加到列表，如果列表中已经存在了，那么不会重复添加
             if (rl.containsFilter(filter)) {
                 Slog.w(TAG, "Receiver with filter " + filter
                         + " already registered for pid " + rl.pid
@@ -15296,8 +15299,8 @@ public class ActivityManagerService extends IActivityManager.Stub
         List receivers = null;
         List<BroadcastFilter> registeredReceivers = null;
         // Need to resolve the intent to interested receivers...
-        if ((intent.getFlags()&Intent.FLAG_RECEIVER_REGISTERED_ONLY)
-                 == 0) {
+        if ((intent.getFlags()&Intent.FLAG_RECEIVER_REGISTERED_ONLY)== 0) {
+			//重点方法    根据发送的广播查找注册该广播的静态receiver
             receivers = collectReceiverComponents(intent, resolvedType, callingUid, users);
         }
         if (intent.getComponent() == null) {
@@ -15308,9 +15311,8 @@ public class ActivityManagerService extends IActivityManager.Stub
                             UserManager.DISALLOW_DEBUGGING_FEATURES, users[i])) {
                         continue;
                     }
-                    List<BroadcastFilter> registeredReceiversForUser =
-                            mReceiverResolver.queryIntent(intent,
-                                    resolvedType, false /*defaultOnly*/, users[i]);
+					////重点方法    根据发送的广播查找注册该广播的动态receiver的列表
+                    List<BroadcastFilter> registeredReceiversForUser = mReceiverResolver.queryIntent(intent,resolvedType, false /*defaultOnly*/, users[i]);
                     if (registeredReceivers == null) {
                         registeredReceivers = registeredReceiversForUser;
                     } else if (registeredReceiversForUser != null) {
@@ -15331,6 +15333,7 @@ public class ActivityManagerService extends IActivityManager.Stub
 
         int NR = registeredReceivers != null ? registeredReceivers.size() : 0;
         if (!ordered && NR > 0) {
+			//这里处理动态receiver，加入到并行分发队列来处理
             // If we are not serializing this broadcast, then send the
             // registered receivers separately so they don't wait for the
             // components to be launched.
@@ -15338,6 +15341,7 @@ public class ActivityManagerService extends IActivityManager.Stub
                 checkBroadcastFromSystem(intent, callerApp, callerPackage, callingUid,
                         isProtectedBroadcast, registeredReceivers);
             }
+			//
             final BroadcastQueue queue = broadcastQueueForIntent(intent);
             BroadcastRecord r = new BroadcastRecord(queue, intent, callerApp,
                     callerPackage, callingPid, callingUid, callerInstantApp, resolvedType,
@@ -15349,7 +15353,9 @@ public class ActivityManagerService extends IActivityManager.Stub
                     && (queue.replaceParallelBroadcastLocked(r) != null);
             // Note: We assume resultTo is null for non-ordered broadcasts.
             if (!replaced) {
+				//放入到并行队列中去发送
                 queue.enqueueParallelBroadcastLocked(r);
+				//重点方法    调度去分发广播。
                 queue.scheduleBroadcastsLocked();
             }
             registeredReceivers = null;
@@ -15359,6 +15365,7 @@ public class ActivityManagerService extends IActivityManager.Stub
         // Merge into one list.
         int ir = 0;
         if (receivers != null) {
+			//这里会处理静态receiver信息。
             // A special case for PACKAGE_ADDED: do not allow the package
             // being added to see this broadcast.  This prevents them from
             // using this as a back door to get run as soon as they are
@@ -15420,6 +15427,7 @@ public class ActivityManagerService extends IActivityManager.Stub
                 }
             }
         }
+		//将=order的动态receiver跟未处理的receiver合并到一起。
         while (ir < NR) {
             if (receivers == null) {
                 receivers = new ArrayList();
@@ -15433,8 +15441,9 @@ public class ActivityManagerService extends IActivityManager.Stub
                     isProtectedBroadcast, receivers);
         }
 
-        if ((receivers != null && receivers.size() > 0)
-                || resultTo != null) {
+        if ((receivers != null && receivers.size() > 0) || resultTo != null) {
+			//处理剩下的receiver，加到串行分发队列中。
+			//queue是一个队列。
             BroadcastQueue queue = broadcastQueueForIntent(intent);
             BroadcastRecord r = new BroadcastRecord(queue, intent, callerApp,
                     callerPackage, callingPid, callingUid, callerInstantApp, resolvedType,
@@ -15571,6 +15580,7 @@ public class ActivityManagerService extends IActivityManager.Stub
 
             final long origId = Binder.clearCallingIdentity();
             try {
+				//
                 return broadcastIntentLocked(callerApp,
                         callerApp != null ? callerApp.info.packageName : null,
                         intent, resolvedType, resultTo, resultCode, resultData, resultExtras,

@@ -1359,6 +1359,7 @@ public final class LoadedApk {
         }
     }
 
+	//该方法跟service的跨进程有异曲同工之妙，都是将客户创建的对象进行一层封装，封装为IBinder对象，之后就可以和AMS进行通讯了
     public IIntentReceiver getReceiverDispatcher(BroadcastReceiver r,
             Context context, Handler handler,
             Instrumentation instrumentation, boolean registered) {
@@ -1466,6 +1467,7 @@ public final class LoadedApk {
                             + " seq=" + seq + " to " + (rd != null ? rd.mReceiver : null));
                 }
                 if (rd != null) {
+					//调用方法
                     rd.performReceive(intent, resultCode, data, extras,
                             ordered, sticky, sendingUser);
                 } else {
@@ -1554,6 +1556,7 @@ public final class LoadedApk {
                         intent.prepareToEnterProcess();
                         setExtrasClassLoader(cl);
                         receiver.setPendingResult(this);
+						//执行onReceive回调函数
                         receiver.onReceive(mContext, intent);
                     } catch (Exception e) {
                         if (mRegistered && ordered) {
@@ -1571,6 +1574,8 @@ public final class LoadedApk {
                     }
 
                     if (receiver.getPendingResult() != null) {
+						//收尾工作。如果是串行化工作，那么上个通知处理完了下个通知是要继续进行处理的
+						//这个finish方法就是用来进行通知功能的
                         finish();
                     }
                     Trace.traceEnd(Trace.TRACE_TAG_ACTIVITY_MANAGER);
@@ -1645,6 +1650,7 @@ public final class LoadedApk {
                             + " seq=" + seq + " to " + mReceiver);
                 }
             }
+			//mActivityThread.post将数组发送到主线程
             if (intent == null || !mActivityThread.post(args.getRunnable())) {
                 if (mRegistered && ordered) {
                     IActivityManager mgr = ActivityManager.getService();
@@ -1817,6 +1823,7 @@ public final class LoadedApk {
             mIServiceConnection = new InnerConnection(this);
             mConnection = conn;
             mContext = context;
+			//主线程的Handler
             mActivityThread = activityThread;
             mActivityExecutor = null;
             mLocation = new ServiceConnectionLeaked(null);

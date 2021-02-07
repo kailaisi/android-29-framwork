@@ -216,7 +216,7 @@ public abstract class BroadcastReceiver {
          * next broadcast will proceed.
          */
         public final void finish() {
-            if (mType == TYPE_COMPONENT) {
+            if (mType == TYPE_COMPONENT) {//如果是静态广播
                 final IActivityManager mgr = ActivityManager.getService();
                 if (QueuedWork.hasPendingWork()) {
                     // If this is a broadcast component, we need to make sure any
@@ -245,6 +245,7 @@ public abstract class BroadcastReceiver {
                 if (ActivityThread.DEBUG_BROADCAST) Slog.i(ActivityThread.TAG,
                         "Finishing broadcast to " + mToken);
                 final IActivityManager mgr = ActivityManager.getService();
+				//通知广播执行完毕了
                 sendFinished(mgr);
             }
         }
