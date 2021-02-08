@@ -958,6 +958,7 @@ public final class ActivityThread extends ClientTransactionHandler {
                     sync, false, mAppThread.asBinder(), sendingUser);
             r.info = info;
             r.compatInfo = compatInfo;
+			//会调用handleReceiver方法
             sendMessage(H.RECEIVER, r);
         }
 
@@ -3927,8 +3928,7 @@ public final class ActivityThread extends ClientTransactionHandler {
 
         String component = data.intent.getComponent().getClassName();
 
-        LoadedApk packageInfo = getPackageInfoNoCheck(
-                data.info.applicationInfo, data.compatInfo);
+        LoadedApk packageInfo = getPackageInfoNoCheck(data.info.applicationInfo, data.compatInfo);
 
         IActivityManager mgr = ActivityManager.getService();
 
@@ -3937,6 +3937,7 @@ public final class ActivityThread extends ClientTransactionHandler {
         ContextImpl context;
         try {
             app = packageInfo.makeApplication(false, mInstrumentation);
+			//这里使用的是application的context
             context = (ContextImpl) app.getBaseContext();
             if (data.info.splitName != null) {
                 context = (ContextImpl) context.createContextForSplit(data.info.splitName);
@@ -3945,8 +3946,8 @@ public final class ActivityThread extends ClientTransactionHandler {
             data.intent.setExtrasClassLoader(cl);
             data.intent.prepareToEnterProcess();
             data.setExtrasClassLoader(cl);
-            receiver = packageInfo.getAppFactory()
-                    .instantiateReceiver(cl, data.info.name, data.intent);
+			//调用构造方法
+            receiver = packageInfo.getAppFactory().instantiateReceiver(cl, data.info.name, data.intent);
         } catch (Exception e) {
             if (DEBUG_BROADCAST) Slog.i(TAG,
                     "Finishing failed broadcast to " + data.intent.getComponent());
@@ -3967,6 +3968,7 @@ public final class ActivityThread extends ClientTransactionHandler {
 
             sCurrentBroadcastIntent.set(data.intent);
             receiver.setPendingResult(data);
+			//调用onReceiver方法
             receiver.onReceive(context.getReceiverRestrictedContext(),
                     data.intent);
         } catch (Exception e) {
@@ -3983,6 +3985,7 @@ public final class ActivityThread extends ClientTransactionHandler {
         }
 
         if (receiver.getPendingResult() != null) {
+			//可以进行下一个广播的分发了
             data.finish();
         }
     }

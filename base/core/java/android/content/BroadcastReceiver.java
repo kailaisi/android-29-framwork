@@ -245,7 +245,7 @@ public abstract class BroadcastReceiver {
                 if (ActivityThread.DEBUG_BROADCAST) Slog.i(ActivityThread.TAG,
                         "Finishing broadcast to " + mToken);
                 final IActivityManager mgr = ActivityManager.getService();
-				//通知广播执行完毕了
+				//通知AMS广播执行完毕了，然后AMS就可以去执行下一个receiver
                 sendFinished(mgr);
             }
         }
@@ -270,6 +270,7 @@ public abstract class BroadcastReceiver {
                         mResultExtras.setAllowFds(false);
                     }
                     if (mOrderedHint) {
+						//调用finishReceiver，这里的的am是AMS的Binder句柄
                         am.finishReceiver(mToken, mResultCode, mResultData, mResultExtras,
                                 mAbortBroadcast, mFlags);
                     } else {

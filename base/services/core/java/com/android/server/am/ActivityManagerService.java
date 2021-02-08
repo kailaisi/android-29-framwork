@@ -15685,9 +15685,10 @@ public class ActivityManagerService extends IActivityManager.Stub
                     queue = (flags & Intent.FLAG_RECEIVER_FOREGROUND) != 0
                             ? mFgBroadcastQueue : mBgBroadcastQueue;
                 }
-
+				//根据IBinder句柄获取到对应的那个广播。
                 r = queue.getMatchingOrderedReceiver(who);
                 if (r != null) {
+					//重点方法：finishReceiverLocked。用于结束receiver的相关状态。这里的返回值决定是否要进行下一个receiver的处理
                     doNext = r.queue.finishReceiverLocked(r, resultCode,
                         resultData, resultExtras, resultAbort, true);
                 }
