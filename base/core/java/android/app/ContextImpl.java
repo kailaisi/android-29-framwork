@@ -2587,7 +2587,7 @@ class ContextImpl extends Context {
         }
 
         mOpPackageName = overrideOpPackageName != null ? overrideOpPackageName : opPackageName;
-
+		//初始化为ApplicationContentResolver对象
         mContentResolver = new ApplicationContentResolver(this, mainThread);
     }
 

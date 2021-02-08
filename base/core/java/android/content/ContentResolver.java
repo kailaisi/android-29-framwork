@@ -1811,6 +1811,7 @@ public abstract class ContentResolver implements ContentInterface {
     @Override
     public final @Nullable Uri insert(@RequiresPermission.Write @NonNull Uri url,
                 @Nullable ContentValues values) {
+		//检查空
         Preconditions.checkNotNull(url, "url");
 
         try {
@@ -1818,13 +1819,14 @@ public abstract class ContentResolver implements ContentInterface {
         } catch (RemoteException e) {
             return null;
         }
-
+		//获取ContentProvider
         IContentProvider provider = acquireProvider(url);
         if (provider == null) {
             throw new IllegalArgumentException("Unknown URL " + url);
         }
         try {
             long startTime = SystemClock.uptimeMillis();
+			//调用insert方法
             Uri createdRow = provider.insert(mPackageName, url, values);
             long durationMillis = SystemClock.uptimeMillis() - startTime;
             maybeLogUpdateToEventLog(durationMillis, url, "insert", null /* where */);

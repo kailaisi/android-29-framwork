@@ -6764,8 +6764,8 @@ public final class ActivityThread extends ClientTransactionHandler {
     }
 
     @UnsupportedAppUsage
-    public final IContentProvider acquireProvider(
-            Context c, String auth, int userId, boolean stable) {
+    public final IContentProvider acquireProvider(Context c, String auth, int userId, boolean stable) {
+        //方法1     查询本地存在的Provider对象
         final IContentProvider provider = acquireExistingProvider(c, auth, userId, stable);
         if (provider != null) {
             return provider;
@@ -6780,8 +6780,8 @@ public final class ActivityThread extends ClientTransactionHandler {
         ContentProviderHolder holder = null;
         try {
             synchronized (getGetProviderLock(auth, userId)) {
-                holder = ActivityManager.getService().getContentProvider(
-                        getApplicationThread(), c.getOpPackageName(), auth, userId, stable);
+				//方法2    通过AMS创建一个ContentProvider对象
+                holder = ActivityManager.getService().getContentProvider(getApplicationThread(), c.getOpPackageName(), auth, userId, stable);
             }
         } catch (RemoteException ex) {
             throw ex.rethrowFromSystemServer();
@@ -6793,8 +6793,8 @@ public final class ActivityThread extends ClientTransactionHandler {
 
         // Install provider will increment the reference count for us, and break
         // any ties in the race.
-        holder = installProvider(c, holder, holder.info,
-                true /*noisy*/, holder.noReleaseNeeded, stable);
+        //方法3    通过holder安装一个本地Provider对象
+        holder = installProvider(c, holder, holder.info,true /*noisy*/, holder.noReleaseNeeded, stable);
         return holder.provider;
     }
 
@@ -6879,10 +6879,10 @@ public final class ActivityThread extends ClientTransactionHandler {
     }
 
     @UnsupportedAppUsage
-    public final IContentProvider acquireExistingProvider(
-            Context c, String auth, int userId, boolean stable) {
+    public final IContentProvider acquireExistingProvider(Context c, String auth, int userId, boolean stable) {
         synchronized (mProviderMap) {
             final ProviderKey key = new ProviderKey(auth, userId);
+			//map里面查找
             final ProviderClientRecord pr = mProviderMap.get(key);
             if (pr == null) {
                 return null;
@@ -6890,7 +6890,7 @@ public final class ActivityThread extends ClientTransactionHandler {
 
             IContentProvider provider = pr.mProvider;
             IBinder jBinder = provider.asBinder();
-            if (!jBinder.isBinderAlive()) {
+            if (!jBinder.isBinderAlive()) {//检查provider对应的Binder已经挂掉了，那么就要做一些清理工作
                 // The hosting process of the provider has died; we can't
                 // use this one.
                 Log.i(TAG, "Acquiring provider " + auth + " for user " + userId
@@ -7147,6 +7147,7 @@ public final class ActivityThread extends ClientTransactionHandler {
                                                   boolean noisy, boolean noReleaseNeeded, boolean stable) {
         ContentProvider localProvider = null;
         IContentProvider provider;
+		//当前客户端没有得到过provider，这时候需要获取provider的远程代理
         if (holder == null || holder.provider == null) {
             if (DEBUG_PROVIDER || noisy) {
                 Slog.d(TAG, "Loading provider " + info.authority + ": "
@@ -7156,11 +7157,11 @@ public final class ActivityThread extends ClientTransactionHandler {
             ApplicationInfo ai = info.applicationInfo;
             if (context.getPackageName().equals(ai.packageName)) {
                 c = context;
-            } else if (mInitialApplication != null &&
-                    mInitialApplication.getPackageName().equals(ai.packageName)) {
+             } else if (mInitialApplication != null && mInitialApplication.getPackageName().equals(ai.packageName)) {
                 c = mInitialApplication;
             } else {
                 try {
+					//content对象
                     c = context.createPackageContext(ai.packageName,
                             Context.CONTEXT_INCLUDE_CODE);
                 } catch (PackageManager.NameNotFoundException e) {
@@ -7190,8 +7191,7 @@ public final class ActivityThread extends ClientTransactionHandler {
                     // System startup case.
                     packageInfo = getSystemContext().mPackageInfo;
                 }
-                localProvider = packageInfo.getAppFactory()
-                        .instantiateProvider(cl, info.name);
+                localProvider = packageInfo.getAppFactory().instantiateProvider(cl, info.name);
                 provider = localProvider.getIContentProvider();
                 if (provider == null) {
                     Slog.e(TAG, "Failed to instantiate class " +

@@ -6736,6 +6736,7 @@ public class ActivityManagerService extends IActivityManager.Stub
             checkTime(startTime, "getContentProviderImpl: getProviderByName");
 
             // First check if this content provider has been published...
+			//检查缓存中是否存在ContentProviderRecord
             cpr = mProviderMap.getProviderByName(name, userId);
             // If that didn't work, check if it exists for user 0 and then
             // verify that it's a singleton provider before using it.
@@ -6774,12 +6775,14 @@ public class ActivityManagerService extends IActivityManager.Stub
                     checkTime(startTime, "getContentProviderImpl: after appDied (killedByAm)");
                 }
             }
-
+			//provider运行过
             if (providerRunning) {
+				//获取对应的providerInfo
                 cpi = cpr.info;
                 String msg;
-
+				
                 if (r != null && cpr.canRunHere(r)) {
+					//canRunHere用来判断cpr可否运行在r所在的线程
                     if ((msg = checkContentProviderAssociation(r, callingUid, cpi)) != null) {
                         throw new SecurityException("Content provider lookup "
                                 + cpr.name.flattenToShortString()
@@ -6787,20 +6790,20 @@ public class ActivityManagerService extends IActivityManager.Stub
                     }
                     checkTime(startTime,
                             "getContentProviderImpl: before checkContentProviderPermission");
-                    if ((msg = checkContentProviderPermissionLocked(cpi, r, userId, checkCrossUser))
-                            != null) {
+                    if ((msg = checkContentProviderPermissionLocked(cpi, r, userId, checkCrossUser)) != null) {
                         throw new SecurityException(msg);
                     }
-                    checkTime(startTime,
-                            "getContentProviderImpl: after checkContentProviderPermission");
+                    checkTime(startTime,"getContentProviderImpl: after checkContentProviderPermission");
 
                     // This provider has been published or is in the process
                     // of being published...  but it is also allowed to run
                     // in the caller's process, so don't make a connection
                     // and just let the caller instantiate its own instance.
+					//直接将ContentProviderHolder传给客户端
                     ContentProviderHolder holder = cpr.newHolder(null);
                     // don't give caller the provider object, it needs
                     // to make its own.
+					//provider是holder的Binder对象，这里清空provider，由客户端自己去初始化provider的对象。
                     holder.provider = null;
                     return holder;
                 }
@@ -6821,12 +6824,10 @@ public class ActivityManagerService extends IActivityManager.Stub
                 }
                 checkTime(startTime,
                         "getContentProviderImpl: before checkContentProviderPermission");
-                if ((msg = checkContentProviderPermissionLocked(cpi, r, userId, checkCrossUser))
-                        != null) {
+                if ((msg = checkContentProviderPermissionLocked(cpi, r, userId, checkCrossUser)) != null) {
                     throw new SecurityException(msg);
                 }
-                checkTime(startTime,
-                        "getContentProviderImpl: after checkContentProviderPermission");
+                checkTime(startTime, "getContentProviderImpl: after checkContentProviderPermission");
 
                 final long origId = Binder.clearCallingIdentity();
 
@@ -6834,8 +6835,7 @@ public class ActivityManagerService extends IActivityManager.Stub
 
                 // In this case the provider instance already exists, so we can
                 // return it right away.
-                conn = incProviderCountLocked(r, cpr, token, callingUid, callingPackage, callingTag,
-                        stable);
+                conn = incProviderCountLocked(r, cpr, token, callingUid, callingPackage, callingTag, stable);
                 if (conn != null && (conn.stableCount+conn.unstableCount) == 1) {
                     if (cpr.proc != null && r.setAdj <= ProcessList.PERCEPTIBLE_LOW_APP_ADJ) {
                         // If this is a perceptible app accessing the provider,
@@ -6891,7 +6891,7 @@ public class ActivityManagerService extends IActivityManager.Stub
 
                 Binder.restoreCallingIdentity(origId);
             }
-
+			//provider不存在
             if (!providerRunning) {
                 try {
                     checkTime(startTime, "getContentProviderImpl: before resolveContentProvider");
@@ -6973,18 +6973,16 @@ public class ActivityManagerService extends IActivityManager.Stub
 
                     try {
                         checkTime(startTime, "getContentProviderImpl: before getApplicationInfo");
-                        ApplicationInfo ai =
-                            AppGlobals.getPackageManager().
-                                getApplicationInfo(
-                                        cpi.applicationInfo.packageName,
-                                        STOCK_PM_FLAGS, userId);
+                        ApplicationInfo ai =AppGlobals.getPackageManager().getApplicationInfo(cpi.applicationInfo.packageName,STOCK_PM_FLAGS, userId);
                         checkTime(startTime, "getContentProviderImpl: after getApplicationInfo");
                         if (ai == null) {
                             Slog.w(TAG, "No package info for content provider "
                                     + cpi.name);
                             return null;
                         }
+						//
                         ai = getAppInfoForUser(ai, userId);
+						//创建一个ContentProviderRecord
                         cpr = new ContentProviderRecord(this, cpi, ai, comp, singleton);
                     } catch (RemoteException ex) {
                         // pm is in same process, this will never happen.
@@ -6996,6 +6994,7 @@ public class ActivityManagerService extends IActivityManager.Stub
                 checkTime(startTime, "getContentProviderImpl: now have ContentProviderRecord");
 
                 if (r != null && cpr.canRunHere(r)) {
+					//如果cpr能够跑在r所在的进程，则直接返回
                     // If this is a multiprocess provider, then just return its
                     // info and allow the caller to instantiate it.  Only do
                     // this if the provider is the same user as the caller's
@@ -7081,7 +7080,7 @@ public class ActivityManagerService extends IActivityManager.Stub
                 if (firstClass) {
                     mProviderMap.putProviderByClass(comp, cpr);
                 }
-
+				//缓存cpr
                 mProviderMap.putProviderByName(name, cpr);
                 conn = incProviderCountLocked(r, cpr, token, callingUid, callingPackage, callingTag,
                         stable);
@@ -7100,6 +7099,7 @@ public class ActivityManagerService extends IActivityManager.Stub
         final long timeout = SystemClock.uptimeMillis() + CONTENT_PROVIDER_WAIT_TIMEOUT;
         boolean timedOut = false;
         synchronized (cpr) {
+			//不断的遍历，等待cpr发布完成
             while (cpr.provider == null) {
                 if (cpr.launchingApp == null) {
                     Slog.w(TAG, "Unable to launch app "
@@ -7120,6 +7120,7 @@ public class ActivityManagerService extends IActivityManager.Stub
                     if (conn != null) {
                         conn.waiting = true;
                     }
+					//等待
                     cpr.wait(wait);
                     if (cpr.provider == null) {
                         timedOut = true;
@@ -7133,6 +7134,7 @@ public class ActivityManagerService extends IActivityManager.Stub
                 }
             }
         }
+		//超时了
         if (timedOut) {
             // Note we do it afer releasing the lock.
             String callerName = "unknown";

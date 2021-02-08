@@ -113,7 +113,9 @@ final class ContentProviderRecord implements ComponentName.WithComponentName {
         }
     }
 
+	//provider可以运行在多个线程的
     public boolean canRunHere(ProcessRecord app) {
+    	//进程名称相同而且uid相同。
         return (info.multiprocess || info.processName.equals(app.processName))
                 && uid == app.info.uid;
     }

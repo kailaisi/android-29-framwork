@@ -354,6 +354,7 @@ public final class BroadcastQueue {
                 return false;
             }
             try {
+				//将pending置为null，然后启动
                 mPendingBroadcast = null;
                 processCurBroadcastLocked(br, app, false);
                 didSomething = true;
