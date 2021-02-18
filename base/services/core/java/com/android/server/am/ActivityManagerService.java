@@ -6709,8 +6709,7 @@ public class ActivityManagerService extends IActivityManager.Stub
         return null;
     }
 
-    private ContentProviderHolder getContentProviderImpl(IApplicationThread caller,
-            String name, IBinder token, int callingUid, String callingPackage, String callingTag,
+    private ContentProviderHolder getContentProviderImpl(IApplicationThread caller,String name, IBinder token, int callingUid, String callingPackage, String callingTag,
             boolean stable, int userId) {
         ContentProviderRecord cpr;
         ContentProviderConnection conn = null;
@@ -6775,7 +6774,7 @@ public class ActivityManagerService extends IActivityManager.Stub
                     checkTime(startTime, "getContentProviderImpl: after appDied (killedByAm)");
                 }
             }
-			//provider运行过
+			//provider正在运行着
             if (providerRunning) {
 				//获取对应的providerInfo
                 cpi = cpr.info;
@@ -6788,8 +6787,7 @@ public class ActivityManagerService extends IActivityManager.Stub
                                 + cpr.name.flattenToShortString()
                                 + " failed: association not allowed with package " + msg);
                     }
-                    checkTime(startTime,
-                            "getContentProviderImpl: before checkContentProviderPermission");
+                    checkTime(startTime,"getContentProviderImpl: before checkContentProviderPermission");
                     if ((msg = checkContentProviderPermissionLocked(cpi, r, userId, checkCrossUser)) != null) {
                         throw new SecurityException(msg);
                     }
@@ -6803,15 +6801,16 @@ public class ActivityManagerService extends IActivityManager.Stub
                     ContentProviderHolder holder = cpr.newHolder(null);
                     // don't give caller the provider object, it needs
                     // to make its own.
-					//provider是holder的Binder对象，这里清空provider，由客户端自己去初始化provider的对象。
+					//provider是holder的Binder对象，
+					//如果这里的provider不为空的话，就可以直接使用Binder对象来进行增删改查；如果为空，则自己在本地创建一个IBinder对象，然后去增删改查
+					//这里清空provider，由客户端自己去初始化provider的对象。
                     holder.provider = null;
                     return holder;
                 }
 
                 // Don't expose providers between normal apps and instant apps
                 try {
-                    if (AppGlobals.getPackageManager()
-                            .resolveContentProvider(name, 0 /*flags*/, userId) == null) {
+                    if (AppGlobals.getPackageManager().resolveContentProvider(name, 0 /*flags*/, userId) == null) {
                         return null;
                     }
                 } catch (RemoteException e) {
@@ -7227,9 +7226,7 @@ public class ActivityManagerService extends IActivityManager.Stub
     }
 
     @Override
-    public final ContentProviderHolder getContentProvider(
-            IApplicationThread caller, String callingPackage, String name, int userId,
-            boolean stable) {
+    public final ContentProviderHolder getContentProvider(IApplicationThread caller, String callingPackage, String name, int userId,boolean stable) {
         enforceNotIsolatedCaller("getContentProvider");
         if (caller == null) {
             String msg = "null IApplicationThread when getting content provider "

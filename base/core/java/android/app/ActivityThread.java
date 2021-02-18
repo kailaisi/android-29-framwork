@@ -6881,6 +6881,7 @@ public final class ActivityThread extends ClientTransactionHandler {
     @UnsupportedAppUsage
     public final IContentProvider acquireExistingProvider(Context c, String auth, int userId, boolean stable) {
         synchronized (mProviderMap) {
+			//这里的ProviderKey重写了equals和hashCode方法，如果userid和auth一样，则是同样的对象。这样的话，当从 map中获取的时候，如果二者相同，就能获取到对应的value值
             final ProviderKey key = new ProviderKey(auth, userId);
 			//map里面查找
             final ProviderClientRecord pr = mProviderMap.get(key);
@@ -7150,8 +7151,7 @@ public final class ActivityThread extends ClientTransactionHandler {
 		//当前客户端没有得到过provider，这时候需要获取provider的远程代理
         if (holder == null || holder.provider == null) {
             if (DEBUG_PROVIDER || noisy) {
-                Slog.d(TAG, "Loading provider " + info.authority + ": "
-                        + info.name);
+                Slog.d(TAG, "Loading provider " + info.authority + ": "+ info.name);
             }
             Context c = null;
             ApplicationInfo ai = info.applicationInfo;
@@ -7161,18 +7161,14 @@ public final class ActivityThread extends ClientTransactionHandler {
                 c = mInitialApplication;
             } else {
                 try {
-					//content对象
-                    c = context.createPackageContext(ai.packageName,
-                            Context.CONTEXT_INCLUDE_CODE);
+					//为要创建的provider对象创建对应的content对象
+                    c = context.createPackageContext(ai.packageName,Context.CONTEXT_INCLUDE_CODE);
                 } catch (PackageManager.NameNotFoundException e) {
                     // Ignore
                 }
             }
             if (c == null) {
-                Slog.w(TAG, "Unable to get context for package " +
-                        ai.packageName +
-                        " while loading content provider " +
-                        info.name);
+                Slog.w(TAG, "Unable to get context for package " +ai.packageName +" while loading content provider " +info.name);
                 return null;
             }
 
@@ -7191,17 +7187,18 @@ public final class ActivityThread extends ClientTransactionHandler {
                     // System startup case.
                     packageInfo = getSystemContext().mPackageInfo;
                 }
+				//载入provider的类
                 localProvider = packageInfo.getAppFactory().instantiateProvider(cl, info.name);
+				//获得provider对应的IContentProvider对象
                 provider = localProvider.getIContentProvider();
                 if (provider == null) {
-                    Slog.e(TAG, "Failed to instantiate class " +
-                            info.name + " from sourceDir " +
-                            info.applicationInfo.sourceDir);
+                    Slog.e(TAG, "Failed to instantiate class " + info.name + " from sourceDir " + info.applicationInfo.sourceDir);
                     return null;
                 }
                 if (DEBUG_PROVIDER) Slog.v(
                         TAG, "Instantiating local provider " + info.name);
                 // XXX Need to create the correct context for this provider.
+                //绑定context，并调用provider的oncreate生命周期函数。
                 localProvider.attachInfo(c, info);
             } catch (java.lang.Exception e) {
                 if (!mInstrumentation.onException(null, e)) {
@@ -7212,6 +7209,7 @@ public final class ActivityThread extends ClientTransactionHandler {
                 return null;
             }
         } else {
+        	//直接使用holder中的provider。也就是AMS返回的IContentProvider。
             provider = holder.provider;
             if (DEBUG_PROVIDER) Slog.v(TAG, "Installing external provider " + info.authority + ": "
                     + info.name);
@@ -7225,6 +7223,7 @@ public final class ActivityThread extends ClientTransactionHandler {
             IBinder jBinder = provider.asBinder();
             if (localProvider != null) {
                 ComponentName cname = new ComponentName(info.packageName, info.name);
+				//ProviderClientRecord是一个包装的类，将provider的句柄信息，holder信息，provider信息等等都放入到一个类中。
                 ProviderClientRecord pr = mLocalProvidersByName.get(cname);
                 if (pr != null) {
                     if (DEBUG_PROVIDER) {
@@ -7233,6 +7232,7 @@ public final class ActivityThread extends ClientTransactionHandler {
                     }
                     provider = pr.mProvider;
                 } else {
+					
                     holder = new ContentProviderHolder(info);
                     holder.provider = provider;
                     holder.noReleaseNeeded = true;
