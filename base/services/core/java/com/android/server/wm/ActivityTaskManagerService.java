@@ -968,6 +968,7 @@ public class ActivityTaskManagerService extends IActivityTaskManager.Stub {
     }
 
     private void start() {
+        //这里需要继续跟踪启动流程
         LocalServices.addService(ActivityTaskManagerInternal.class, mInternal);
     }
 
@@ -976,12 +977,14 @@ public class ActivityTaskManagerService extends IActivityTaskManager.Stub {
 
         public Lifecycle(Context context) {
             super(context);
+            //构造函数创建ATMS实例
             mService = new ActivityTaskManagerService(context);
         }
 
         @Override
         public void onStart() {
             publishBinderService(Context.ACTIVITY_TASK_SERVICE, mService);
+            //调用ATMS的start方法
             mService.start();
         }
 
@@ -1000,6 +1003,7 @@ public class ActivityTaskManagerService extends IActivityTaskManager.Stub {
         }
 
         public ActivityTaskManagerService getService() {
+            //返回了ATMS实例
             return mService;
         }
     }

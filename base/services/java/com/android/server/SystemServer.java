@@ -517,9 +517,8 @@ public final class SystemServer {
 			//启动服务 WebViewUpdateService。
             startBootstrapServices();
 			//启动核心服务，
-			//启动服务 BatteryService 用于统计电池电量，需要 LightService。
-			//启动服务 UsageStatsService，用于统计应用使用情况。
-			//启动服务 WebViewUpdateService。
+			//该方法主要启动服务 ActivityManagerService，PowerManagerService，LightsService，DisplayManagerService，PackageManagerService，UserManagerService。
+            //设置 ActivityManagerService，启动传感器服务。
             startCoreServices();
 			//启动其他服务
 			//该方法主要启动服务 InputManagerService，WindowManagerService。
@@ -646,6 +645,7 @@ public final class SystemServer {
         // Start the watchdog as early as possible so we can crash the system server
         // if we deadlock during early boot
         traceBeginAndSlog("StartWatchdog");
+        //看门狗服务
         final Watchdog watchdog = Watchdog.getInstance();
         watchdog.start();
         traceEnd();
@@ -678,6 +678,7 @@ public final class SystemServer {
         //启动ATMS服务
         traceBeginAndSlog("StartActivityManager");
         // TODO: Might need to move after migration to WM.
+        //这里会将ATMS注册到ServiceManager中，然后调用ATMS的start方法。
         ActivityTaskManagerService atm = mSystemServiceManager.startService(ActivityTaskManagerService.Lifecycle.class).getService();
         mActivityManagerService = ActivityManagerService.Lifecycle.startService(mSystemServiceManager, atm);
         mActivityManagerService.setSystemServiceManager(mSystemServiceManager);

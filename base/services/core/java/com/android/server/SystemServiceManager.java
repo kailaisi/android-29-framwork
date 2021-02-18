@@ -125,6 +125,7 @@ public class SystemServiceManager {
 
     public void startService(@NonNull final SystemService service) {
         // Register it.
+        //注册到ServiceManager列表中
         mServices.add(service);
         // Start it.
         long time = SystemClock.elapsedRealtime();
