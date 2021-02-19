@@ -680,8 +680,10 @@ public final class SystemServer {
         // TODO: Might need to move after migration to WM.
         //这里会将ATMS注册到ServiceManager中，然后调用ATMS的start方法。
         ActivityTaskManagerService atm = mSystemServiceManager.startService(ActivityTaskManagerService.Lifecycle.class).getService();
+        //重点方法。 注册AMS服务，并返回对应的对象信息
         mActivityManagerService = ActivityManagerService.Lifecycle.startService(mSystemServiceManager, atm);
         mActivityManagerService.setSystemServiceManager(mSystemServiceManager);
+        //设置app安装器
         mActivityManagerService.setInstaller(installer);
         mWindowManagerGlobalLock = atm.getGlobalLock();
         traceEnd();
@@ -799,6 +801,7 @@ public final class SystemServer {
 
         // Set up the Application instance for the system process and get started.
         traceBeginAndSlog("SetSystemProcess");
+        //2]向ServiceManager中注册一些系统的Binder服务
         mActivityManagerService.setSystemProcess();
         traceEnd();
 
@@ -1002,6 +1005,7 @@ public final class SystemServer {
             traceEnd();
 
             traceBeginAndSlog("InstallSystemProviders");
+            //注册系统的ContentProvider信息
             mActivityManagerService.installSystemProviders();
             // Now that SettingsProvider is ready, reactivate SQLiteCompatibilityWalFlags
             SQLiteCompatibilityWalFlags.reset();
@@ -1052,6 +1056,7 @@ public final class SystemServer {
             traceEnd();
 
             traceBeginAndSlog("SetWindowManagerService");
+            //设置wm
             mActivityManagerService.setWindowManager(wm);
             traceEnd();
 
@@ -1908,6 +1913,7 @@ public final class SystemServer {
         traceEnd();
 
         if (safeMode) {
+            //进入安全模式
             mActivityManagerService.enterSafeMode();
         }
 
@@ -2055,14 +2061,15 @@ public final class SystemServer {
         // where third party code can really run (but before it has actually
         // started launching the initial applications), for us to complete our
         // initialization.
+        //调用systemReady方法，
         mActivityManagerService.systemReady(() -> {
             Slog.i(TAG, "Making services ready");
             traceBeginAndSlog("StartActivityManagerReadyPhase");
-            mSystemServiceManager.startBootPhase(
-                    SystemService.PHASE_ACTIVITY_MANAGER_READY);
+            mSystemServiceManager.startBootPhase(SystemService.PHASE_ACTIVITY_MANAGER_READY);
             traceEnd();
             traceBeginAndSlog("StartObservingNativeCrashes");
             try {
+                //启动NativeCrash的监测
                 mActivityManagerService.startObservingNativeCrashes();
             } catch (Throwable e) {
                 reportWtf("observing native crashes", e);
@@ -2081,6 +2088,7 @@ public final class SystemServer {
                     traceLog.traceBegin(WEBVIEW_PREPARATION);
                     ConcurrentUtils.waitForFutureNoInterrupt(mZygotePreload, "Zygote preload");
                     mZygotePreload = null;
+                    //启动WebView相关
                     mWebViewUpdateService.prepareWebViewInSystemServer();
                     traceLog.traceEnd();
                 }, WEBVIEW_PREPARATION);
@@ -2094,6 +2102,7 @@ public final class SystemServer {
 
             traceBeginAndSlog("StartSystemUI");
             try {
+                //启动systemUI
                 startSystemUi(context, windowManagerF);
             } catch (Throwable e) {
                 reportWtf("starting System UI", e);
@@ -2174,8 +2183,7 @@ public final class SystemServer {
             if (webviewPrep != null) {
                 ConcurrentUtils.waitForFutureNoInterrupt(webviewPrep, WEBVIEW_PREPARATION);
             }
-            mSystemServiceManager.startBootPhase(
-                    SystemService.PHASE_THIRD_PARTY_APPS_CAN_START);
+            mSystemServiceManager.startBootPhase(SystemService.PHASE_THIRD_PARTY_APPS_CAN_START);
             traceEnd();
 
             traceBeginAndSlog("StartNetworkStack");

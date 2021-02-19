@@ -2039,24 +2039,30 @@ public class ActivityManagerService extends IActivityManager.Stub
 
     public void setSystemProcess() {
         try {
+        	//注册ActivityService服务
             ServiceManager.addService(Context.ACTIVITY_SERVICE, this, /* allowIsolated= */ true,
                     DUMP_FLAG_PRIORITY_CRITICAL | DUMP_FLAG_PRIORITY_NORMAL | DUMP_FLAG_PROTO);
+            //注册进程状态服务
             ServiceManager.addService(ProcessStats.SERVICE_NAME, mProcessStats);
-            ServiceManager.addService("meminfo", new MemBinder(this), /* allowIsolated= */ false,
-                    DUMP_FLAG_PRIORITY_HIGH);
+            //注册内存Binder
+            ServiceManager.addService("meminfo", new MemBinder(this), /* allowIsolated= */ false,DUMP_FLAG_PRIORITY_HIGH);
+            //注册图像Binder
             ServiceManager.addService("gfxinfo", new GraphicsBinder(this));
+            //注册SQLite DB binder
             ServiceManager.addService("dbinfo", new DbBinder(this));
             if (MONITOR_CPU_USAGE) {
-                ServiceManager.addService("cpuinfo", new CpuBinder(this),
-                        /* allowIsolated= */ false, DUMP_FLAG_PRIORITY_CRITICAL);
+            	//注册CPU使用情况的Binder
+                ServiceManager.addService("cpuinfo", new CpuBinder(this),/* allowIsolated= */ false, DUMP_FLAG_PRIORITY_CRITICAL);
             }
+            //注册权限控制Binder
             ServiceManager.addService("permission", new PermissionController(this));
+            //注册进程管理Binder
             ServiceManager.addService("processinfo", new ProcessInfoService(this));
 
-            ApplicationInfo info = mContext.getPackageManager().getApplicationInfo(
-                    "android", STOCK_PM_FLAGS | MATCH_SYSTEM_ONLY);
+            //获取“android”应用的ApplicationInfo，并装载到mSystemThread
+            ApplicationInfo info = mContext.getPackageManager().getApplicationInfo("android", STOCK_PM_FLAGS | MATCH_SYSTEM_ONLY);
             mSystemThread.installSystemApplicationInfo(info, getClass().getClassLoader());
-
+            //创建ProcessRecord维护进程的相关信息
             synchronized (this) {
                 ProcessRecord app = mProcessList.newProcessRecordLocked(info, info.processName,
                         false,
@@ -2212,12 +2218,13 @@ public class ActivityManagerService extends IActivityManager.Stub
 
         public Lifecycle(Context context) {
             super(context);
+            //创建AMS对象
             mService = new ActivityManagerService(context, sAtm);
         }
 
-        public static ActivityManagerService startService(
-                SystemServiceManager ssm, ActivityTaskManagerService atm) {
+        public static ActivityManagerService startService(SystemServiceManager ssm, ActivityTaskManagerService atm) {
             sAtm = atm;
+            //启动AMS
             return ssm.startService(ActivityManagerService.Lifecycle.class).getService();
         }
 
@@ -2432,79 +2439,78 @@ public class ActivityManagerService extends IActivityManager.Stub
 
     // Note: This method is invoked on the main thread but may need to attach various
     // handlers to other threads.  So take care to be explicit about the looper.
+    //构造方法，
     public ActivityManagerService(Context systemContext, ActivityTaskManagerService atm) {
         LockGuard.installLock(this, LockGuard.INDEX_ACTIVITY);
         mInjector = new Injector();
         mContext = systemContext;
 
         mFactoryTest = FactoryTest.getMode();
+        //获取系统的ActivityThread
         mSystemThread = ActivityThread.currentActivityThread();
         mUiContext = mSystemThread.getSystemUiContext();
 
         Slog.i(TAG, "Memory class: " + ActivityManager.staticGetMemoryClass());
 
-        mHandlerThread = new ServiceThread(TAG,
-                THREAD_PRIORITY_FOREGROUND, false /*allowIo*/);
+        //创建一个ServiceThread用来处理AMS接收到的命令
+        mHandlerThread = new ServiceThread(TAG,THREAD_PRIORITY_FOREGROUND, false /*allowIo*/);
         mHandlerThread.start();
         mHandler = new MainHandler(mHandlerThread.getLooper());
         mUiHandler = mInjector.getUiHandler(this);
 
-        mProcStartHandlerThread = new ServiceThread(TAG + ":procStart",
-                THREAD_PRIORITY_FOREGROUND, false /* allowIo */);
+        mProcStartHandlerThread = new ServiceThread(TAG + ":procStart", THREAD_PRIORITY_FOREGROUND, false /* allowIo */);
         mProcStartHandlerThread.start();
         mProcStartHandler = new Handler(mProcStartHandlerThread.getLooper());
 
         mConstants = new ActivityManagerConstants(mContext, this, mHandler);
         final ActiveUids activeUids = new ActiveUids(this, true /* postChangesToAtm */);
         mProcessList.init(this, activeUids);
+        //低内存监控
         mLowMemDetector = new LowMemDetector(this);
         mOomAdjuster = new OomAdjuster(this, mProcessList, activeUids);
 
         // Broadcast policy parameters
-        final BroadcastConstants foreConstants = new BroadcastConstants(
-                Settings.Global.BROADCAST_FG_CONSTANTS);
+        final BroadcastConstants foreConstants = new BroadcastConstants(Settings.Global.BROADCAST_FG_CONSTANTS);
         foreConstants.TIMEOUT = BROADCAST_FG_TIMEOUT;
 
-        final BroadcastConstants backConstants = new BroadcastConstants(
-                Settings.Global.BROADCAST_BG_CONSTANTS);
+        final BroadcastConstants backConstants = new BroadcastConstants(Settings.Global.BROADCAST_BG_CONSTANTS);
         backConstants.TIMEOUT = BROADCAST_BG_TIMEOUT;
 
-        final BroadcastConstants offloadConstants = new BroadcastConstants(
-                Settings.Global.BROADCAST_OFFLOAD_CONSTANTS);
+        final BroadcastConstants offloadConstants = new BroadcastConstants(Settings.Global.BROADCAST_OFFLOAD_CONSTANTS);
         offloadConstants.TIMEOUT = BROADCAST_BG_TIMEOUT;
         // by default, no "slow" policy in this queue
         offloadConstants.SLOW_TIME = Integer.MAX_VALUE;
 
-        mEnableOffloadQueue = SystemProperties.getBoolean(
-                "persist.device_config.activity_manager_native_boot.offload_queue_enabled", false);
+        mEnableOffloadQueue = SystemProperties.getBoolean("persist.device_config.activity_manager_native_boot.offload_queue_enabled", false);
 
-        mFgBroadcastQueue = new BroadcastQueue(this, mHandler,
-                "foreground", foreConstants, false);
-        mBgBroadcastQueue = new BroadcastQueue(this, mHandler,
-                "background", backConstants, true);
-        mOffloadBroadcastQueue = new BroadcastQueue(this, mHandler,
-                "offload", offloadConstants, true);
+        //初始化广播队列。这里包含了前台广播，后台广播等
+        mFgBroadcastQueue = new BroadcastQueue(this, mHandler, "foreground", foreConstants, false);
+        mBgBroadcastQueue = new BroadcastQueue(this, mHandler, "background", backConstants, true);
+        mOffloadBroadcastQueue = new BroadcastQueue(this, mHandler, "offload", offloadConstants, true);
         mBroadcastQueues[0] = mFgBroadcastQueue;
         mBroadcastQueues[1] = mBgBroadcastQueue;
         mBroadcastQueues[2] = mOffloadBroadcastQueue;
 
+        //用于保存注册的Service
         mServices = new ActiveServices(this);
+
+        //map，用于保存注册的ContentProvider
         mProviderMap = new ProviderMap(this);
         mPackageWatchdog = PackageWatchdog.getInstance(mUiContext);
         mAppErrors = new AppErrors(mUiContext, this, mPackageWatchdog);
 
+        //创建 /data/system目录
         final File systemDir = SystemServiceManager.ensureSystemDir();
 
         // TODO: Move creation of battery stats service outside of activity manager service.
-        mBatteryStatsService = new BatteryStatsService(systemContext, systemDir,
-                BackgroundThread.get().getHandler());
+        mBatteryStatsService = new BatteryStatsService(systemContext, systemDir, BackgroundThread.get().getHandler());
         mBatteryStatsService.getActiveStatistics().readLocked();
         mBatteryStatsService.scheduleWriteToDisk();
-        mOnBattery = DEBUG_POWER ? true
-                : mBatteryStatsService.getActiveStatistics().getIsOnBattery();
+        mOnBattery = DEBUG_POWER ? true : mBatteryStatsService.getActiveStatistics().getIsOnBattery();
         mBatteryStatsService.getActiveStatistics().setCallback(this);
         mOomAdjProfiler.batteryPowerChanged(mOnBattery);
 
+        //创建进程统计服务，保存在/data/system/proccstats目录中。
         mProcessStats = new ProcessStatsService(this, new File(systemDir, "procstats"));
 
         mAppOpsService = mInjector.getAppOpsService(new File(systemDir, "appops.xml"), mHandler);
@@ -2513,8 +2519,7 @@ public class ActivityManagerService extends IActivityManager.Stub
 
         mUserController = new UserController(this);
 
-        mPendingIntentController = new PendingIntentController(
-                mHandlerThread.getLooper(), mUserController);
+        mPendingIntentController = new PendingIntentController(mHandlerThread.getLooper(), mUserController);
 
         if (SystemProperties.getInt("sys.use_fifo_ui", 0) != 0) {
             mUseFifoUiScheduling = true;
@@ -2524,10 +2529,10 @@ public class ActivityManagerService extends IActivityManager.Stub
         mIntentFirewall = new IntentFirewall(new IntentFirewallInterface(), mHandler);
 
         mActivityTaskManager = atm;
-        mActivityTaskManager.initialize(mIntentFirewall, mPendingIntentController,
-                DisplayThread.get().getLooper());
+        mActivityTaskManager.initialize(mIntentFirewall, mPendingIntentController, DisplayThread.get().getLooper());
         mAtmInternal = LocalServices.getService(ActivityTaskManagerInternal.class);
 
+        //CPU追踪器进程
         mProcessCpuThread = new Thread("CpuTracker") {
             @Override
             public void run() {
@@ -2564,6 +2569,7 @@ public class ActivityManagerService extends IActivityManager.Stub
 
         mHiddenApiBlacklist = new HiddenApiSettings(mHandler, mContext);
 
+        //监控狗
         Watchdog.getInstance().addMonitor(this);
         Watchdog.getInstance().addThread(mHandler);
 
@@ -2592,12 +2598,15 @@ public class ActivityManagerService extends IActivityManager.Stub
     }
 
     private void start() {
+    	//移除所有的进程组
         removeAllProcessGroups();
+        //启动CpuTracker线程
         mProcessCpuThread.start();
-
+        //启动电池统计服务，能够统计具体的应用的电池消耗，从而来进行一定的电量统计
         mBatteryStatsService.publish();
         mAppOpsService.publish(mContext);
         Slog.d("AppOps", "AppOpsService published");
+        //创建LocalService，并添加到LocalServices列表中
         LocalServices.addService(ActivityManagerInternal.class, new LocalService());
         mActivityTaskManager.onActivityManagerInternalAdded();
         mUgmInternal.onActivityManagerInternalAdded();
@@ -2605,6 +2614,9 @@ public class ActivityManagerService extends IActivityManager.Stub
         // Wait for the synchronized block started in mProcessCpuThread,
         // so that any other access to mProcessCpuTracker from main thread
         // will be blocked during mProcessCpuTracker initialization.
+        // 等待在mProcessCpuThread中启动的同步块，
+  		//以便从主线程获得对mProcessCpuTracker的任何其他访问 
+  		//将在mProcessCpuTracker初始化期间被阻塞。
         try {
             mProcessCpuInitLatch.await();
         } catch (InterruptedException e) {
@@ -8965,21 +8977,23 @@ public class ActivityManagerService extends IActivityManager.Stub
     public void systemReady(final Runnable goingCallback, TimingsTraceLog traceLog) {
         traceLog.traceBegin("PhaseActivityManagerReady");
         synchronized(this) {
+        	//第一次进入的时候为false
             if (mSystemReady) {
                 // If we're done calling all the receivers, run the next "boot phase" passed in
                 // by the SystemServer
+                //如果AMS已经准备好了，那么会调用goingCallback的run方法，然后返回
                 if (goingCallback != null) {
                     goingCallback.run();
                 }
                 return;
             }
 
-            mLocalDeviceIdleController
-                    = LocalServices.getService(DeviceIdleController.LocalService.class);
+            mLocalDeviceIdleController = LocalServices.getService(DeviceIdleController.LocalService.class);
+            //调用ATMS的onSystemReady方法
             mActivityTaskManager.onSystemReady();
             // Make sure we have the current profile info, since it is needed for security checks.
             mUserController.onSystemReady();
-            mAppOpsService.systemReady();
+            mAppOpsService.systemReady();//
             mSystemReady = true;
         }
 
@@ -8989,6 +9003,7 @@ public class ActivityManagerService extends IActivityManager.Stub
                     .getSerial();
         } catch (RemoteException e) {}
 
+        //关闭procsToKill中的所有进程
         ArrayList<ProcessRecord> procsToKill = null;
         synchronized(mPidsSelfLocked) {
             for (int i=mPidsSelfLocked.size()-1; i>=0; i--) {
@@ -9014,6 +9029,7 @@ public class ActivityManagerService extends IActivityManager.Stub
             // Now that we have cleaned up any update processes, we
             // are ready to start launching real processes and know that
             // we won't trample on them any more.
+            //到这里为止，整个系统已经准备完毕了。可以进行进程的创建等工作。
             mProcessesReady = true;
         }
 
@@ -9038,6 +9054,7 @@ public class ActivityManagerService extends IActivityManager.Stub
             Slog.wtf(TAG, "PowerManagerInternal not found.");
         }
 
+        //运行goingCallback
         if (goingCallback != null) goingCallback.run();
         // Check the current user here as a user can be started inside goingCallback.run() from
         // other system services.
@@ -9078,6 +9095,7 @@ public class ActivityManagerService extends IActivityManager.Stub
                     throw e.rethrowAsRuntimeException();
                 }
             }
+            //启动Launcher的activity
             mAtmInternal.startHomeOnAllDisplays(currentUserId, "systemReady");
 
             mAtmInternal.showSystemReadyErrorDialogsIfNeeded();

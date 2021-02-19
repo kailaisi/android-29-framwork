@@ -365,8 +365,8 @@ class RootActivityContainer extends ConfigurationContainer implements DisplayMan
      *    If there are multiple activities matched, use first one.
      *  - Use the secondary home defined in the config.
      */
-    boolean startHomeOnDisplay(int userId, String reason, int displayId, boolean allowInstrumenting,
-                               boolean fromHomeKey) {
+    //启动桌面的入口
+    boolean startHomeOnDisplay(int userId, String reason, int displayId, boolean allowInstrumenting,boolean fromHomeKey) {
         // Fallback to top focused display if the displayId is invalid.
         if (displayId == INVALID_DISPLAY) {
             displayId = getTopDisplayFocusedStack().mDisplayId;
