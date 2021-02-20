@@ -409,6 +409,8 @@ public final class SurfaceControl implements Parcelable {
         mName = other.mName;
         mWidth = other.mWidth;
         mHeight = other.mHeight;
+        //nativeCopyFromSurfaceControl方法，会根据Native层的SurfaceControl对象，创建一个Native层的Surface对象
+        //assignNativeObject则将
         assignNativeObject(nativeCopyFromSurfaceControl(other.mNativeObject));
     }
 
@@ -790,6 +792,7 @@ public final class SurfaceControl implements Parcelable {
                 }
                 metaParcel.setDataPosition(0);
             }
+            //创建一个Native层的SurfaceContorl
             mNativeObject = nativeCreate(session, name, w, h, format, flags,
                     parent != null ? parent.mNativeObject : 0, metaParcel);
         } finally {

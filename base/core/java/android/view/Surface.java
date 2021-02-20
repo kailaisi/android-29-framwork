@@ -613,6 +613,7 @@ public class Surface implements Parcelable {
             // in frameworks/native/libs/Surface.cpp
             mName = source.readString();
             mIsSingleBuffered = source.readInt() != 0;
+            //nativeReadFromParcel方法将会返回一个long类型的数据。并且会返回一个mNativeObject或者
             setNativeObjectLocked(nativeReadFromParcel(mNativeObject, source));
         }
     }
@@ -625,8 +626,11 @@ public class Surface implements Parcelable {
         synchronized (mLock) {
             // NOTE: This must be kept synchronized with the native parceling code
             // in frameworks/native/libs/Surface.cpp
+            //写了一个名字
             dest.writeString(mName);
+            //写了一个int数据，标明是否是SingleBuffer
             dest.writeInt(mIsSingleBuffered ? 1 : 0);
+            //调用了一个native函数，写入了mNativeObject。具体的实现是在androdi_view_Surface.cpp中
             nativeWriteToParcel(mNativeObject, dest);
         }
         if ((flags & Parcelable.PARCELABLE_WRITE_RETURN_VALUE) != 0) {
@@ -649,6 +653,7 @@ public class Surface implements Parcelable {
             } else if (mNativeObject != 0 && ptr == 0) {
                 mCloseGuard.close();
             }
+            //进行了赋值
             mNativeObject = ptr;
             mGenerationId += 1;
             if (mHwuiContext != null) {

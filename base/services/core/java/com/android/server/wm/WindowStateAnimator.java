@@ -427,6 +427,7 @@ class WindowStateAnimator {
         final WindowState w = mWin;
 
         if (mSurfaceController != null) {
+            //如果已经存在了，则直接返回
             return mSurfaceController;
         }
         mChildrenDetached = false;
@@ -483,7 +484,7 @@ class WindowStateAnimator {
                     && !w.isDragResizing()) {
                 flags |= SurfaceControl.OPAQUE;
             }
-
+            //创建一个WindowSurfaceController对象
             mSurfaceController = new WindowSurfaceController(mSession.mSurfaceSession,
                     attrs.getTitle().toString(), width, height, format, flags, this,
                     windowType, ownerUid);

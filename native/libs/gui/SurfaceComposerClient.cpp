@@ -67,6 +67,7 @@ ComposerService::ComposerService()
 void ComposerService::connectLocked() {
     const String16 name("SurfaceFlinger");
 	//通过getService方法获取SurfaceFlinger服务，并将获取到的服务保存到mComposerService变量中
+    //这样就将SuraceComposerClient和SurfaceFling进行了一个绑定
     while (getService(name, &mComposerService) != NO_ERROR) {
         usleep(250000);
     }
@@ -86,6 +87,7 @@ void ComposerService::connectLocked() {
     };
 
     mDeathObserver = new DeathObserver(*const_cast<ComposerService*>(this));
+    //这里通过binder将
     IInterface::asBinder(mComposerService)->linkToDeath(mDeathObserver);
 }
 
@@ -94,7 +96,7 @@ void ComposerService::connectLocked() {
     Mutex::Autolock _l(instance.mLock);//加锁
     if (instance.mComposerService == nullptr) {
 		//重点方法   获取SurfaceFling服务，并保存在ComposerService中
-        ComposerService::getInstance().connectLocked();
+        ComposerService::getInstance().createConnection();
         assert(instance.mComposerService != nullptr);
         ALOGD("ComposerService reconnected");
     }
@@ -1274,10 +1276,12 @@ SurfaceComposerClient::SurfaceComposerClient(const sp<ISurfaceComposerClient>& c
 {
 }
 
+//在第一次创建的时候会调用该方法
 void SurfaceComposerClient::onFirstRef() {
     sp<ISurfaceComposer> sf(ComposerService::getComposerService());
     if (sf != nullptr && mStatus == NO_INIT) {
         sp<ISurfaceComposerClient> conn;
+        //创建
         conn = sf->createConnection();
         if (conn != nullptr) {
             mClient = conn;

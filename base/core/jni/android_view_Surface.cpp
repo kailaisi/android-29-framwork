@@ -338,6 +338,7 @@ static jlong nativeGetFromSurfaceControl(JNIEnv* env, jclass clazz,
 
 static jlong nativeReadFromParcel(JNIEnv* env, jclass clazz,
         jlong nativeObject, jobject parcelObj) {
+    //得到Native层的Parcel对象
     Parcel* parcel = parcelForJavaObject(env, parcelObj);
     if (parcel == NULL) {
         doThrowNPE(env);
@@ -379,14 +380,17 @@ static jlong nativeReadFromParcel(JNIEnv* env, jclass clazz,
 
 static void nativeWriteToParcel(JNIEnv* env, jclass clazz,
         jlong nativeObject, jobject parcelObj) {
+    //获取一个native层的Parcel对象。这里会将Java层的Parcel对象转为一个Natvie层数据
     Parcel* parcel = parcelForJavaObject(env, parcelObj);
     if (parcel == NULL) {
         doThrowNPE(env);
         return;
     }
+    //nativeObject是Surface在Native层的一个对应的指针。这里直接还原出来
     sp<Surface> self(reinterpret_cast<Surface *>(nativeObject));
     android::view::Surface surfaceShim;
     if (self != nullptr) {
+        //创建一个GraphicBufferProducer对象
         surfaceShim.graphicBufferProducer = self->getIGraphicBufferProducer();
     }
     // Calling code in Surface.java has already written the name of the Surface

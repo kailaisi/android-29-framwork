@@ -181,6 +181,7 @@ static jlong nativeCreate(JNIEnv* env, jclass clazz, jobject sessionObj,
     ScopedUtfChars name(env, nameStr);
     sp<SurfaceComposerClient> client;
     if (sessionObj != NULL) {
+        //该方法的功能是，获取sessionObj中的SurfaceComposerClient对象中的mNativeClient
         client = android_view_SurfaceSession_getClient(env, sessionObj);
     } else {
         client = SurfaceComposerClient::getDefault();
@@ -197,8 +198,8 @@ static jlong nativeCreate(JNIEnv* env, jclass clazz, jobject sessionObj,
         }
     }
 
-    status_t err = client->createSurfaceChecked(
-            String8(name.c_str()), w, h, format, &surface, flags, parent, std::move(metadata));
+    //通过SurfaceComposerClient创建了一个nativce层的SurfaceControl对象，并且赋值给surface指针
+    status_t err = client->createSurfaceChecked(String8(name.c_str()), w, h, format, &surface, flags, parent, std::move(metadata));
     if (err == NAME_NOT_FOUND) {
         jniThrowException(env, "java/lang/IllegalArgumentException", NULL);
         return 0;
@@ -206,7 +207,7 @@ static jlong nativeCreate(JNIEnv* env, jclass clazz, jobject sessionObj,
         jniThrowException(env, OutOfResourcesException, NULL);
         return 0;
     }
-
+    //将surface所对应的计数器+1，对应的调用类是nativeCreate
     surface->incStrong((void *)nativeCreate);
     return reinterpret_cast<jlong>(surface.get());
 }

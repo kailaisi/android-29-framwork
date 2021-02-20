@@ -2145,6 +2145,7 @@ public class WindowManagerService extends IWindowManager.Stub
                 result = win.relayoutVisibleWindow(result, attrChanges);
 
                 try {
+                    //重点方法   创建一个SurfaceControl，这里的outSurfaceControl是在Activity中传入的一个空壳对象
                     result = createSurfaceControl(outSurfaceControl, result, win, winAnimator);
                 } catch (Exception e) {
                     displayContent.getInputMonitor().updateInputWindowsLw(true /*force*/);
@@ -2182,8 +2183,7 @@ public class WindowManagerService extends IWindowManager.Stub
                     if (DEBUG_VISIBILITY) Slog.i(TAG_WM, "Releasing surface in: " + win);
 
                     try {
-                        Trace.traceBegin(TRACE_TAG_WINDOW_MANAGER, "wmReleaseOutSurface_"
-                                + win.mAttrs.getTitle());
+                        Trace.traceBegin(TRACE_TAG_WINDOW_MANAGER, "wmReleaseOutSurface_"+ win.mAttrs.getTitle());
                         outSurfaceControl.release();
                     } finally {
                         Trace.traceEnd(TRACE_TAG_WINDOW_MANAGER);
@@ -2214,23 +2214,20 @@ public class WindowManagerService extends IWindowManager.Stub
             }
 
             if (wallpaperMayMove) {
-                displayContent.pendingLayoutChanges |=
-                        WindowManagerPolicy.FINISH_LAYOUT_REDO_WALLPAPER;
+                displayContent.pendingLayoutChanges |=WindowManagerPolicy.FINISH_LAYOUT_REDO_WALLPAPER;
             }
 
             if (win.mAppToken != null) {
                 displayContent.mUnknownAppVisibilityController.notifyRelayouted(win.mAppToken);
             }
 
-            Trace.traceBegin(TRACE_TAG_WINDOW_MANAGER,
-                    "relayoutWindow: updateOrientationFromAppTokens");
+            Trace.traceBegin(TRACE_TAG_WINDOW_MANAGER,"relayoutWindow: updateOrientationFromAppTokens");
             configChanged = displayContent.updateOrientationFromAppTokens();
             Trace.traceEnd(TRACE_TAG_WINDOW_MANAGER);
 
             if (toBeDisplayed && win.mIsWallpaper) {
                 DisplayInfo displayInfo = displayContent.getDisplayInfo();
-                displayContent.mWallpaperController.updateWallpaperOffset(
-                        win, displayInfo.logicalWidth, displayInfo.logicalHeight, false);
+                displayContent.mWallpaperController.updateWallpaperOffset(win, displayInfo.logicalWidth, displayInfo.logicalHeight, false);
             }
             if (win.mAppToken != null) {
                 win.mAppToken.updateReportedVisibilityLocked();
@@ -2340,7 +2337,7 @@ public class WindowManagerService extends IWindowManager.Stub
 
         // When we start the exit animation we take the Surface from the client
         // so it will stop perturbing it. We need to likewise takeaway the SurfaceFlinger
-        // side child surfaces, so they will remain preserved in their current state
+        // side child surfaces, so they will remain preserved in their current stateopenSession
         // (rather than be cleaned up immediately by the app code).
         SurfaceControl.openTransaction();
         winAnimator.detachChildren();
@@ -2349,8 +2346,7 @@ public class WindowManagerService extends IWindowManager.Stub
         return focusMayChange;
     }
 
-    private int createSurfaceControl(SurfaceControl outSurfaceControl, int result, WindowState win,
-            WindowStateAnimator winAnimator) {
+    private int createSurfaceControl(SurfaceControl outSurfaceControl, int result, WindowState win,WindowStateAnimator winAnimator) {
         if (!win.mHasSurface) {
             result |= RELAYOUT_RES_SURFACE_CHANGED;
         }
@@ -2358,11 +2354,13 @@ public class WindowManagerService extends IWindowManager.Stub
         WindowSurfaceController surfaceController;
         try {
             Trace.traceBegin(TRACE_TAG_WINDOW_MANAGER, "createSurfaceControl");
+            //获取一个surfaceController对象
             surfaceController = winAnimator.createSurfaceLocked(win.mAttrs.type, win.mOwnerUid);
         } finally {
             Trace.traceEnd(TRACE_TAG_WINDOW_MANAGER);
         }
         if (surfaceController != null) {
+            //这里会将surfaceController的一些数据拷贝到outSurfaceControl中，也就是会传输给我们Activit中的surfaceControl，从而能够获取Surface
             surfaceController.getSurfaceControl(outSurfaceControl);
             if (SHOW_TRANSACTIONS) Slog.i(TAG_WM, "  OUT SURFACE " + outSurfaceControl + ": copied");
         } else {
@@ -4984,6 +4982,7 @@ public class WindowManagerService extends IWindowManager.Stub
 
     @Override
     public IWindowSession openSession(IWindowSessionCallback callback) {
+        //返回一个Session的句柄
         return new Session(this, callback);
     }
 
