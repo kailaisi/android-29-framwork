@@ -71,6 +71,7 @@ protected:
     const bool mIsMain;
 };
 
+//返回一个ProcessState
 sp<ProcessState> ProcessState::self()
 {
     Mutex::Autolock _l(gProcessMutex);

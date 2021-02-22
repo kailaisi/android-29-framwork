@@ -119,7 +119,7 @@ public class WebViewUpdateService extends SystemService {
         userAddedFilter.addAction(Intent.ACTION_USER_REMOVED);
         getContext().registerReceiverAsUser(mWebViewUpdatedReceiver, UserHandle.ALL,
                 userAddedFilter, null /* broadcast permission */, null /* handler */);
-
+		//启动之后，要注册到SystemServer中
         publishBinderService("webviewupdate", new BinderService(), true /*allowIsolated*/);
     }
 

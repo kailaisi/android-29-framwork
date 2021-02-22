@@ -120,6 +120,7 @@ class Session extends IWindowSession.Stub implements IBinder.DeathRecipient {
         mStringName = sb.toString();
 
         try {
+            //调用linkToDeath方法
             mCallback.asBinder().linkToDeath(this, 0);
         } catch (RemoteException e) {
             // The caller has died, so we can just forget about this.
@@ -191,6 +192,7 @@ class Session extends IWindowSession.Stub implements IBinder.DeathRecipient {
         if (false) Slog.d(TAG_WM, ">>>>>> ENTERED relayout from "
                 + Binder.getCallingPid());
         Trace.traceBegin(TRACE_TAG_WINDOW_MANAGER, mRelayoutTag);
+        //调用了mService的relayoutWindow方法。这里的mService是WMS对象，是在构造函数中进行的赋值
         int res = mService.relayoutWindow(this, window, seq, attrs,
                 requestedWidth, requestedHeight, viewFlags, flags, frameNumber,
                 outFrame, outOverscanInsets, outContentInsets, outVisibleInsets,

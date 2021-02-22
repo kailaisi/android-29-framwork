@@ -184,6 +184,7 @@ public final class WindowManagerGlobal {
     public static IWindowManager getWindowManagerService() {
         synchronized (WindowManagerGlobal.class) {
             if (sWindowManagerService == null) {
+                //这里获取的是window的系统服务，
                 sWindowManagerService = IWindowManager.Stub.asInterface(ServiceManager.getService("window"));
                 try {
                     if (sWindowManagerService != null) {
@@ -206,7 +207,9 @@ public final class WindowManagerGlobal {
                     // was instantiated here.
                     // TODO(b/116157766): Remove this hack after cleaning up @UnsupportedAppUsage
                     InputMethodManager.ensureDefaultInstanceForDefaultDisplayIfNecessary();
+                    //获取了WMS对应的Binder句柄
                     IWindowManager windowManager = getWindowManagerService();
+                    //返回一个
                     sWindowSession = windowManager.openSession(
                             new IWindowSessionCallback.Stub() {
                                 @Override
@@ -384,6 +387,7 @@ public final class WindowManagerGlobal {
 
             // do this last because it fires off messages to start doing things
             try {
+				//将view交给ViewRootImpl来处理
                 root.setView(view, wparams, panelParentView);
             } catch (RuntimeException e) {
                 // BadTokenException or InvalidDisplayException, clean up.

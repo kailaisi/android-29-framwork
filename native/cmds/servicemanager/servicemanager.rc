@@ -1,8 +1,11 @@
 service servicemanager /system/bin/servicemanager
     class core animation
-    user system
+    user system  //说明以用户system身份运行
     group system readproc
-    critical
+    //说明servicemanager是系统中的关键服务，
+    //关键服务是不会退出的，如果退出了，系统就会重启，当系统重启时就会启动用onrestart关键字修饰的进程，
+    //比如zygote、media、surfaceflinger等等。
+   critical
     onrestart restart healthd
     onrestart restart zygote
     onrestart restart audioserver

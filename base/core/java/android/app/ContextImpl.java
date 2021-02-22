@@ -1135,6 +1135,7 @@ class ContextImpl extends Context {
                 : new String[] {receiverPermission};
         try {
             intent.prepareToLeaveProcess(this);
+			//调用AMS的方法
             ActivityManager.getService().broadcastIntent(
                     mMainThread.getApplicationThread(), intent, resolvedType, null,
                     Activity.RESULT_OK, null, null, receiverPermissions, appOp, null, false, false,
@@ -1514,12 +1515,14 @@ class ContextImpl extends Context {
     private Intent registerReceiverInternal(BroadcastReceiver receiver, int userId,
             IntentFilter filter, String broadcastPermission,
             Handler scheduler, Context context, int flags) {
+        //这个是IBinder对象，可以跨进程传递
         IIntentReceiver rd = null;
         if (receiver != null) {
             if (mPackageInfo != null && context != null) {
                 if (scheduler == null) {
                     scheduler = mMainThread.getHandler();
                 }
+				//创建或获取IBinder对象
                 rd = mPackageInfo.getReceiverDispatcher(
                     receiver, context, scheduler,
                     mMainThread.getInstrumentation(), true);
@@ -1532,6 +1535,7 @@ class ContextImpl extends Context {
             }
         }
         try {
+			//传给了AMS来进行处理
             final Intent intent = ActivityManager.getService().registerReceiver(
                     mMainThread.getApplicationThread(), mBasePackageName, rd, filter,
                     broadcastPermission, userId, flags);
@@ -1573,6 +1577,7 @@ class ContextImpl extends Context {
         }
     }
 
+	//启动Service服务
     @Override
     public ComponentName startService(Intent service) {
         warnIfCallingFromSystemProcess();
@@ -1606,10 +1611,10 @@ class ContextImpl extends Context {
         try {
             validateServiceIntent(service);
             service.prepareToLeaveProcess(this);
+			//binder机制调用AMS中的startService方法
             ComponentName cn = ActivityManager.getService().startService(
                 mMainThread.getApplicationThread(), service, service.resolveTypeIfNeeded(
-                            getContentResolver()), requireForeground,
-                            getOpPackageName(), user.getIdentifier());
+                            getContentResolver()), requireForeground,getOpPackageName(), user.getIdentifier());
             if (cn != null) {
                 if (cn.getPackageName().equals("!")) {
                     throw new SecurityException(
@@ -1715,6 +1720,8 @@ class ContextImpl extends Context {
     private boolean bindServiceCommon(Intent service, ServiceConnection conn, int flags,
             String instanceName, Handler handler, Executor executor, UserHandle user) {
         // Keep this in sync with DevicePolicyManager.bindDeviceAdminServiceAsUser.
+        //ServiceConnection对象是无法达到跨进程通讯功能的，所以这里生成了一个IServiceConnection对象，
+        //sd是一个IBinder对象，能够实现跨进程的通讯功能
         IServiceConnection sd;
         if (conn == null) {
             throw new IllegalArgumentException("connection is null");
@@ -1742,7 +1749,6 @@ class ContextImpl extends Context {
             service.prepareToLeaveProcess(this);
             //ActivityManager.getService()会通过ServiceManager返回IActivityManager的binder对象。
             // bindIsolatedService，会调用服务端的相应接口。也就是AMS的bindIsolatedService接口
-
             int res = ActivityManager.getService().bindIsolatedService(
                 mMainThread.getApplicationThread(), getActivityToken(), service,
                 service.resolveTypeIfNeeded(getContentResolver()),
@@ -2581,7 +2587,7 @@ class ContextImpl extends Context {
         }
 
         mOpPackageName = overrideOpPackageName != null ? overrideOpPackageName : opPackageName;
-
+		//初始化为ApplicationContentResolver对象
         mContentResolver = new ApplicationContentResolver(this, mainThread);
     }
 

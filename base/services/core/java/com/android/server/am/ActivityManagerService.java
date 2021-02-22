@@ -2039,24 +2039,30 @@ public class ActivityManagerService extends IActivityManager.Stub
 
     public void setSystemProcess() {
         try {
+        	//注册ActivityService服务
             ServiceManager.addService(Context.ACTIVITY_SERVICE, this, /* allowIsolated= */ true,
                     DUMP_FLAG_PRIORITY_CRITICAL | DUMP_FLAG_PRIORITY_NORMAL | DUMP_FLAG_PROTO);
+            //注册进程状态服务
             ServiceManager.addService(ProcessStats.SERVICE_NAME, mProcessStats);
-            ServiceManager.addService("meminfo", new MemBinder(this), /* allowIsolated= */ false,
-                    DUMP_FLAG_PRIORITY_HIGH);
+            //注册内存Binder
+            ServiceManager.addService("meminfo", new MemBinder(this), /* allowIsolated= */ false,DUMP_FLAG_PRIORITY_HIGH);
+            //注册图像Binder
             ServiceManager.addService("gfxinfo", new GraphicsBinder(this));
+            //注册SQLite DB binder
             ServiceManager.addService("dbinfo", new DbBinder(this));
             if (MONITOR_CPU_USAGE) {
-                ServiceManager.addService("cpuinfo", new CpuBinder(this),
-                        /* allowIsolated= */ false, DUMP_FLAG_PRIORITY_CRITICAL);
+            	//注册CPU使用情况的Binder
+                ServiceManager.addService("cpuinfo", new CpuBinder(this),/* allowIsolated= */ false, DUMP_FLAG_PRIORITY_CRITICAL);
             }
+            //注册权限控制Binder
             ServiceManager.addService("permission", new PermissionController(this));
+            //注册进程管理Binder
             ServiceManager.addService("processinfo", new ProcessInfoService(this));
 
-            ApplicationInfo info = mContext.getPackageManager().getApplicationInfo(
-                    "android", STOCK_PM_FLAGS | MATCH_SYSTEM_ONLY);
+            //获取“android”应用的ApplicationInfo，并装载到mSystemThread
+            ApplicationInfo info = mContext.getPackageManager().getApplicationInfo("android", STOCK_PM_FLAGS | MATCH_SYSTEM_ONLY);
             mSystemThread.installSystemApplicationInfo(info, getClass().getClassLoader());
-
+            //创建ProcessRecord维护进程的相关信息
             synchronized (this) {
                 ProcessRecord app = mProcessList.newProcessRecordLocked(info, info.processName,
                         false,
@@ -2212,12 +2218,13 @@ public class ActivityManagerService extends IActivityManager.Stub
 
         public Lifecycle(Context context) {
             super(context);
+            //创建AMS对象
             mService = new ActivityManagerService(context, sAtm);
         }
 
-        public static ActivityManagerService startService(
-                SystemServiceManager ssm, ActivityTaskManagerService atm) {
+        public static ActivityManagerService startService(SystemServiceManager ssm, ActivityTaskManagerService atm) {
             sAtm = atm;
+            //启动AMS
             return ssm.startService(ActivityManagerService.Lifecycle.class).getService();
         }
 
@@ -2432,79 +2439,78 @@ public class ActivityManagerService extends IActivityManager.Stub
 
     // Note: This method is invoked on the main thread but may need to attach various
     // handlers to other threads.  So take care to be explicit about the looper.
+    //构造方法，
     public ActivityManagerService(Context systemContext, ActivityTaskManagerService atm) {
         LockGuard.installLock(this, LockGuard.INDEX_ACTIVITY);
         mInjector = new Injector();
         mContext = systemContext;
 
         mFactoryTest = FactoryTest.getMode();
+        //获取系统的ActivityThread
         mSystemThread = ActivityThread.currentActivityThread();
         mUiContext = mSystemThread.getSystemUiContext();
 
         Slog.i(TAG, "Memory class: " + ActivityManager.staticGetMemoryClass());
 
-        mHandlerThread = new ServiceThread(TAG,
-                THREAD_PRIORITY_FOREGROUND, false /*allowIo*/);
+        //创建一个ServiceThread用来处理AMS接收到的命令
+        mHandlerThread = new ServiceThread(TAG,THREAD_PRIORITY_FOREGROUND, false /*allowIo*/);
         mHandlerThread.start();
         mHandler = new MainHandler(mHandlerThread.getLooper());
         mUiHandler = mInjector.getUiHandler(this);
 
-        mProcStartHandlerThread = new ServiceThread(TAG + ":procStart",
-                THREAD_PRIORITY_FOREGROUND, false /* allowIo */);
+        mProcStartHandlerThread = new ServiceThread(TAG + ":procStart", THREAD_PRIORITY_FOREGROUND, false /* allowIo */);
         mProcStartHandlerThread.start();
         mProcStartHandler = new Handler(mProcStartHandlerThread.getLooper());
 
         mConstants = new ActivityManagerConstants(mContext, this, mHandler);
         final ActiveUids activeUids = new ActiveUids(this, true /* postChangesToAtm */);
         mProcessList.init(this, activeUids);
+        //低内存监控
         mLowMemDetector = new LowMemDetector(this);
         mOomAdjuster = new OomAdjuster(this, mProcessList, activeUids);
 
         // Broadcast policy parameters
-        final BroadcastConstants foreConstants = new BroadcastConstants(
-                Settings.Global.BROADCAST_FG_CONSTANTS);
+        final BroadcastConstants foreConstants = new BroadcastConstants(Settings.Global.BROADCAST_FG_CONSTANTS);
         foreConstants.TIMEOUT = BROADCAST_FG_TIMEOUT;
 
-        final BroadcastConstants backConstants = new BroadcastConstants(
-                Settings.Global.BROADCAST_BG_CONSTANTS);
+        final BroadcastConstants backConstants = new BroadcastConstants(Settings.Global.BROADCAST_BG_CONSTANTS);
         backConstants.TIMEOUT = BROADCAST_BG_TIMEOUT;
 
-        final BroadcastConstants offloadConstants = new BroadcastConstants(
-                Settings.Global.BROADCAST_OFFLOAD_CONSTANTS);
+        final BroadcastConstants offloadConstants = new BroadcastConstants(Settings.Global.BROADCAST_OFFLOAD_CONSTANTS);
         offloadConstants.TIMEOUT = BROADCAST_BG_TIMEOUT;
         // by default, no "slow" policy in this queue
         offloadConstants.SLOW_TIME = Integer.MAX_VALUE;
 
-        mEnableOffloadQueue = SystemProperties.getBoolean(
-                "persist.device_config.activity_manager_native_boot.offload_queue_enabled", false);
+        mEnableOffloadQueue = SystemProperties.getBoolean("persist.device_config.activity_manager_native_boot.offload_queue_enabled", false);
 
-        mFgBroadcastQueue = new BroadcastQueue(this, mHandler,
-                "foreground", foreConstants, false);
-        mBgBroadcastQueue = new BroadcastQueue(this, mHandler,
-                "background", backConstants, true);
-        mOffloadBroadcastQueue = new BroadcastQueue(this, mHandler,
-                "offload", offloadConstants, true);
+        //初始化广播队列。这里包含了前台广播，后台广播等
+        mFgBroadcastQueue = new BroadcastQueue(this, mHandler, "foreground", foreConstants, false);
+        mBgBroadcastQueue = new BroadcastQueue(this, mHandler, "background", backConstants, true);
+        mOffloadBroadcastQueue = new BroadcastQueue(this, mHandler, "offload", offloadConstants, true);
         mBroadcastQueues[0] = mFgBroadcastQueue;
         mBroadcastQueues[1] = mBgBroadcastQueue;
         mBroadcastQueues[2] = mOffloadBroadcastQueue;
 
+        //用于保存注册的Service
         mServices = new ActiveServices(this);
+
+        //map，用于保存注册的ContentProvider
         mProviderMap = new ProviderMap(this);
         mPackageWatchdog = PackageWatchdog.getInstance(mUiContext);
         mAppErrors = new AppErrors(mUiContext, this, mPackageWatchdog);
 
+        //创建 /data/system目录
         final File systemDir = SystemServiceManager.ensureSystemDir();
 
         // TODO: Move creation of battery stats service outside of activity manager service.
-        mBatteryStatsService = new BatteryStatsService(systemContext, systemDir,
-                BackgroundThread.get().getHandler());
+        mBatteryStatsService = new BatteryStatsService(systemContext, systemDir, BackgroundThread.get().getHandler());
         mBatteryStatsService.getActiveStatistics().readLocked();
         mBatteryStatsService.scheduleWriteToDisk();
-        mOnBattery = DEBUG_POWER ? true
-                : mBatteryStatsService.getActiveStatistics().getIsOnBattery();
+        mOnBattery = DEBUG_POWER ? true : mBatteryStatsService.getActiveStatistics().getIsOnBattery();
         mBatteryStatsService.getActiveStatistics().setCallback(this);
         mOomAdjProfiler.batteryPowerChanged(mOnBattery);
 
+        //创建进程统计服务，保存在/data/system/proccstats目录中。
         mProcessStats = new ProcessStatsService(this, new File(systemDir, "procstats"));
 
         mAppOpsService = mInjector.getAppOpsService(new File(systemDir, "appops.xml"), mHandler);
@@ -2513,8 +2519,7 @@ public class ActivityManagerService extends IActivityManager.Stub
 
         mUserController = new UserController(this);
 
-        mPendingIntentController = new PendingIntentController(
-                mHandlerThread.getLooper(), mUserController);
+        mPendingIntentController = new PendingIntentController(mHandlerThread.getLooper(), mUserController);
 
         if (SystemProperties.getInt("sys.use_fifo_ui", 0) != 0) {
             mUseFifoUiScheduling = true;
@@ -2524,10 +2529,10 @@ public class ActivityManagerService extends IActivityManager.Stub
         mIntentFirewall = new IntentFirewall(new IntentFirewallInterface(), mHandler);
 
         mActivityTaskManager = atm;
-        mActivityTaskManager.initialize(mIntentFirewall, mPendingIntentController,
-                DisplayThread.get().getLooper());
+        mActivityTaskManager.initialize(mIntentFirewall, mPendingIntentController, DisplayThread.get().getLooper());
         mAtmInternal = LocalServices.getService(ActivityTaskManagerInternal.class);
 
+        //CPU追踪器进程
         mProcessCpuThread = new Thread("CpuTracker") {
             @Override
             public void run() {
@@ -2564,6 +2569,7 @@ public class ActivityManagerService extends IActivityManager.Stub
 
         mHiddenApiBlacklist = new HiddenApiSettings(mHandler, mContext);
 
+        //监控狗
         Watchdog.getInstance().addMonitor(this);
         Watchdog.getInstance().addThread(mHandler);
 
@@ -2592,12 +2598,15 @@ public class ActivityManagerService extends IActivityManager.Stub
     }
 
     private void start() {
+    	//移除所有的进程组
         removeAllProcessGroups();
+        //启动CpuTracker线程
         mProcessCpuThread.start();
-
+        //启动电池统计服务，能够统计具体的应用的电池消耗，从而来进行一定的电量统计
         mBatteryStatsService.publish();
         mAppOpsService.publish(mContext);
         Slog.d("AppOps", "AppOpsService published");
+        //创建LocalService，并添加到LocalServices列表中
         LocalServices.addService(ActivityManagerInternal.class, new LocalService());
         mActivityTaskManager.onActivityManagerInternalAdded();
         mUgmInternal.onActivityManagerInternalAdded();
@@ -2605,6 +2614,9 @@ public class ActivityManagerService extends IActivityManager.Stub
         // Wait for the synchronized block started in mProcessCpuThread,
         // so that any other access to mProcessCpuTracker from main thread
         // will be blocked during mProcessCpuTracker initialization.
+        // 等待在mProcessCpuThread中启动的同步块，
+  		//以便从主线程获得对mProcessCpuTracker的任何其他访问 
+  		//将在mProcessCpuTracker初始化期间被阻塞。
         try {
             mProcessCpuInitLatch.await();
         } catch (InterruptedException e) {
@@ -4770,6 +4782,7 @@ public class ActivityManagerService extends IActivityManager.Stub
         long bindApplicationTimeMillis;
         if (pid != MY_PID && pid >= 0) {
             synchronized (mPidsSelfLocked) {
+				//根据进程的pid获取对应的ProcessRecord
                 app = mPidsSelfLocked.get(pid);
             }
             if (app != null && (app.startUid != callingUid || app.startSeq != startSeq)) {
@@ -5055,6 +5068,7 @@ public class ActivityManagerService extends IActivityManager.Stub
                         mCoreSettingsObserver.getCoreSettingsLocked(),
                         buildSerial, autofillOptions, contentCaptureOptions);
             } else {
+				//重点方法       这里的thread是IBinder对象，可以调用ApplicationThread的bindApplication方法。这里会创建Application对象
                 thread.bindApplication(processName, appInfo, providers, null, profilerInfo,
                         null, null, null, testMode,
                         mBinderTransactionTrackingEnabled, enableTrackAllocation,
@@ -5110,6 +5124,7 @@ public class ActivityManagerService extends IActivityManager.Stub
         // Find any services that should be running in this process...
         if (!badApp) {
             try {
+				//启动关联的services，将启动的Service和对应的Application进行绑定
                 didSomething |= mServices.attachApplicationLocked(app, processName);
                 checkTime(startTime, "attachApplicationLocked: after mServices.attachApplicationLocked");
             } catch (Exception e) {
@@ -5121,6 +5136,7 @@ public class ActivityManagerService extends IActivityManager.Stub
         // Check if a next-broadcast receiver is in this process...
         if (!badApp && isPendingBroadcastProcessLocked(pid)) {
             try {
+				//启动对应的广播
                 didSomething |= sendPendingBroadcastsLocked(app);
                 checkTime(startTime, "attachApplicationLocked: after sendPendingBroadcastsLocked");
             } catch (Exception e) {
@@ -5171,12 +5187,14 @@ public class ActivityManagerService extends IActivityManager.Stub
         return true;
     }
 
+	//绑定Application
     @Override
     public final void attachApplication(IApplicationThread thread, long startSeq) {
         synchronized (this) {
             int callingPid = Binder.getCallingPid();
             final int callingUid = Binder.getCallingUid();
             final long origId = Binder.clearCallingIdentity();
+			//重点方法
             attachApplicationLocked(thread, callingPid, callingUid, startSeq);
             Binder.restoreCallingIdentity(origId);
         }
@@ -6703,8 +6721,7 @@ public class ActivityManagerService extends IActivityManager.Stub
         return null;
     }
 
-    private ContentProviderHolder getContentProviderImpl(IApplicationThread caller,
-            String name, IBinder token, int callingUid, String callingPackage, String callingTag,
+    private ContentProviderHolder getContentProviderImpl(IApplicationThread caller,String name, IBinder token, int callingUid, String callingPackage, String callingTag,
             boolean stable, int userId) {
         ContentProviderRecord cpr;
         ContentProviderConnection conn = null;
@@ -6730,6 +6747,7 @@ public class ActivityManagerService extends IActivityManager.Stub
             checkTime(startTime, "getContentProviderImpl: getProviderByName");
 
             // First check if this content provider has been published...
+			//检查缓存中是否存在ContentProviderRecord
             cpr = mProviderMap.getProviderByName(name, userId);
             // If that didn't work, check if it exists for user 0 and then
             // verify that it's a singleton provider before using it.
@@ -6768,41 +6786,43 @@ public class ActivityManagerService extends IActivityManager.Stub
                     checkTime(startTime, "getContentProviderImpl: after appDied (killedByAm)");
                 }
             }
-
+			//provider正在运行着
             if (providerRunning) {
+				//获取对应的providerInfo
                 cpi = cpr.info;
                 String msg;
-
+				
                 if (r != null && cpr.canRunHere(r)) {
+					//canRunHere用来判断cpr可否运行在r所在的线程
                     if ((msg = checkContentProviderAssociation(r, callingUid, cpi)) != null) {
                         throw new SecurityException("Content provider lookup "
                                 + cpr.name.flattenToShortString()
                                 + " failed: association not allowed with package " + msg);
                     }
-                    checkTime(startTime,
-                            "getContentProviderImpl: before checkContentProviderPermission");
-                    if ((msg = checkContentProviderPermissionLocked(cpi, r, userId, checkCrossUser))
-                            != null) {
+                    checkTime(startTime,"getContentProviderImpl: before checkContentProviderPermission");
+                    if ((msg = checkContentProviderPermissionLocked(cpi, r, userId, checkCrossUser)) != null) {
                         throw new SecurityException(msg);
                     }
-                    checkTime(startTime,
-                            "getContentProviderImpl: after checkContentProviderPermission");
+                    checkTime(startTime,"getContentProviderImpl: after checkContentProviderPermission");
 
                     // This provider has been published or is in the process
                     // of being published...  but it is also allowed to run
                     // in the caller's process, so don't make a connection
                     // and just let the caller instantiate its own instance.
+					//直接将ContentProviderHolder传给客户端
                     ContentProviderHolder holder = cpr.newHolder(null);
                     // don't give caller the provider object, it needs
                     // to make its own.
+					//provider是holder的Binder对象，
+					//如果这里的provider不为空的话，就可以直接使用Binder对象来进行增删改查；如果为空，则自己在本地创建一个IBinder对象，然后去增删改查
+					//这里清空provider，由客户端自己去初始化provider的对象。
                     holder.provider = null;
                     return holder;
                 }
 
                 // Don't expose providers between normal apps and instant apps
                 try {
-                    if (AppGlobals.getPackageManager()
-                            .resolveContentProvider(name, 0 /*flags*/, userId) == null) {
+                    if (AppGlobals.getPackageManager().resolveContentProvider(name, 0 /*flags*/, userId) == null) {
                         return null;
                     }
                 } catch (RemoteException e) {
@@ -6815,12 +6835,10 @@ public class ActivityManagerService extends IActivityManager.Stub
                 }
                 checkTime(startTime,
                         "getContentProviderImpl: before checkContentProviderPermission");
-                if ((msg = checkContentProviderPermissionLocked(cpi, r, userId, checkCrossUser))
-                        != null) {
+                if ((msg = checkContentProviderPermissionLocked(cpi, r, userId, checkCrossUser)) != null) {
                     throw new SecurityException(msg);
                 }
-                checkTime(startTime,
-                        "getContentProviderImpl: after checkContentProviderPermission");
+                checkTime(startTime, "getContentProviderImpl: after checkContentProviderPermission");
 
                 final long origId = Binder.clearCallingIdentity();
 
@@ -6828,8 +6846,7 @@ public class ActivityManagerService extends IActivityManager.Stub
 
                 // In this case the provider instance already exists, so we can
                 // return it right away.
-                conn = incProviderCountLocked(r, cpr, token, callingUid, callingPackage, callingTag,
-                        stable);
+                conn = incProviderCountLocked(r, cpr, token, callingUid, callingPackage, callingTag, stable);
                 if (conn != null && (conn.stableCount+conn.unstableCount) == 1) {
                     if (cpr.proc != null && r.setAdj <= ProcessList.PERCEPTIBLE_LOW_APP_ADJ) {
                         // If this is a perceptible app accessing the provider,
@@ -6885,7 +6902,7 @@ public class ActivityManagerService extends IActivityManager.Stub
 
                 Binder.restoreCallingIdentity(origId);
             }
-
+			//provider不存在
             if (!providerRunning) {
                 try {
                     checkTime(startTime, "getContentProviderImpl: before resolveContentProvider");
@@ -6967,18 +6984,16 @@ public class ActivityManagerService extends IActivityManager.Stub
 
                     try {
                         checkTime(startTime, "getContentProviderImpl: before getApplicationInfo");
-                        ApplicationInfo ai =
-                            AppGlobals.getPackageManager().
-                                getApplicationInfo(
-                                        cpi.applicationInfo.packageName,
-                                        STOCK_PM_FLAGS, userId);
+                        ApplicationInfo ai =AppGlobals.getPackageManager().getApplicationInfo(cpi.applicationInfo.packageName,STOCK_PM_FLAGS, userId);
                         checkTime(startTime, "getContentProviderImpl: after getApplicationInfo");
                         if (ai == null) {
                             Slog.w(TAG, "No package info for content provider "
                                     + cpi.name);
                             return null;
                         }
+						//
                         ai = getAppInfoForUser(ai, userId);
+						//创建一个ContentProviderRecord
                         cpr = new ContentProviderRecord(this, cpi, ai, comp, singleton);
                     } catch (RemoteException ex) {
                         // pm is in same process, this will never happen.
@@ -6990,6 +7005,7 @@ public class ActivityManagerService extends IActivityManager.Stub
                 checkTime(startTime, "getContentProviderImpl: now have ContentProviderRecord");
 
                 if (r != null && cpr.canRunHere(r)) {
+					//如果cpr能够跑在r所在的进程，则直接返回
                     // If this is a multiprocess provider, then just return its
                     // info and allow the caller to instantiate it.  Only do
                     // this if the provider is the same user as the caller's
@@ -7075,7 +7091,7 @@ public class ActivityManagerService extends IActivityManager.Stub
                 if (firstClass) {
                     mProviderMap.putProviderByClass(comp, cpr);
                 }
-
+				//缓存cpr
                 mProviderMap.putProviderByName(name, cpr);
                 conn = incProviderCountLocked(r, cpr, token, callingUid, callingPackage, callingTag,
                         stable);
@@ -7094,6 +7110,7 @@ public class ActivityManagerService extends IActivityManager.Stub
         final long timeout = SystemClock.uptimeMillis() + CONTENT_PROVIDER_WAIT_TIMEOUT;
         boolean timedOut = false;
         synchronized (cpr) {
+			//不断的遍历，等待cpr发布完成
             while (cpr.provider == null) {
                 if (cpr.launchingApp == null) {
                     Slog.w(TAG, "Unable to launch app "
@@ -7114,6 +7131,7 @@ public class ActivityManagerService extends IActivityManager.Stub
                     if (conn != null) {
                         conn.waiting = true;
                     }
+					//等待
                     cpr.wait(wait);
                     if (cpr.provider == null) {
                         timedOut = true;
@@ -7127,6 +7145,7 @@ public class ActivityManagerService extends IActivityManager.Stub
                 }
             }
         }
+		//超时了
         if (timedOut) {
             // Note we do it afer releasing the lock.
             String callerName = "unknown";
@@ -7219,9 +7238,7 @@ public class ActivityManagerService extends IActivityManager.Stub
     }
 
     @Override
-    public final ContentProviderHolder getContentProvider(
-            IApplicationThread caller, String callingPackage, String name, int userId,
-            boolean stable) {
+    public final ContentProviderHolder getContentProvider(IApplicationThread caller, String callingPackage, String name, int userId,boolean stable) {
         enforceNotIsolatedCaller("getContentProvider");
         if (caller == null) {
             String msg = "null IApplicationThread when getting content provider "
@@ -8960,21 +8977,23 @@ public class ActivityManagerService extends IActivityManager.Stub
     public void systemReady(final Runnable goingCallback, TimingsTraceLog traceLog) {
         traceLog.traceBegin("PhaseActivityManagerReady");
         synchronized(this) {
+        	//第一次进入的时候为false
             if (mSystemReady) {
                 // If we're done calling all the receivers, run the next "boot phase" passed in
                 // by the SystemServer
+                //如果AMS已经准备好了，那么会调用goingCallback的run方法，然后返回
                 if (goingCallback != null) {
                     goingCallback.run();
                 }
                 return;
             }
 
-            mLocalDeviceIdleController
-                    = LocalServices.getService(DeviceIdleController.LocalService.class);
+            mLocalDeviceIdleController = LocalServices.getService(DeviceIdleController.LocalService.class);
+            //调用ATMS的onSystemReady方法
             mActivityTaskManager.onSystemReady();
             // Make sure we have the current profile info, since it is needed for security checks.
             mUserController.onSystemReady();
-            mAppOpsService.systemReady();
+            mAppOpsService.systemReady();//
             mSystemReady = true;
         }
 
@@ -8984,6 +9003,7 @@ public class ActivityManagerService extends IActivityManager.Stub
                     .getSerial();
         } catch (RemoteException e) {}
 
+        //关闭procsToKill中的所有进程
         ArrayList<ProcessRecord> procsToKill = null;
         synchronized(mPidsSelfLocked) {
             for (int i=mPidsSelfLocked.size()-1; i>=0; i--) {
@@ -9009,6 +9029,7 @@ public class ActivityManagerService extends IActivityManager.Stub
             // Now that we have cleaned up any update processes, we
             // are ready to start launching real processes and know that
             // we won't trample on them any more.
+            //到这里为止，整个系统已经准备完毕了。可以进行进程的创建等工作。
             mProcessesReady = true;
         }
 
@@ -9033,6 +9054,7 @@ public class ActivityManagerService extends IActivityManager.Stub
             Slog.wtf(TAG, "PowerManagerInternal not found.");
         }
 
+        //运行goingCallback
         if (goingCallback != null) goingCallback.run();
         // Check the current user here as a user can be started inside goingCallback.run() from
         // other system services.
@@ -9073,6 +9095,7 @@ public class ActivityManagerService extends IActivityManager.Stub
                     throw e.rethrowAsRuntimeException();
                 }
             }
+            //启动Launcher的activity
             mAtmInternal.startHomeOnAllDisplays(currentUserId, "systemReady");
 
             mAtmInternal.showSystemReadyErrorDialogsIfNeeded();
@@ -13912,6 +13935,7 @@ public class ActivityManagerService extends IActivityManager.Stub
             final long origId = Binder.clearCallingIdentity();
             ComponentName res;
             try {
+				//调用了startServiceLocked方法
                 res = mServices.startServiceLocked(caller, service,
                         resolvedType, callingPid, callingUid,
                         requireForeground, callingPackage, userId);
@@ -14065,6 +14089,7 @@ public class ActivityManagerService extends IActivityManager.Stub
         }
 
         synchronized(this) {
+			//重点方法   mServices是ActiveServices对象
             return mServices.bindServiceLocked(caller, token, service,
                     resolvedType, connection, flags, instanceName, callingPackage, userId);
         }
@@ -14493,6 +14518,7 @@ public class ActivityManagerService extends IActivityManager.Stub
                 // Original caller already died
                 return null;
             }
+			//一个BroadcastFilter的列表，用于进行条件的过滤
             ReceiverList rl = mRegisteredReceivers.get(receiver.asBinder());
             if (rl == null) {
                 rl = new ReceiverList(this, callerApp, callingPid, callingUid,
@@ -14530,8 +14556,10 @@ public class ActivityManagerService extends IActivityManager.Stub
                         + " was previously registered for user " + rl.userId
                         + " callerPackage is " + callerPackage);
             }
+			//创建一个filter
             BroadcastFilter bf = new BroadcastFilter(filter, rl, callerPackage,
                     permission, callingUid, userId, instantApp, visibleToInstantApps);
+			//将filter添加到列表，如果列表中已经存在了，那么不会重复添加
             if (rl.containsFilter(filter)) {
                 Slog.w(TAG, "Receiver with filter " + filter
                         + " already registered for pid " + rl.pid
@@ -15288,8 +15316,8 @@ public class ActivityManagerService extends IActivityManager.Stub
         List receivers = null;
         List<BroadcastFilter> registeredReceivers = null;
         // Need to resolve the intent to interested receivers...
-        if ((intent.getFlags()&Intent.FLAG_RECEIVER_REGISTERED_ONLY)
-                 == 0) {
+        if ((intent.getFlags()&Intent.FLAG_RECEIVER_REGISTERED_ONLY)== 0) {
+			//重点方法    根据发送的广播查找注册该广播的静态receiver
             receivers = collectReceiverComponents(intent, resolvedType, callingUid, users);
         }
         if (intent.getComponent() == null) {
@@ -15300,9 +15328,8 @@ public class ActivityManagerService extends IActivityManager.Stub
                             UserManager.DISALLOW_DEBUGGING_FEATURES, users[i])) {
                         continue;
                     }
-                    List<BroadcastFilter> registeredReceiversForUser =
-                            mReceiverResolver.queryIntent(intent,
-                                    resolvedType, false /*defaultOnly*/, users[i]);
+					////重点方法    根据发送的广播查找注册该广播的动态receiver的列表
+                    List<BroadcastFilter> registeredReceiversForUser = mReceiverResolver.queryIntent(intent,resolvedType, false /*defaultOnly*/, users[i]);
                     if (registeredReceivers == null) {
                         registeredReceivers = registeredReceiversForUser;
                     } else if (registeredReceiversForUser != null) {
@@ -15323,6 +15350,7 @@ public class ActivityManagerService extends IActivityManager.Stub
 
         int NR = registeredReceivers != null ? registeredReceivers.size() : 0;
         if (!ordered && NR > 0) {
+			//这里处理动态receiver，加入到并行分发队列来处理
             // If we are not serializing this broadcast, then send the
             // registered receivers separately so they don't wait for the
             // components to be launched.
@@ -15330,6 +15358,7 @@ public class ActivityManagerService extends IActivityManager.Stub
                 checkBroadcastFromSystem(intent, callerApp, callerPackage, callingUid,
                         isProtectedBroadcast, registeredReceivers);
             }
+			//
             final BroadcastQueue queue = broadcastQueueForIntent(intent);
             BroadcastRecord r = new BroadcastRecord(queue, intent, callerApp,
                     callerPackage, callingPid, callingUid, callerInstantApp, resolvedType,
@@ -15341,7 +15370,9 @@ public class ActivityManagerService extends IActivityManager.Stub
                     && (queue.replaceParallelBroadcastLocked(r) != null);
             // Note: We assume resultTo is null for non-ordered broadcasts.
             if (!replaced) {
+				//放入到并行队列中去发送
                 queue.enqueueParallelBroadcastLocked(r);
+				//重点方法    调度去分发广播。
                 queue.scheduleBroadcastsLocked();
             }
             registeredReceivers = null;
@@ -15351,6 +15382,7 @@ public class ActivityManagerService extends IActivityManager.Stub
         // Merge into one list.
         int ir = 0;
         if (receivers != null) {
+			//这里会处理静态receiver信息。
             // A special case for PACKAGE_ADDED: do not allow the package
             // being added to see this broadcast.  This prevents them from
             // using this as a back door to get run as soon as they are
@@ -15412,6 +15444,7 @@ public class ActivityManagerService extends IActivityManager.Stub
                 }
             }
         }
+		//将=order的动态receiver跟未处理的receiver合并到一起。
         while (ir < NR) {
             if (receivers == null) {
                 receivers = new ArrayList();
@@ -15425,8 +15458,9 @@ public class ActivityManagerService extends IActivityManager.Stub
                     isProtectedBroadcast, receivers);
         }
 
-        if ((receivers != null && receivers.size() > 0)
-                || resultTo != null) {
+        if ((receivers != null && receivers.size() > 0) || resultTo != null) {
+			//处理剩下的receiver，加到串行分发队列中。
+			//queue是一个队列。
             BroadcastQueue queue = broadcastQueueForIntent(intent);
             BroadcastRecord r = new BroadcastRecord(queue, intent, callerApp,
                     callerPackage, callingPid, callingUid, callerInstantApp, resolvedType,
@@ -15563,6 +15597,7 @@ public class ActivityManagerService extends IActivityManager.Stub
 
             final long origId = Binder.clearCallingIdentity();
             try {
+				//
                 return broadcastIntentLocked(callerApp,
                         callerApp != null ? callerApp.info.packageName : null,
                         intent, resolvedType, resultTo, resultCode, resultData, resultExtras,
@@ -15667,9 +15702,10 @@ public class ActivityManagerService extends IActivityManager.Stub
                     queue = (flags & Intent.FLAG_RECEIVER_FOREGROUND) != 0
                             ? mFgBroadcastQueue : mBgBroadcastQueue;
                 }
-
+				//根据IBinder句柄获取到对应的那个广播。
                 r = queue.getMatchingOrderedReceiver(who);
                 if (r != null) {
+					//重点方法：finishReceiverLocked。用于结束receiver的相关状态。这里的返回值决定是否要进行下一个receiver的处理
                     doNext = r.queue.finishReceiverLocked(r, resultCode,
                         resultData, resultExtras, resultAbort, true);
                 }

@@ -126,6 +126,7 @@ import java.util.List;
  *
  * @hide
  */
+ //Phone手机的Window，
 public class PhoneWindow extends Window implements MenuBuilder.Callback {
 
     private final static String TAG = "PhoneWindow";
@@ -2687,7 +2688,8 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
     private void installDecor() {
         mForceDecorInstall = false;
         if (mDecor == null) {
-            mDecor = generateDecor(-1);//创建DecorView
+			//创建DecorView,是一个FrameLayout对象
+            mDecor = generateDecor(-1);
             mDecor.setDescendantFocusability(ViewGroup.FOCUS_AFTER_DESCENDANTS);
             mDecor.setIsRootNamespace(true);
             if (!mInvalidatePanelMenuPosted && mInvalidatePanelMenuFeatures != 0) {

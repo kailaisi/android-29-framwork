@@ -1302,6 +1302,7 @@ final class SystemServiceRegistry {
      * Gets a system service from a given context.
      */
     public static Object getSystemService(ContextImpl ctx, String name) {
+    	//先去缓存查找
         ServiceFetcher<?> fetcher = SYSTEM_SERVICE_FETCHERS.get(name);
         return fetcher != null ? fetcher.getService(ctx) : null;
     }
@@ -1355,6 +1356,7 @@ final class SystemServiceRegistry {
                 boolean doInitialize = false;
                 synchronized (cache) {
                     // Return it if we already have a cached instance.
+                    //如果缓存中存在则返回
                     T service = (T) cache[mCacheIndex];
                     if (service != null || gates[mCacheIndex] == ContextImpl.STATE_NOT_FOUND) {
                         return service;
@@ -1387,6 +1389,7 @@ final class SystemServiceRegistry {
                     try {
                         // This thread is the first one to get here. Instantiate the service
                         // *without* the cache lock held.
+                        //否则就调用createService方法创建
                         service = createService(ctx);
                         newState = ContextImpl.STATE_READY;
 

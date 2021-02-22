@@ -33,10 +33,9 @@ static struct {
 } gSurfaceSessionClassInfo;
 
 
-sp<SurfaceComposerClient> android_view_SurfaceSession_getClient(
-        JNIEnv* env, jobject surfaceSessionObj) {
-    return reinterpret_cast<SurfaceComposerClient*>(
-            env->GetLongField(surfaceSessionObj, gSurfaceSessionClassInfo.mNativeClient));
+sp<SurfaceComposerClient> android_view_SurfaceSession_getClient(JNIEnv* env, jobject surfaceSessionObj) {
+    //获取surfaceSessionObj对象的中的mNativeClient对象
+    return reinterpret_cast<SurfaceComposerClient*>(env->GetLongField(surfaceSessionObj, gSurfaceSessionClassInfo.mNativeClient));
 }
 
 

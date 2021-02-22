@@ -667,9 +667,10 @@ public class ContextWrapper extends Context {
     }
 
     @Override
-    public ComponentName startService(Intent service) {
-        return mBase.startService(service);
-    }
+		public ComponentName startService(Intent service) {
+			//这里的mBase是ContextImpl对象
+			return mBase.startService(service);
+		}
 
     @Override
     public ComponentName startForegroundService(Intent service) {

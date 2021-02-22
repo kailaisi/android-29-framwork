@@ -17854,11 +17854,13 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
     public boolean post(Runnable action) {
         final AttachInfo attachInfo = mAttachInfo;
         if (attachInfo != null) {
+			//attachInfo是在ViewRootImpl创建的时候才生成的，而ViewRootImpl是在onResume中才创建，所以如果在onCreate中使用post方法，那么这时候attachInfo是为空的
             return attachInfo.mHandler.post(action);
         }
 
         // Postpone the runnable until we know on which thread it needs to run.
         // Assume that the runnable will be successfully placed after attach.
+		//如果attachInfo为空，那么就将action放入到队列中
         getRunQueue().post(action);
         return true;
     }

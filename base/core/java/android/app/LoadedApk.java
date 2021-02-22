@@ -1195,7 +1195,7 @@ public final class LoadedApk {
     @UnsupportedAppUsage
     public Application makeApplication(boolean forceDefaultAppClass,
             Instrumentation instrumentation) {
-        //已经创建，直接返回
+        //已经创建，直接返回。避免多次创建
         if (mApplication != null) {
             return mApplication;
         }
@@ -1203,7 +1203,7 @@ public final class LoadedApk {
         Trace.traceBegin(Trace.TRACE_TAG_ACTIVITY_MANAGER, "makeApplication");
 
         Application app = null;
-
+		//拿到对应的类名称
         String appClass = mApplicationInfo.className;
         if (forceDefaultAppClass || (appClass == null)) {
             appClass = "android.app.Application";
@@ -1359,6 +1359,7 @@ public final class LoadedApk {
         }
     }
 
+	//该方法跟service的跨进程有异曲同工之妙，都是将客户创建的对象进行一层封装，封装为IBinder对象，之后就可以和AMS进行通讯了
     public IIntentReceiver getReceiverDispatcher(BroadcastReceiver r,
             Context context, Handler handler,
             Instrumentation instrumentation, boolean registered) {
@@ -1466,6 +1467,7 @@ public final class LoadedApk {
                             + " seq=" + seq + " to " + (rd != null ? rd.mReceiver : null));
                 }
                 if (rd != null) {
+					//调用方法
                     rd.performReceive(intent, resultCode, data, extras,
                             ordered, sticky, sendingUser);
                 } else {
@@ -1554,6 +1556,7 @@ public final class LoadedApk {
                         intent.prepareToEnterProcess();
                         setExtrasClassLoader(cl);
                         receiver.setPendingResult(this);
+						//执行onReceive回调函数
                         receiver.onReceive(mContext, intent);
                     } catch (Exception e) {
                         if (mRegistered && ordered) {
@@ -1571,6 +1574,8 @@ public final class LoadedApk {
                     }
 
                     if (receiver.getPendingResult() != null) {
+						//收尾工作。如果是串行化工作，那么上个通知处理完了下个通知是要继续进行处理的
+						//这个finish方法就是用来进行通知功能的
                         finish();
                     }
                     Trace.traceEnd(Trace.TRACE_TAG_ACTIVITY_MANAGER);
@@ -1645,6 +1650,7 @@ public final class LoadedApk {
                             + " seq=" + seq + " to " + mReceiver);
                 }
             }
+			//mActivityThread.post将数组发送到主线程
             if (intent == null || !mActivityThread.post(args.getRunnable())) {
                 if (mRegistered && ordered) {
                     IActivityManager mgr = ActivityManager.getService();
@@ -1671,19 +1677,24 @@ public final class LoadedApk {
     private IServiceConnection getServiceDispatcherCommon(ServiceConnection c,
             Context context, Handler handler, Executor executor, int flags) {
         synchronized (mServices) {
+			
             LoadedApk.ServiceDispatcher sd = null;
+			//获取缓存的Service的map信息。这里的map是和context作为主键的。所以不同的activity，其保存的serviceConnext是不一样的
             ArrayMap<ServiceConnection, LoadedApk.ServiceDispatcher> map = mServices.get(context);
             if (map != null) {
                 if (DEBUG) Slog.d(TAG, "Returning existing dispatcher " + sd + " for conn " + c);
+				//查找对应的ServiceConnection是否有对应的缓存的ServiceDispatcher对象
                 sd = map.get(c);
             }
             if (sd == null) {
+				//创建ServiceDispatcher对象
                 if (executor != null) {
                     sd = new ServiceDispatcher(c, context, executor, flags);
                 } else {
                     sd = new ServiceDispatcher(c, context, handler, flags);
                 }
                 if (DEBUG) Slog.d(TAG, "Creating new dispatcher " + sd + " for conn " + c);
+				//放入到缓存
                 if (map == null) {
                     map = new ArrayMap<>();
                     mServices.put(context, map);
@@ -1692,6 +1703,7 @@ public final class LoadedApk {
             } else {
                 sd.validate(context, handler, executor);
             }
+			//返回sd中的IServiceConnection对象
             return sd.getIServiceConnection();
         }
     }
@@ -1781,7 +1793,10 @@ public final class LoadedApk {
         }
 
         private static class InnerConnection extends IServiceConnection.Stub {
+        	//实现了.stub接口，能够实现跨进程传递。会将这个对象传递给AMS，然后AMS就可以调用该对象的
+        	//connected方法，从而实现对于sd方法的调用
             @UnsupportedAppUsage
+			//弱引用。
             final WeakReference<LoadedApk.ServiceDispatcher> mDispatcher;
 
             InnerConnection(LoadedApk.ServiceDispatcher sd) {
@@ -1792,6 +1807,7 @@ public final class LoadedApk {
                     throws RemoteException {
                 LoadedApk.ServiceDispatcher sd = mDispatcher.get();
                 if (sd != null) {
+					//调用connect方法，
                     sd.connected(name, service, dead);
                 }
             }
@@ -1803,9 +1819,11 @@ public final class LoadedApk {
         @UnsupportedAppUsage
         ServiceDispatcher(ServiceConnection conn,
                 Context context, Handler activityThread, int flags) {
+                //直接创建InnerConnection
             mIServiceConnection = new InnerConnection(this);
             mConnection = conn;
             mContext = context;
+			//主线程的Handler
             mActivityThread = activityThread;
             mActivityExecutor = null;
             mLocation = new ServiceConnectionLeaked(null);
@@ -1883,11 +1901,13 @@ public final class LoadedApk {
         }
 
         public void connected(ComponentName name, IBinder service, boolean dead) {
+        	//这里向主线程post了一个runnable函数，其本质也是调用doConnected方法
             if (mActivityExecutor != null) {
                 mActivityExecutor.execute(new RunConnection(name, service, 0, dead));
             } else if (mActivityThread != null) {
                 mActivityThread.post(new RunConnection(name, service, 0, dead));
             } else {
+				//进行连接操作
                 doConnected(name, service, dead);
             }
         }
@@ -1902,6 +1922,7 @@ public final class LoadedApk {
             }
         }
 
+		//最后调用的方法，
         public void doConnected(ComponentName name, IBinder service, boolean dead) {
             ServiceDispatcher.ConnectionInfo old;
             ServiceDispatcher.ConnectionInfo info;
@@ -1912,6 +1933,7 @@ public final class LoadedApk {
                     // any connection received.
                     return;
                 }
+				//缓存对应的Binder对象
                 old = mActiveConnections.get(name);
                 if (old != null && old.binder == service) {
                     // Huh, already have this one.  Oh well!
@@ -1922,6 +1944,7 @@ public final class LoadedApk {
                     // A new service is being connected... set it all up.
                     info = new ConnectionInfo();
                     info.binder = service;
+					//监控服务是否撕掉
                     info.deathMonitor = new DeathMonitor(name, service);
                     try {
                         service.linkToDeath(info.deathMonitor, 0);
@@ -1945,6 +1968,7 @@ public final class LoadedApk {
 
             // If there was an old service, it is now disconnected.
             if (old != null) {
+				//之前绑定过，这里需要将其解绑
                 mConnection.onServiceDisconnected(name);
             }
             if (dead) {
@@ -1952,6 +1976,7 @@ public final class LoadedApk {
             }
             // If there is a new viable service, it is now connected.
             if (service != null) {
+				//绑定成功了，调用onServiceConnected方法
                 mConnection.onServiceConnected(name, service);
             } else {
                 // The binding machinery worked, but the remote returned null from onBind().

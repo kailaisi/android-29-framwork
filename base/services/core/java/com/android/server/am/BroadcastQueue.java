@@ -142,6 +142,8 @@ public final class BroadcastQueue {
     /**
      * Set when we current have a BROADCAST_INTENT_MSG in flight.
      */
+    //当前正在进行广播的分发标志位：true正在分发；false没有分发。
+    //当在进行广播的分发的时候，如果再有广播进来的时候，是不会分发的，会等到上次处理完成再处理
     boolean mBroadcastsScheduled = false;
 
     /**
@@ -183,6 +185,7 @@ public final class BroadcastQueue {
                     if (DEBUG_BROADCAST) Slog.v(
                             TAG_BROADCAST, "Received BROADCAST_INTENT_MSG ["
                             + mQueueName + "]");
+					//处理下一个广播
                     processNextBroadcast(true);
                 } break;
                 case BROADCAST_TIMEOUT_MSG: {
@@ -322,6 +325,7 @@ public final class BroadcastQueue {
                     + ": " + r);
             mService.notifyPackageUse(r.intent.getComponent().getPackageName(),
                                       PackageManager.NOTIFY_PACKAGE_USE_BROADCAST_RECEIVER);
+			//到应用中去调用scheduleReceiver方法
             app.thread.scheduleReceiver(new Intent(r.intent), r.curReceiver,
                     mService.compatibilityInfoForPackage(r.curReceiver.applicationInfo),
                     r.resultCode, r.resultData, r.resultExtras, r.ordered, r.userId,
@@ -350,6 +354,7 @@ public final class BroadcastQueue {
                 return false;
             }
             try {
+				//将pending置为null，然后启动
                 mPendingBroadcast = null;
                 processCurBroadcastLocked(br, app, false);
                 didSomething = true;
@@ -407,14 +412,16 @@ public final class BroadcastQueue {
         scheduleBroadcastsLocked();
     }
 
+	//调用广播的分发
     public void scheduleBroadcastsLocked() {
         if (DEBUG_BROADCAST) Slog.v(TAG_BROADCAST, "Schedule broadcasts ["
                 + mQueueName + "]: current="
                 + mBroadcastsScheduled);
 
-        if (mBroadcastsScheduled) {
+        if (mBroadcastsScheduled){ //如果当前正在进行广播的分发，则返回等待
             return;
         }
+		//发送到主线程执行分发。。。。
         mHandler.sendMessage(mHandler.obtainMessage(BROADCAST_INTENT_MSG, this));
         mBroadcastsScheduled = true;
     }
@@ -450,6 +457,7 @@ public final class BroadcastQueue {
         }, msgToken, (r.receiverTime + mConstants.ALLOW_BG_ACTIVITY_START_TIMEOUT));
     }
 
+	//用于结束receiver的相关状态。这里的返回值决定是否要进行下一个receiver的处理
     public boolean finishReceiverLocked(BroadcastRecord r, int resultCode,
             String resultData, Bundle resultExtras, boolean resultAbort, boolean waitForServices) {
         final int state = r.state;
@@ -585,6 +593,9 @@ public final class BroadcastQueue {
                 // If we have an app thread, do the call through that so it is
                 // correctly ordered with other one-way calls.
                 try {
+					//重点方法 app.thread是applicationThread对象，处于ActivityThread中。
+					//其实scheduleRegisteredReceiver方法也是调用了下面的receiver.performReceive方法
+					//但是通过这种方式，就将对于广播的处理进行了串行化处理。
                     app.thread.scheduleRegisteredReceiver(receiver, intent, resultCode,
                             data, extras, ordered, sticky, sendingUser, app.getReportedProcState());
                 // TODO: Uncomment this when (b/28322359) is fixed and we aren't getting
@@ -811,6 +822,7 @@ public final class BroadcastQueue {
             } else {
                 r.receiverTime = SystemClock.uptimeMillis();
                 maybeAddAllowBackgroundActivityStartsToken(filter.receiverList.app, r);
+				//重点方法        调用onReceiver方法
                 performReceiveLocked(filter.receiverList.app, filter.receiverList.receiver,
                         new Intent(r.intent), r.resultCode, r.resultData,
                         r.resultExtras, r.ordered, r.initialSticky, r.userId);
@@ -821,6 +833,7 @@ public final class BroadcastQueue {
                 }
             }
             if (ordered) {
+				//如果是有序的，设置状态
                 r.state = BroadcastRecord.CALL_DONE_RECEIVE;
             }
         } catch (RemoteException e) {
@@ -950,6 +963,8 @@ public final class BroadcastQueue {
         }
     }
 
+
+	//进行广播的分发
     final void processNextBroadcastLocked(boolean fromMsg, boolean skipOomAdj) {
         BroadcastRecord r;
 
@@ -965,6 +980,10 @@ public final class BroadcastQueue {
         }
 
         // First, deliver any non-serialized broadcasts right away.
+        //1.先分发无序的广播（并行分发）
+        	// 11 deliverToRegisteredReceiverLocked
+			// 12 performReceiveLocked
+			
         while (mParallelBroadcasts.size() > 0) {
             r = mParallelBroadcasts.remove(0);
             r.dispatchTime = SystemClock.uptimeMillis();
@@ -978,17 +997,20 @@ public final class BroadcastQueue {
                     createBroadcastTraceTitle(r, BroadcastRecord.DELIVERY_DELIVERED),
                     System.identityHashCode(r));
             }
-
+			//获取到广播所对应的监听者
             final int N = r.receivers.size();
             if (DEBUG_BROADCAST_LIGHT) Slog.v(TAG_BROADCAST, "Processing parallel broadcast ["
                     + mQueueName + "] " + r);
             for (int i=0; i<N; i++) {
+				//逐个分发
                 Object target = r.receivers.get(i);
                 if (DEBUG_BROADCAST)  Slog.v(TAG_BROADCAST,
                         "Delivering non-ordered on [" + mQueueName + "] to registered "
                         + target + ": " + r);
+				//重点方法         分发函数
                 deliverToRegisteredReceiverLocked(r, (BroadcastFilter)target, false, i);
             }
+			//
             addBroadcastToHistoryLocked(r);
             if (DEBUG_BROADCAST_LIGHT) Slog.v(TAG_BROADCAST, "Done with parallel broadcast ["
                     + mQueueName + "] " + r);
@@ -999,7 +1021,10 @@ public final class BroadcastQueue {
         // If we are waiting for a process to come up to handle the next
         // broadcast, then do nothing at this point.  Just in case, we
         // check that the process we're waiting for still exists.
+        //剩下的就是有序广播的处理了。也就是一个处理完之后，下一个继续处理的情况
+        //如果有pending的广播，就直接返回，这个广播在等待应用进程的启动
         if (mPendingBroadcast != null) {
+			
             if (DEBUG_BROADCAST_LIGHT) Slog.v(TAG_BROADCAST,
                     "processNextBroadcast [" + mQueueName + "]: waiting for "
                     + mPendingBroadcast.curApp);
@@ -1033,8 +1058,9 @@ public final class BroadcastQueue {
 
         do {
             final long now = SystemClock.uptimeMillis();
+			//下一个要处理的receiver
             r = mDispatcher.getNextBroadcastLocked(now);
-
+			//如果为空，表明所有的都分发完成了。
             if (r == null) {
                 // No more broadcasts are deliverable right now, so all done!
                 mDispatcher.scheduleDeferralCheckLocked(false);
@@ -1065,8 +1091,8 @@ public final class BroadcastQueue {
             // exempt broadcasts are ignored.
             int numReceivers = (r.receivers != null) ? r.receivers.size() : 0;
             if (mService.mProcessesReady && !r.timeoutExempt && r.dispatchTime > 0) {
-                if ((numReceivers > 0) &&
-                        (now > r.dispatchTime + (2 * mConstants.TIMEOUT * numReceivers))) {
+				//如果广播已经超时了。这里会比较广播的下发时间和当前时间，如果当前时间>分发时间+2*分发数*每个分发超时间隔
+                if ((numReceivers > 0) &&(now > r.dispatchTime + (2 * mConstants.TIMEOUT * numReceivers))) {
                     Slog.w(TAG, "Hung broadcast ["
                             + mQueueName + "] discarded after timeout failure:"
                             + " now=" + now
@@ -1076,13 +1102,14 @@ public final class BroadcastQueue {
                             + " numReceivers=" + numReceivers
                             + " nextReceiver=" + r.nextReceiver
                             + " state=" + r.state);
+					//设置对应的状态为IDLE，forceReceive为true。表示这个receiver是要强制回收的
                     broadcastTimeoutLocked(false); // forcibly finish this broadcast
                     forceReceive = true;
                     r.state = BroadcastRecord.IDLE;
                 }
             }
 
-            if (r.state != BroadcastRecord.IDLE) {
+            if (r.state != BroadcastRecord.IDLE) {//状态不是IDEL，证明正在分发，那么就返回
                 if (DEBUG_BROADCAST) Slog.d(TAG_BROADCAST,
                         "processNextBroadcast("
                         + mQueueName + ") called when not idle (state="
@@ -1091,8 +1118,9 @@ public final class BroadcastQueue {
             }
 
             // Is the current broadcast is done for any reason?
-            if (r.receivers == null || r.nextReceiver >= numReceivers
-                    || r.resultAbort || forceReceive) {
+            
+            if (r.receivers == null || r.nextReceiver >= numReceivers || r.resultAbort || forceReceive) {
+				//走到这里面证明是IDLE状态，而且forceReceive=true，receiver已经超时了
                 // Send the final result if requested
                 if (r.resultTo != null) {
                     boolean sendResult = true;
@@ -1144,6 +1172,7 @@ public final class BroadcastQueue {
                 }
 
                 if (DEBUG_BROADCAST) Slog.v(TAG_BROADCAST, "Cancelling BROADCAST_TIMEOUT_MSG");
+				//广播超时的一些处理工作。比如说显示ANR？
                 cancelBroadcastTimeoutLocked();
 
                 if (DEBUG_BROADCAST_LIGHT) Slog.v(TAG_BROADCAST,
@@ -1157,6 +1186,7 @@ public final class BroadcastQueue {
                     mService.addBroadcastStatLocked(r.intent.getAction(), r.callerPackage,
                             r.manifestCount, r.manifestSkipCount, r.finishTime-r.dispatchTime);
                 }
+				//将r移除掉，通过continue执行下一次循环过程
                 mDispatcher.retireBroadcastLocked(r);
                 r = null;
                 looped = true;
@@ -1240,10 +1270,13 @@ public final class BroadcastQueue {
         } while (r == null);
 
         // Get the next receiver...
+        //走到这里说明当前的状态是正常的：没有receiver在分发，也没有超时，可以进行下一个receiver的处理工作
+        //拿到下一个要处理的receiver所对应的编号
         int recIdx = r.nextReceiver++;
 
         // Keep track of when this receiver started, and make sure there
         // is a timeout message pending to kill it if need be.
+        //设置广播的时间戳
         r.receiverTime = SystemClock.uptimeMillis();
         if (recIdx == 0) {
             r.dispatchTime = r.receiverTime;
@@ -1275,8 +1308,11 @@ public final class BroadcastQueue {
         }
 
         final BroadcastOptions brOptions = r.options;
+		//获取要分发的下一个receiver
         final Object nextReceiver = r.receivers.get(recIdx);
 
+
+		//如果是动态receiver，则直接分发
         if (nextReceiver instanceof BroadcastFilter) {
             // Simple case: this is a registered receiver who gets
             // a direct call.
@@ -1308,14 +1344,12 @@ public final class BroadcastQueue {
             return;
         }
 
+		//如果是静态广播，则继续往下面走
         // Hard case: need to instantiate the receiver, possibly
         // starting its application process to host it.
 
-        ResolveInfo info =
-            (ResolveInfo)nextReceiver;
-        ComponentName component = new ComponentName(
-                info.activityInfo.applicationInfo.packageName,
-                info.activityInfo.name);
+        ResolveInfo info = (ResolveInfo)nextReceiver;
+        ComponentName component = new ComponentName(info.activityInfo.applicationInfo.packageName, info.activityInfo.name);
 
         boolean skip = false;
         if (brOptions != null &&
@@ -1600,13 +1634,14 @@ public final class BroadcastQueue {
             Slog.w(TAG, "Failed trying to unstop package "
                     + r.curComponent.getPackageName() + ": " + e);
         }
-
+		//判断广播的进程已经启动了
         // Is this receiver's application already running?
         if (app != null && app.thread != null && !app.killed) {
             try {
                 app.addPackage(info.activityInfo.packageName,
                         info.activityInfo.applicationInfo.longVersionCode, mService.mProcessStats);
                 maybeAddAllowBackgroundActivityStartsToken(app, r);
+				//直接处理广播，分发给指定进程
                 processCurBroadcastLocked(r, app, skipOomAdj);
                 return;
             } catch (RemoteException e) {
@@ -1634,10 +1669,11 @@ public final class BroadcastQueue {
         }
 
         // Not running -- get it started, to be executed when the app comes up.
+        //广播的进程没有启动
         if (DEBUG_BROADCAST)  Slog.v(TAG_BROADCAST,
                 "Need to start app ["
                 + mQueueName + "] " + targetProcess + " for broadcast " + r);
-        if ((r.curApp=mService.startProcessLocked(targetProcess,
+        if ((r.curApp=mService.startProcessLocked(targetProcess,//启动进程，如果失败进入到方法体内
                 info.activityInfo.applicationInfo, true,
                 r.intent.getFlags() | Intent.FLAG_FROM_BACKGROUND,
                 new HostingRecord("broadcast", r.curComponent),
@@ -1656,8 +1692,9 @@ public final class BroadcastQueue {
             r.state = BroadcastRecord.IDLE;
             return;
         }
-
+		//进程启动成功			
         maybeAddAllowBackgroundActivityStartsToken(r.curApp, r);
+		//设置pending广播为r
         mPendingBroadcast = r;
         mPendingBroadcastRecvIndex = recIdx;
     }
@@ -1699,6 +1736,7 @@ public final class BroadcastQueue {
         }
 
         long now = SystemClock.uptimeMillis();
+		//获取到当前正在处理的receiver
         BroadcastRecord r = mDispatcher.getActiveBroadcastLocked();
         if (fromMsg) {
             if (!mService.mProcessesReady) {
@@ -1785,18 +1823,20 @@ public final class BroadcastQueue {
             anrMessage = "Broadcast of " + r.intent.toString();
         }
 
-        if (mPendingBroadcast == r) {
+        if (mPendingBroadcast == r) {//表示超时是因为pending启动导致的。之所以超时可能是因为崩溃了，没有报告给AMS
             mPendingBroadcast = null;
         }
 
         // Move on to the next receiver.
-        finishReceiverLocked(r, r.resultCode, r.resultData,
-                r.resultExtras, r.resultAbort, false);
+        //将当前广播的所有状态重置
+        finishReceiverLocked(r, r.resultCode, r.resultData, r.resultExtras, r.resultAbort, false);
+		//重新调度处理下一个请求
         scheduleBroadcastsLocked();
 
         if (!debugging && anrMessage != null) {
             // Post the ANR to the handler since we do not want to process ANRs while
             // potentially holding our lock.
+            //显示ANR的dialog
             mHandler.post(new AppNotResponding(app, anrMessage));
         }
     }

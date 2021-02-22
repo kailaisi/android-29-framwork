@@ -958,6 +958,7 @@ public final class ActivityThread extends ClientTransactionHandler {
                     sync, false, mAppThread.asBinder(), sendingUser);
             r.info = info;
             r.compatInfo = compatInfo;
+			//会调用handleReceiver方法
             sendMessage(H.RECEIVER, r);
         }
 
@@ -986,6 +987,7 @@ public final class ActivityThread extends ClientTransactionHandler {
         public final void scheduleCreateService(IBinder token,
                                                 ServiceInfo info, CompatibilityInfo compatInfo, int processState) {
             updateProcessState(processState, false);
+			//将相关参数封装为CreateServiceData，然后通过Handler发送
             CreateServiceData s = new CreateServiceData();
             s.token = token;
             s.info = info;
@@ -1020,16 +1022,15 @@ public final class ActivityThread extends ClientTransactionHandler {
 
         public final void scheduleServiceArgs(IBinder token, ParceledListSlice args) {
             List<ServiceStartArgs> list = args.getList();
-
             for (int i = 0; i < list.size(); i++) {
                 ServiceStartArgs ssa = list.get(i);
+				//封装为ServiceArgsData对象，然后发送
                 ServiceArgsData s = new ServiceArgsData();
                 s.token = token;
                 s.taskRemoved = ssa.taskRemoved;
                 s.startId = ssa.startId;
                 s.flags = ssa.flags;
                 s.args = ssa.args;
-
                 sendMessage(H.SERVICE_ARGS, s);
             }
         }
@@ -1097,6 +1098,7 @@ public final class ActivityThread extends ClientTransactionHandler {
             data.buildSerial = buildSerial;
             data.autofillOptions = autofillOptions;
             data.contentCaptureOptions = contentCaptureOptions;
+			//发送Handler消息
             sendMessage(H.BIND_APPLICATION, data);
         }
 
@@ -1163,6 +1165,7 @@ public final class ActivityThread extends ClientTransactionHandler {
                                                int resultCode, String dataStr, Bundle extras, boolean ordered,
                                                boolean sticky, int sendingUser, int processState) throws RemoteException {
             updateProcessState(processState, false);
+			//receiver是在LoadedApk中的类
             receiver.performReceive(intent, resultCode, dataStr, extras, ordered,
                     sticky, sendingUser);
         }
@@ -1963,7 +1966,7 @@ public final class ActivityThread extends ClientTransactionHandler {
         public void handleMessage(Message msg) {
             if (DEBUG_MESSAGES) Slog.v(TAG, ">>> handling: " + codeToString(msg.what));
             switch (msg.what) {
-                case BIND_APPLICATION:
+                case BIND_APPLICATION://绑定Application的消息
                     Trace.traceBegin(Trace.TRACE_TAG_ACTIVITY_MANAGER, "bindApplication");
                     AppBindData data = (AppBindData) msg.obj;
                     handleBindApplication(data);
@@ -3925,8 +3928,7 @@ public final class ActivityThread extends ClientTransactionHandler {
 
         String component = data.intent.getComponent().getClassName();
 
-        LoadedApk packageInfo = getPackageInfoNoCheck(
-                data.info.applicationInfo, data.compatInfo);
+        LoadedApk packageInfo = getPackageInfoNoCheck(data.info.applicationInfo, data.compatInfo);
 
         IActivityManager mgr = ActivityManager.getService();
 
@@ -3935,6 +3937,7 @@ public final class ActivityThread extends ClientTransactionHandler {
         ContextImpl context;
         try {
             app = packageInfo.makeApplication(false, mInstrumentation);
+			//这里使用的是application的context
             context = (ContextImpl) app.getBaseContext();
             if (data.info.splitName != null) {
                 context = (ContextImpl) context.createContextForSplit(data.info.splitName);
@@ -3943,8 +3946,8 @@ public final class ActivityThread extends ClientTransactionHandler {
             data.intent.setExtrasClassLoader(cl);
             data.intent.prepareToEnterProcess();
             data.setExtrasClassLoader(cl);
-            receiver = packageInfo.getAppFactory()
-                    .instantiateReceiver(cl, data.info.name, data.intent);
+			//调用构造方法
+            receiver = packageInfo.getAppFactory().instantiateReceiver(cl, data.info.name, data.intent);
         } catch (Exception e) {
             if (DEBUG_BROADCAST) Slog.i(TAG,
                     "Finishing failed broadcast to " + data.intent.getComponent());
@@ -3965,6 +3968,7 @@ public final class ActivityThread extends ClientTransactionHandler {
 
             sCurrentBroadcastIntent.set(data.intent);
             receiver.setPendingResult(data);
+			//调用onReceiver方法
             receiver.onReceive(context.getReceiverRestrictedContext(),
                     data.intent);
         } catch (Exception e) {
@@ -3981,6 +3985,7 @@ public final class ActivityThread extends ClientTransactionHandler {
         }
 
         if (receiver.getPendingResult() != null) {
+			//可以进行下一个广播的分发了
             data.finish();
         }
     }
@@ -4111,6 +4116,7 @@ public final class ActivityThread extends ClientTransactionHandler {
         Service service = null;
         try {
             java.lang.ClassLoader cl = packageInfo.getClassLoader();
+			//通过反射创建一个Service对象
             service = packageInfo.getAppFactory()
                     .instantiateService(cl, data.info.name, data.intent);
         } catch (Exception e) {
@@ -4123,13 +4129,15 @@ public final class ActivityThread extends ClientTransactionHandler {
 
         try {
             if (localLOGV) Slog.v(TAG, "Creating service " + data.info.name);
-
+			//创建一个ContextImpl对象
             ContextImpl context = ContextImpl.createAppContext(this, packageInfo);
             context.setOuterContext(service);
-
+			//这里如果Application没有创建的话，会进行创建，如果已经存在了，则不会再重复创建了。
             Application app = packageInfo.makeApplication(false, mInstrumentation);
+			//绑定context
             service.attach(context, this, data.info.name, data.token, app,
                     ActivityManager.getService());
+			//调用onCreate()方法
             service.onCreate();
             mServices.put(data.token, service);
             try {
@@ -4148,6 +4156,7 @@ public final class ActivityThread extends ClientTransactionHandler {
     }
 
     private void handleBindService(BindServiceData data) {
+    	//根据token获取应用中的service对象
         Service s = mServices.get(data.token);
         if (DEBUG_SERVICE)
             Slog.v(TAG, "handleBindService s=" + s + " rebind=" + data.rebind);
@@ -4156,8 +4165,9 @@ public final class ActivityThread extends ClientTransactionHandler {
                 data.intent.setExtrasClassLoader(s.getClassLoader());
                 data.intent.prepareToEnterProcess();
                 try {
-                    if (!data.rebind) {
+                    if (!data.rebind) {//控制标识
                         IBinder binder = s.onBind(data.intent);
+						//将Service对象的Binder句柄发布到AMS中
                         ActivityManager.getService().publishService(
                                 data.token, data.intent, binder);
                     } else {
@@ -4255,6 +4265,7 @@ public final class ActivityThread extends ClientTransactionHandler {
     }
 
     private void handleServiceArgs(ServiceArgsData data) {
+    	//获取到对应的Service对象
         Service s = mServices.get(data.token);
         if (s != null) {
             try {
@@ -4264,6 +4275,7 @@ public final class ActivityThread extends ClientTransactionHandler {
                 }
                 int res;
                 if (!data.taskRemoved) {
+					//调用onStartCommand()方法
                     res = s.onStartCommand(data.args, data.flags, data.startId);
                 } else {
                     s.onTaskRemoved(data.args);
@@ -6324,6 +6336,7 @@ public final class ActivityThread extends ClientTransactionHandler {
     @UnsupportedAppUsage
     private void handleBindApplication(AppBindData data) {
         // Register the UI Thread as a sensitive thread to the runtime.
+        //将UI线程注册为敏感线程。
         VMRuntime.registerSensitiveThread();
         // In the case the stack depth property exists, pass it down to the runtime.
         String property = SystemProperties.get("debug.allocTracker.stackDepth");
@@ -6335,6 +6348,7 @@ public final class ActivityThread extends ClientTransactionHandler {
         }
 
         // Note when this process has started.
+        //进程启动时间
         Process.setStartTimes(SystemClock.elapsedRealtime(), SystemClock.uptimeMillis());
 
         mBoundApplication = data;
@@ -6542,7 +6556,7 @@ public final class ActivityThread extends ClientTransactionHandler {
         } else {
             ii = null;
         }
-		//创建application对应的Context
+		//重点方法        创建application对应的Context
         final ContextImpl appContext = ContextImpl.createAppContext(this, data.info);
         updateLocaleListFromAppContext(appContext,
                 mResourcesManager.getConfiguration().getLocales());
@@ -6567,6 +6581,7 @@ public final class ActivityThread extends ClientTransactionHandler {
 
         // Continue loading instrumentation.
         if (ii != null) {
+			//创建对应的ApplicationInfo对象
             ApplicationInfo instrApp;
             try {
                 instrApp = getPackageManager().getApplicationInfo(ii.packageName, 0,
@@ -6631,6 +6646,7 @@ public final class ActivityThread extends ClientTransactionHandler {
         try {
             // If the app is being launched for full backup or restore, bring it up in
             // a restricted environment with the base application class.
+            //重点方法        通过LoadApk的makeApplication方法创建Application实例
             app = data.info.makeApplication(data.restrictedBackupMode, null);
 
             // Propagate autofill compat state
@@ -6652,6 +6668,7 @@ public final class ActivityThread extends ClientTransactionHandler {
             // Do this after providers, since instrumentation tests generally start their
             // test thread at this point, and we don't want that racing.
             try {
+				//钩子函数，可以自定义mInstrumentation来监听onCreate方法的调用
                 mInstrumentation.onCreate(data.instrumentationArgs);
             } catch (Exception e) {
                 throw new RuntimeException(
@@ -6659,6 +6676,7 @@ public final class ActivityThread extends ClientTransactionHandler {
                                 + data.instrumentationName + ": " + e.toString(), e);
             }
             try {
+				//重点方法      通过mInstrumentation调用Application的onCreate生命周期函数
                 mInstrumentation.callApplicationOnCreate(app);
             } catch (Exception e) {
                 if (!mInstrumentation.onException(app, e)) {
@@ -6677,6 +6695,7 @@ public final class ActivityThread extends ClientTransactionHandler {
         }
 
         // Preload fonts resources
+        //提前加载fonts的资源信息
         FontsContract.setApplicationContextForResources(appContext);
         if (!Process.isIsolated()) {
             try {
@@ -6745,8 +6764,8 @@ public final class ActivityThread extends ClientTransactionHandler {
     }
 
     @UnsupportedAppUsage
-    public final IContentProvider acquireProvider(
-            Context c, String auth, int userId, boolean stable) {
+    public final IContentProvider acquireProvider(Context c, String auth, int userId, boolean stable) {
+        //方法1     查询本地存在的Provider对象
         final IContentProvider provider = acquireExistingProvider(c, auth, userId, stable);
         if (provider != null) {
             return provider;
@@ -6761,8 +6780,8 @@ public final class ActivityThread extends ClientTransactionHandler {
         ContentProviderHolder holder = null;
         try {
             synchronized (getGetProviderLock(auth, userId)) {
-                holder = ActivityManager.getService().getContentProvider(
-                        getApplicationThread(), c.getOpPackageName(), auth, userId, stable);
+				//方法2    通过AMS创建一个ContentProvider对象
+                holder = ActivityManager.getService().getContentProvider(getApplicationThread(), c.getOpPackageName(), auth, userId, stable);
             }
         } catch (RemoteException ex) {
             throw ex.rethrowFromSystemServer();
@@ -6774,8 +6793,8 @@ public final class ActivityThread extends ClientTransactionHandler {
 
         // Install provider will increment the reference count for us, and break
         // any ties in the race.
-        holder = installProvider(c, holder, holder.info,
-                true /*noisy*/, holder.noReleaseNeeded, stable);
+        //方法3    通过holder安装一个本地Provider对象
+        holder = installProvider(c, holder, holder.info,true /*noisy*/, holder.noReleaseNeeded, stable);
         return holder.provider;
     }
 
@@ -6860,10 +6879,11 @@ public final class ActivityThread extends ClientTransactionHandler {
     }
 
     @UnsupportedAppUsage
-    public final IContentProvider acquireExistingProvider(
-            Context c, String auth, int userId, boolean stable) {
+    public final IContentProvider acquireExistingProvider(Context c, String auth, int userId, boolean stable) {
         synchronized (mProviderMap) {
+			//这里的ProviderKey重写了equals和hashCode方法，如果userid和auth一样，则是同样的对象。这样的话，当从 map中获取的时候，如果二者相同，就能获取到对应的value值
             final ProviderKey key = new ProviderKey(auth, userId);
+			//map里面查找
             final ProviderClientRecord pr = mProviderMap.get(key);
             if (pr == null) {
                 return null;
@@ -6871,7 +6891,7 @@ public final class ActivityThread extends ClientTransactionHandler {
 
             IContentProvider provider = pr.mProvider;
             IBinder jBinder = provider.asBinder();
-            if (!jBinder.isBinderAlive()) {
+            if (!jBinder.isBinderAlive()) {//检查provider对应的Binder已经挂掉了，那么就要做一些清理工作
                 // The hosting process of the provider has died; we can't
                 // use this one.
                 Log.i(TAG, "Acquiring provider " + auth + " for user " + userId
@@ -7128,31 +7148,27 @@ public final class ActivityThread extends ClientTransactionHandler {
                                                   boolean noisy, boolean noReleaseNeeded, boolean stable) {
         ContentProvider localProvider = null;
         IContentProvider provider;
+		//当前客户端没有得到过provider，这时候需要获取provider的远程代理
         if (holder == null || holder.provider == null) {
             if (DEBUG_PROVIDER || noisy) {
-                Slog.d(TAG, "Loading provider " + info.authority + ": "
-                        + info.name);
+                Slog.d(TAG, "Loading provider " + info.authority + ": "+ info.name);
             }
             Context c = null;
             ApplicationInfo ai = info.applicationInfo;
             if (context.getPackageName().equals(ai.packageName)) {
                 c = context;
-            } else if (mInitialApplication != null &&
-                    mInitialApplication.getPackageName().equals(ai.packageName)) {
+             } else if (mInitialApplication != null && mInitialApplication.getPackageName().equals(ai.packageName)) {
                 c = mInitialApplication;
             } else {
                 try {
-                    c = context.createPackageContext(ai.packageName,
-                            Context.CONTEXT_INCLUDE_CODE);
+					//为要创建的provider对象创建对应的content对象
+                    c = context.createPackageContext(ai.packageName,Context.CONTEXT_INCLUDE_CODE);
                 } catch (PackageManager.NameNotFoundException e) {
                     // Ignore
                 }
             }
             if (c == null) {
-                Slog.w(TAG, "Unable to get context for package " +
-                        ai.packageName +
-                        " while loading content provider " +
-                        info.name);
+                Slog.w(TAG, "Unable to get context for package " +ai.packageName +" while loading content provider " +info.name);
                 return null;
             }
 
@@ -7171,18 +7187,18 @@ public final class ActivityThread extends ClientTransactionHandler {
                     // System startup case.
                     packageInfo = getSystemContext().mPackageInfo;
                 }
-                localProvider = packageInfo.getAppFactory()
-                        .instantiateProvider(cl, info.name);
+				//载入provider的类
+                localProvider = packageInfo.getAppFactory().instantiateProvider(cl, info.name);
+				//获得provider对应的IContentProvider对象
                 provider = localProvider.getIContentProvider();
                 if (provider == null) {
-                    Slog.e(TAG, "Failed to instantiate class " +
-                            info.name + " from sourceDir " +
-                            info.applicationInfo.sourceDir);
+                    Slog.e(TAG, "Failed to instantiate class " + info.name + " from sourceDir " + info.applicationInfo.sourceDir);
                     return null;
                 }
                 if (DEBUG_PROVIDER) Slog.v(
                         TAG, "Instantiating local provider " + info.name);
                 // XXX Need to create the correct context for this provider.
+                //绑定context，并调用provider的oncreate生命周期函数。
                 localProvider.attachInfo(c, info);
             } catch (java.lang.Exception e) {
                 if (!mInstrumentation.onException(null, e)) {
@@ -7193,6 +7209,7 @@ public final class ActivityThread extends ClientTransactionHandler {
                 return null;
             }
         } else {
+        	//直接使用holder中的provider。也就是AMS返回的IContentProvider。
             provider = holder.provider;
             if (DEBUG_PROVIDER) Slog.v(TAG, "Installing external provider " + info.authority + ": "
                     + info.name);
@@ -7206,6 +7223,7 @@ public final class ActivityThread extends ClientTransactionHandler {
             IBinder jBinder = provider.asBinder();
             if (localProvider != null) {
                 ComponentName cname = new ComponentName(info.packageName, info.name);
+				//ProviderClientRecord是一个包装的类，将provider的句柄信息，holder信息，provider信息等等都放入到一个类中。
                 ProviderClientRecord pr = mLocalProvidersByName.get(cname);
                 if (pr != null) {
                     if (DEBUG_PROVIDER) {
@@ -7214,6 +7232,7 @@ public final class ActivityThread extends ClientTransactionHandler {
                     }
                     provider = pr.mProvider;
                 } else {
+					
                     holder = new ContentProviderHolder(info);
                     holder.provider = provider;
                     holder.noReleaseNeeded = true;
@@ -7274,11 +7293,15 @@ public final class ActivityThread extends ClientTransactionHandler {
     private void attach(boolean system, long startSeq) {
         sCurrentActivityThread = this;
         mSystemThread = system;
-        if (!system) {
+        if (!system) {//非系统给应用
             android.ddm.DdmHandleAppName.setAppName("<pre-initialized>", UserHandle.myUserId());
             RuntimeInit.setApplicationObject(mAppThread.asBinder());
+			//获取到ATMS的Binder对象
             final IActivityManager mgr = ActivityManager.getService();
             try {
+				//AMS里面的方法，
+				//mAppThread是个IBinder对象，
+				//这里将Ibinder对象关联到了AMS，这样AMS就可以通过这个对象进行Application的创建、生命周期的管理等等。
                 mgr.attachApplication(mAppThread, startSeq);
             } catch (RemoteException ex) {
                 throw ex.rethrowFromSystemServer();
@@ -7315,8 +7338,7 @@ public final class ActivityThread extends ClientTransactionHandler {
                 mInstrumentation = new Instrumentation();
                 mInstrumentation.basicInit(this);
 				//创建application对应的context对象。getSystemContext会创建第一个contextImpl，里面进行Loadedapk信息的初始化
-                ContextImpl context = ContextImpl.createAppContext(
-				this, getSystemContext().mPackageInfo);
+                ContextImpl context = ContextImpl.createAppContext(this, getSystemContext().mPackageInfo);
 				//创建application
                 mInitialApplication = context.mPackageInfo.makeApplication(true, null);
 				//调用oncreate方法
@@ -7532,7 +7554,7 @@ public final class ActivityThread extends ClientTransactionHandler {
         TrustedCertificateStore.setDefaultUserDirectory(configDir);
 
         Process.setArgV0("<pre-initialized>");
-        //准备looper
+        //准备主线程的looper
         Looper.prepareMainLooper();
 
         // Find the value for {@link #PROC_START_SEQ_IDENT} if provided on the command line.

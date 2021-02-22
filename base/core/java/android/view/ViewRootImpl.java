@@ -7012,7 +7012,9 @@ public final class ViewRootImpl implements ViewParent,
         if (mSurface.isValid()) {
             frameNumber = mSurface.getNextFrameNumber();
         }
-		//调用WMS的relayout强制进行重新layout操作
+		//通过mWindowSession这个binder对象向WMS发起relayout调用，强制进行重新layout操作
+        //mWindowSession是AP和WMS一个打通的通道，具体的实现是在WMS中
+        //这里传入了一个mSurfaceControl对象，在该方法中，会将创建的Surface对象保存到mSurfaceControl中。
         int relayoutResult = mWindowSession.relayout(mWindow, mSeq, params,
                 (int) (mView.getMeasuredWidth() * appScale + 0.5f),
                 (int) (mView.getMeasuredHeight() * appScale + 0.5f), viewVisibility,

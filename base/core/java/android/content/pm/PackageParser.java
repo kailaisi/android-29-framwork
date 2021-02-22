@@ -3814,12 +3814,13 @@ public class PackageParser {
                 owner.receivers.add(a);
 
             } else if (tagName.equals("service")) {
+				//解析静态广播
                 Service s = parseService(owner, res, parser, flags, outError, cachedArgs);
                 if (s == null) {
                     mParseError = PackageManager.INSTALL_PARSE_FAILED_MANIFEST_MALFORMED;
                     return false;
                 }
-
+				
                 hasServiceOrder |= (s.order != 0);
                 owner.services.add(s);
 

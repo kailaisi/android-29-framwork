@@ -107,6 +107,7 @@ class WindowSurfaceController {
                 .setFlags(flags)
                 .setMetadata(METADATA_WINDOW_TYPE, windowType)
                 .setMetadata(METADATA_OWNER_UID, ownerUid);
+        //创建一个SurfaceControl
         mSurfaceControl = b.build();
         Trace.traceEnd(TRACE_TAG_WINDOW_MANAGER);
     }
@@ -491,6 +492,7 @@ class WindowSurfaceController {
     }
 
     void getSurfaceControl(SurfaceControl outSurfaceControl) {
+        //将mSurfaceControl的一些数据拷贝到outSurfaceControl中。
         outSurfaceControl.copyFrom(mSurfaceControl);
     }
 

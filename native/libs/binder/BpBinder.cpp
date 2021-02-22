@@ -214,6 +214,7 @@ status_t BpBinder::transact(
     uint32_t code, const Parcel& data, Parcel* reply, uint32_t flags)
 {
     // Once a binder has died, it will never come back to life.
+    //如果binder已经died，则不会返回数据
     if (mAlive) {
         bool privateVendor = flags & FLAG_PRIVATE_VENDOR;
         // don't send userspace flags to the kernel
@@ -233,7 +234,8 @@ status_t BpBinder::transact(
                 return BAD_TYPE;
             }
         }
-
+		//调用IPCThreadState的transact方法，
+		//有参数mHandle对象，驱动就能知道具体的binder对象是是谁了。
         status_t status = IPCThreadState::self()->transact(
             mHandle, code, data, reply, flags);
         if (status == DEAD_OBJECT) mAlive = 0;
