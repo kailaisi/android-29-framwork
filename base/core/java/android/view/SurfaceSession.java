@@ -36,6 +36,7 @@ public final class SurfaceSession {
     /** Create a new connection with the surface flinger. */
     @UnsupportedAppUsage
     public SurfaceSession() {
+        //创建一个SurfaceComposerClient对象，并将其JNI对象的地址保存到mNativeClient中
         mNativeClient = nativeCreate();
     }
 

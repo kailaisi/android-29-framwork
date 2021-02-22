@@ -1278,10 +1278,11 @@ SurfaceComposerClient::SurfaceComposerClient(const sp<ISurfaceComposerClient>& c
 
 //在第一次创建的时候会调用该方法
 void SurfaceComposerClient::onFirstRef() {
+    //ComposerService::getComposerService()会获取SurfaceFlinger服务
     sp<ISurfaceComposer> sf(ComposerService::getComposerService());
     if (sf != nullptr && mStatus == NO_INIT) {
         sp<ISurfaceComposerClient> conn;
-        //创建
+        //创建和SurfaceFlinger服务的连接。也就是会创建一个SurfaceFlinger的client端
         conn = sf->createConnection();
         if (conn != nullptr) {
             mClient = conn;

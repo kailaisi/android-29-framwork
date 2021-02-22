@@ -209,7 +209,7 @@ public final class WindowManagerGlobal {
                     InputMethodManager.ensureDefaultInstanceForDefaultDisplayIfNecessary();
                     //获取了WMS对应的Binder句柄
                     IWindowManager windowManager = getWindowManagerService();
-                    //返回一个
+                    //返回一个IWindowSession对象
                     sWindowSession = windowManager.openSession(
                             new IWindowSessionCallback.Stub() {
                                 @Override
