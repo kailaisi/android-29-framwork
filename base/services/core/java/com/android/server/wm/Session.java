@@ -157,6 +157,7 @@ class Session extends IWindowSession.Stub implements IBinder.DeathRecipient {
             Rect outStableInsets, Rect outOutsets,
             DisplayCutout.ParcelableWrapper outDisplayCutout, InputChannel outInputChannel,
             InsetsState outInsetsState) {
+        //mService是WMS
         return mService.addWindow(this, window, seq, attrs, viewVisibility, displayId, outFrame,
                 outContentInsets, outStableInsets, outOutsets, outDisplayCutout, outInputChannel,
                 outInsetsState);
@@ -471,15 +472,18 @@ class Session extends IWindowSession.Stub implements IBinder.DeathRecipient {
         }
     }
 
+    //
     void windowAddedLocked(String packageName) {
         mPackageName = packageName;
         mRelayoutTag = "relayoutWindow: " + mPackageName;
+        //创建SurfaceSession对象。这里保证还有一个SurfaceSession对象。这
         if (mSurfaceSession == null) {
             if (WindowManagerService.localLOGV) Slog.v(
                 TAG_WM, "First window added to " + this + ", creating SurfaceSession");
+
             mSurfaceSession = new SurfaceSession();
-            if (SHOW_TRANSACTIONS) Slog.i(
-                    TAG_WM, "  NEW SURFACE SESSION " + mSurfaceSession);
+            if (SHOW_TRANSACTIONS) Slog.i(TAG_WM, "  NEW SURFACE SESSION " + mSurfaceSession);
+            //mService是WMS。而mSession则是WMS和APP之间创建的一个会话层。WMS会将所有的会话Session都添加到mSessions中去做统一的管理
             mService.mSessions.add(this);
             if (mLastReportedAnimatorScale != mService.getCurrentAnimatorScale()) {
                 mService.dispatchNewAnimatorScaleLocked(this);

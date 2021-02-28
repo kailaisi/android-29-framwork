@@ -786,6 +786,7 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
 
     void attach() {
         if (localLOGV) Slog.v(TAG, "Attaching " + this + " token=" + mToken);
+        //mSession这里的mSessioin对象是ViewRootImpl里的mWindowSession。
         mSession.windowAddedLocked(mAttrs.packageName);
     }
 

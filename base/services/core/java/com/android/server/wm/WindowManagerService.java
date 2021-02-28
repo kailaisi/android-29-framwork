@@ -1339,8 +1339,7 @@ public class WindowManagerService extends IWindowManager.Stub
                 final IBinder binder = attrs.token != null ? attrs.token : client.asBinder();
                 final boolean isRoundedCornerOverlay =
                         (attrs.privateFlags & PRIVATE_FLAG_IS_ROUNDED_CORNERS_OVERLAY) != 0;
-                token = new WindowToken(this, binder, type, false, displayContent,
-                        session.mCanAddInternalSystemWindow, isRoundedCornerOverlay);
+                token = new WindowToken(this, binder, type, false, displayContent,session.mCanAddInternalSystemWindow, isRoundedCornerOverlay);
             } else if (rootType >= FIRST_APPLICATION_WINDOW && rootType <= LAST_APPLICATION_WINDOW) {
                 atoken = token.asAppWindowToken();
                 if (atoken == null) {
@@ -1409,7 +1408,7 @@ public class WindowManagerService extends IWindowManager.Stub
                 token = new WindowToken(this, client.asBinder(), type, false, displayContent,
                         session.mCanAddInternalSystemWindow);
             }
-
+            //将Session对象封装到一个WindowState对象中
             final WindowState win = new WindowState(this, session, client, token, parentWindow,
                     appOp[0], seq, attrs, viewVisibility, session.mUid,
                     session.mCanAddInternalSystemWindow);
@@ -1485,6 +1484,7 @@ public class WindowManagerService extends IWindowManager.Stub
 
             origId = Binder.clearCallingIdentity();
 
+            //重点方法  
             win.attach();
             mWindowMap.put(client.asBinder(), win);
 
@@ -1983,6 +1983,7 @@ public class WindowManagerService extends IWindowManager.Stub
         long origId = Binder.clearCallingIdentity();
         final int displayId;
         synchronized (mGlobalLock) {
+            //将session，client等信息放入到WindowState中
             final WindowState win = windowForClientLocked(session, client, false);
             if (win == null) {
                 return 0;

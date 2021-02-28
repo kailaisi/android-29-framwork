@@ -465,6 +465,7 @@ public final class ViewRootImpl implements ViewParent,
     // Surface can never be reassigned or cleared (use Surface.clear()).
     @UnsupportedAppUsage
     public final Surface mSurface = new Surface();
+	//这里只是一个空壳，此时是无效的，只有调用relayout方法的时候，才会去创建真正的SurfaceControl
     private final SurfaceControl mSurfaceControl = new SurfaceControl();
 
     /**

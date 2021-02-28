@@ -34,12 +34,14 @@ static struct {
 
 
 sp<SurfaceComposerClient> android_view_SurfaceSession_getClient(JNIEnv* env, jobject surfaceSessionObj) {
-    //获取surfaceSessionObj对象的中的mNativeClient对象
+    //获取surfaceSessionObj对象的中的mNativeClient对象（native层的SurfaceComposerClient），对象是该类中的nativeCreate创建的
     return reinterpret_cast<SurfaceComposerClient*>(env->GetLongField(surfaceSessionObj, gSurfaceSessionClassInfo.mNativeClient));
 }
 
 
 static jlong nativeCreate(JNIEnv* env, jclass clazz) {
+    //直接生成一个SurfaceComposerClient对象。将其地址返回到Java层。
+    //在创建SurfaceComposerClient的时候，会创建和SurfaceFling的连接
     SurfaceComposerClient* client = new SurfaceComposerClient();
     client->incStrong((void*)nativeCreate);
     return reinterpret_cast<jlong>(client);
