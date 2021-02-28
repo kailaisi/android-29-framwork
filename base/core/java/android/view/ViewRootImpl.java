@@ -3628,6 +3628,7 @@ public final class ViewRootImpl implements ViewParent,
         boolean useAsyncReport = false;
         if (!dirty.isEmpty() || mIsAnimating || accessibilityFocusDirty) {
             if (mAttachInfo.mThreadedRenderer != null && mAttachInfo.mThreadedRenderer.isEnabled()) {
+				//如果启用了硬件加速，则使用硬件加速方式去绘制
                 // If accessibility focus moved, always invalidate the root.
                 boolean invalidateRoot = accessibilityFocusDirty || mInvalidateRootRequested;
                 mInvalidateRootRequested = false;
@@ -3691,7 +3692,7 @@ public final class ViewRootImpl implements ViewParent,
                     scheduleTraversals();
                     return false;
                 }
-
+				//如果没有启用硬件加速，则使用软件方式去绘制
                 if (!drawSoftware(surface, mAttachInfo, xOffset, yOffset,
                         scalingRequired, dirty, surfaceInsets)) {
                     return false;
@@ -3709,6 +3710,7 @@ public final class ViewRootImpl implements ViewParent,
     /**
      * @return true if drawing was successful, false if an error occurred
      */
+     //采用软件方式去进行绘制
     private boolean drawSoftware(Surface surface, AttachInfo attachInfo, int xoff, int yoff,
                                  boolean scalingRequired, Rect dirty, Rect surfaceInsets) {
 
@@ -3730,7 +3732,7 @@ public final class ViewRootImpl implements ViewParent,
             final int top = dirty.top;
             final int right = dirty.right;
             final int bottom = dirty.bottom;
-
+			//重点方法1        获取到surface，锁定画布
             canvas = mSurface.lockCanvas(dirty);
 
             // TODO: Do this in native
@@ -3783,12 +3785,13 @@ public final class ViewRootImpl implements ViewParent,
                 mTranslator.translateCanvas(canvas);
             }
             canvas.setScreenDensity(scalingRequired ? mNoncompatDensity : 0);
-
+			//重点方法2      进行view的绘制，这里会调用到我们View里面所覆写的onDraw()方法
             mView.draw(canvas);
 
             drawAccessibilityFocusedDrawableIfNeeded(canvas);
         } finally {
             try {
+				//重点方法3        解除锁定
                 surface.unlockCanvasAndPost(canvas);
             } catch (IllegalArgumentException e) {
                 Log.e(mTag, "Could not unlock surface", e);

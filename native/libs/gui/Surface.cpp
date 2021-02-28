@@ -572,6 +572,7 @@ int Surface::dequeueBuffer(android_native_buffer_t** buffer, int* fenceFd) {
     nsecs_t startTime = systemTime();
 
     FrameEventHistoryDelta frameTimestamps;
+    //最核心的方法   通过GBP从远端的buffer中申请一段buffer信息，并放到buf中
     status_t result = mGraphicBufferProducer->dequeueBuffer(&buf, &fence, reqWidth, reqHeight,
                                                             reqFormat, reqUsage, &mBufferAge,
                                                             enableFrameTimestamps ? &frameTimestamps
@@ -596,6 +597,7 @@ int Surface::dequeueBuffer(android_native_buffer_t** buffer, int* fenceFd) {
     // Write this while holding the mutex
     mLastDequeueStartTime = startTime;
 
+    //gbuf是对应的buffer的句柄
     sp<GraphicBuffer>& gbuf(mSlots[buf].buffer);
 
     // this should never happen
@@ -615,9 +617,11 @@ int Surface::dequeueBuffer(android_native_buffer_t** buffer, int* fenceFd) {
     }
 
     if ((result & IGraphicBufferProducer::BUFFER_NEEDS_REALLOCATION) || gbuf == nullptr) {
+        //如果本地的buffer是null或者远端的buffer更新了
         if (mReportRemovedBuffers && (gbuf != nullptr)) {
             mRemovedBuffers.push_back(gbuf);
         }
+        //更新buffer
         result = mGraphicBufferProducer->requestBuffer(buf, &gbuf);
         if (result != NO_ERROR) {
             ALOGE("dequeueBuffer: IGraphicBufferProducer::requestBuffer failed: %d", result);
@@ -700,7 +704,7 @@ int Surface::lockBuffer_DEPRECATED(android_native_buffer_t* buffer __attribute__
 int Surface::queueBuffer(android_native_buffer_t* buffer, int fenceFd) {
     ATRACE_CALL();
     ALOGV("Surface::queueBuffer");
-    Mutex::Autolock lock(mMutex);
+    Mutex::Autolock lock( );
     int64_t timestamp;
     bool isAutoTimestamp = false;
 
@@ -712,6 +716,7 @@ int Surface::queueBuffer(android_native_buffer_t* buffer, int fenceFd) {
     } else {
         timestamp = mTimestamp;
     }
+    //获取到buffer对应的编号
     int i = getSlotFromBufferLocked(buffer);
     if (i < 0) {
         if (fenceFd >= 0) {
@@ -805,6 +810,7 @@ int Surface::queueBuffer(android_native_buffer_t* buffer, int fenceFd) {
     }
 
     nsecs_t now = systemTime();
+    //重点方法    填充缓存区并返回给队列
     status_t err = mGraphicBufferProducer->queueBuffer(i, input, &output);
     mLastQueueDuration = systemTime() - now;
     if (err != OK)  {
@@ -1801,8 +1807,7 @@ static status_t copyBlt(
 
 // ----------------------------------------------------------------------------
 
-status_t Surface::lock(
-        ANativeWindow_Buffer* outBuffer, ARect* inOutDirtyBounds)
+status_t Surface::lock(ANativeWindow_Buffer* outBuffer, ARect* inOutDirtyBounds)
 {
     if (mLockedBuffer != nullptr) {
         ALOGE("Surface::lock failed, already locked");
@@ -1820,9 +1825,11 @@ status_t Surface::lock(
 
     ANativeWindowBuffer* out;
     int fenceFd = -1;
+    //可关心重点方法   创建ANativeWindowBuffer对象，并赋值
     status_t err = dequeueBuffer(&out, &fenceFd);
     ALOGE_IF(err, "dequeueBuffer failed (%s)", strerror(-err));
     if (err == NO_ERROR) {
+        //转为GraphicBuffer对象。这里申请的是后台buffer，主要用于在后台进行绘制。
         sp<GraphicBuffer> backBuffer(GraphicBuffer::getSelf(out));
         const Rect bounds(backBuffer->width, backBuffer->height);
 
@@ -1875,6 +1882,7 @@ status_t Surface::lock(
         }
 
         void* vaddr;
+        //锁定buffer，并且获取对应的buffer的地址，vaddr
         status_t res = backBuffer->lockAsync(
                 GRALLOC_USAGE_SW_READ_OFTEN | GRALLOC_USAGE_SW_WRITE_OFTEN,
                 newDirtyRegion.bounds(), &vaddr, fenceFd);
@@ -1885,11 +1893,13 @@ status_t Surface::lock(
         if (res != 0) {
             err = INVALID_OPERATION;
         } else {
+            //mLockedBuffer是surface中表示后台的buffer变量
             mLockedBuffer = backBuffer;
             outBuffer->width  = backBuffer->width;
             outBuffer->height = backBuffer->height;
             outBuffer->stride = backBuffer->stride;
             outBuffer->format = backBuffer->format;
+            //将申请的buffer的地址赋值给outbuffer的bits变量
             outBuffer->bits   = vaddr;
         }
     }
@@ -1904,14 +1914,16 @@ status_t Surface::unlockAndPost()
     }
 
     int fd = -1;
+    //解除锁定
     status_t err = mLockedBuffer->unlockAsync(&fd);
     ALOGE_IF(err, "failed unlocking buffer (%p)", mLockedBuffer->handle);
-
+    //
     err = queueBuffer(mLockedBuffer.get(), fd);
     ALOGE_IF(err, "queueBuffer (handle=%p) failed (%s)",
             mLockedBuffer->handle, strerror(-err));
-
+    //将后台buffer，升级为前台buffer，
     mPostedBuffer = mLockedBuffer;
+    //后台buffer进行清空
     mLockedBuffer = nullptr;
     return err;
 }

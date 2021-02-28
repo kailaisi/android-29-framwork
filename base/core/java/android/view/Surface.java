@@ -368,6 +368,7 @@ public class Surface implements Parcelable {
                 // we just refuse to re-lock the Surface.
                 throw new IllegalArgumentException("Surface was already locked");
             }
+			//通过native层的方法，给mCanvas赋值，
             mLockedObject = nativeLockCanvas(mNativeObject, mCanvas, inOutDirty);
             return mCanvas;
         }

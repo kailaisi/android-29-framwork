@@ -203,8 +203,8 @@ static inline SkColorType convertPixelFormat(PixelFormat format) {
     }
 }
 
-static jlong nativeLockCanvas(JNIEnv* env, jclass clazz,
-        jlong nativeObject, jobject canvasObj, jobject dirtyRectObj) {
+static jlong nativeLockCanvas(JNIEnv* env, jclass clazz,jlong nativeObject, jobject canvasObj, jobject dirtyRectObj) {
+    //获取到nativie层的surface对象
     sp<Surface> surface(reinterpret_cast<Surface *>(nativeObject));
 
     if (!isSurfaceValid(surface)) {
@@ -228,6 +228,7 @@ static jlong nativeLockCanvas(JNIEnv* env, jclass clazz,
     }
 
     ANativeWindow_Buffer outBuffer;
+    //根据绘制的区域大小，通过surface对象获取一块buffer。每次重新绘制都会申请buffer
     status_t err = surface->lock(&outBuffer, dirtyRectPtr);
     if (err < 0) {
         const char* const exception = (err == NO_MEMORY) ?
@@ -242,6 +243,7 @@ static jlong nativeLockCanvas(JNIEnv* env, jclass clazz,
                                          outBuffer.format == PIXEL_FORMAT_RGBX_8888
                                                  ? kOpaque_SkAlphaType : kPremul_SkAlphaType);
 
+    //将申请的buffer对象设置为bitmap的参数
     SkBitmap bitmap;
     ssize_t bpr = outBuffer.stride * bytesPerPixel(outBuffer.format);
     bitmap.setInfo(info, bpr);
@@ -252,6 +254,7 @@ static jlong nativeLockCanvas(JNIEnv* env, jclass clazz,
         bitmap.setPixels(NULL);
     }
 
+    //创建一个native层的Canvas对象，然后将bitmap进行赋值
     Canvas* nativeCanvas = GraphicsJNI::getNativeCanvas(env, canvasObj);
     nativeCanvas->setBitmap(bitmap);
 
@@ -270,6 +273,7 @@ static jlong nativeLockCanvas(JNIEnv* env, jclass clazz,
     // Create another reference to the surface and return it.  This reference
     // should be passed to nativeUnlockCanvasAndPost in place of mNativeObject,
     // because the latter could be replaced while the surface is locked.
+    //创建一个新的指针，指向surface，并增加引用计数器
     sp<Surface> lockedSurface(surface);
     lockedSurface->incStrong(&sRefBaseOwner);
     return (jlong) lockedSurface.get();
@@ -284,9 +288,10 @@ static void nativeUnlockCanvasAndPost(JNIEnv* env, jclass clazz,
 
     // detach the canvas from the surface
     Canvas* nativeCanvas = GraphicsJNI::getNativeCanvas(env, canvasObj);
+    //给canvas设置一个空的bitmap
     nativeCanvas->setBitmap(SkBitmap());
 
-    // unlock surface
+    //解除锁定，并将buffer返回给SurfaceFling的buffer队列进行绘制
     status_t err = surface->unlockAndPost();
     if (err < 0) {
         doThrowIAE(env);
@@ -294,7 +299,7 @@ static void nativeUnlockCanvasAndPost(JNIEnv* env, jclass clazz,
 }
 
 static void nativeAllocateBuffers(JNIEnv* /* env */ , jclass /* clazz */,
-        jlong nativeObject) {
+        jlong nativeObject) {W
     sp<Surface> surface(reinterpret_cast<Surface *>(nativeObject));
     if (!isSurfaceValid(surface)) {
         return;
