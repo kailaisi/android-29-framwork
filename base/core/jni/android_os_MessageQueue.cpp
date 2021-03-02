@@ -107,6 +107,7 @@ void NativeMessageQueue::raiseException(JNIEnv* env, const char* msg, jthrowable
 void NativeMessageQueue::pollOnce(JNIEnv* env, jobject pollObj, int timeoutMillis) {
     mPollEnv = env;
     mPollObj = pollObj;
+    //这里是管道的信息
     mLooper->pollOnce(timeoutMillis);
     mPollObj = NULL;
     mPollEnv = NULL;

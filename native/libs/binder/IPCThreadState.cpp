@@ -499,12 +499,13 @@ status_t IPCThreadState::getAndExecuteCommand()
     if (result >= NO_ERROR) {
         size_t IN = mIn.dataAvail();
         if (IN < sizeof(int32_t)) return result;
+        //读取要执行的指令
         cmd = mIn.readInt32();
         IF_LOG_COMMANDS() {
             alog << "Processing top-level Command: "
                  << getReturnString(cmd) << endl;
         }
-
+        //加锁
         pthread_mutex_lock(&mProcess->mThreadCountLock);
         mProcess->mExecutingThreadsCount++;
         if (mProcess->mExecutingThreadsCount >= mProcess->mMaxThreads &&
@@ -512,7 +513,7 @@ status_t IPCThreadState::getAndExecuteCommand()
             mProcess->mStarvationStartTimeMs = uptimeMillis();
         }
         pthread_mutex_unlock(&mProcess->mThreadCountLock);
-
+        //执行指令
         result = executeCommand(cmd);
 
         pthread_mutex_lock(&mProcess->mThreadCountLock);
@@ -583,16 +584,18 @@ void IPCThreadState::processPostWriteDerefs()
     mPostWriteStrongDerefs.clear();
 }
 
+//注册为Binder线程
 void IPCThreadState::joinThreadPool(bool isMain)
 {
     LOG_THREADPOOL("**** THREAD %p (PID %d) IS JOINING THE THREAD POOL\n", (void*)pthread_self(), getpid());
-
+    //写入标志位，标明线程是主动还是被动注册为Binder线程
     mOut.writeInt32(isMain ? BC_ENTER_LOOPER : BC_REGISTER_LOOPER);
 
     status_t result;
     do {
         processPendingDerefs();
         // now get the next command to be processed, waiting if necessary
+        //重点方法。获取到指令并不断的处理指令
         result = getAndExecuteCommand();
 
         if (result < NO_ERROR && result != TIMED_OUT && result != -ECONNREFUSED && result != -EBADF) {
@@ -665,6 +668,7 @@ status_t IPCThreadState::transact(int32_t handle,
 
     LOG_ONEWAY(">>>> SEND from pid %d uid %d %s", getpid(), getuid(),
         (flags & TF_ONE_WAY) == 0 ? "READ REPLY" : "ONE WAY");
+    //写数据
     err = writeTransactionData(BC_TRANSACTION, flags, handle, code, data, nullptr);
 
     if (err != NO_ERROR) {
@@ -691,6 +695,7 @@ status_t IPCThreadState::transact(int32_t handle,
         }
         #endif
         if (reply) {
+            //进行数据的交互，会有replay信息
             err = waitForResponse(reply);
         } else {
             Parcel fakeReply;
@@ -833,13 +838,14 @@ status_t IPCThreadState::waitForResponse(Parcel *reply, status_t *acquireResult)
 {
     uint32_t cmd;
     int32_t err;
-
+    //一个交互过程会有多次的数据交互过程，所以通过while来处理
     while (1) {
+        //因为往mOut中写入了数据，所以这里会将mOut中的数据写入到驱动中
         if ((err=talkWithDriver()) < NO_ERROR) break;
         err = mIn.errorCheck();
         if (err < NO_ERROR) break;
         if (mIn.dataAvail() == 0) continue;
-
+        //读取server端返回的指令
         cmd = (uint32_t)mIn.readInt32();
 
         IF_LOG_COMMANDS() {
@@ -869,15 +875,17 @@ status_t IPCThreadState::waitForResponse(Parcel *reply, status_t *acquireResult)
             }
             goto finish;
 
-        case BR_REPLY:
+        case BR_REPLY://client端收到了server端返回的reply指令
             {
                 binder_transaction_data tr;
+                //将mIn中的数据读出来，读取到tr中
                 err = mIn.read(&tr, sizeof(tr));
                 ALOG_ASSERT(err == NO_ERROR, "Not enough command data for brREPLY");
                 if (err != NO_ERROR) goto finish;
 
                 if (reply) {
                     if ((tr.flags & TF_STATUS_CODE) == 0) {
+                        //将binder_tr中的数据转化处理，赋值给reply对象
                         reply->ipcSetDataReference(
                             reinterpret_cast<const uint8_t*>(tr.data.ptr.buffer),
                             tr.data_size,
@@ -973,6 +981,7 @@ status_t IPCThreadState::talkWithDriver(bool doReceive)
             alog << "About to read/write, write size = " << mOut.dataSize() << endl;
         }
 #if defined(__ANDROID__)
+        //和Binder驱动进行交互
         if (ioctl(mProcess->mDriverFD, BINDER_WRITE_READ, &bwr) >= 0)
             err = NO_ERROR;
         else
@@ -1026,6 +1035,7 @@ status_t IPCThreadState::talkWithDriver(bool doReceive)
 status_t IPCThreadState::writeTransactionData(int32_t cmd, uint32_t binderFlags,
     int32_t handle, uint32_t code, const Parcel& data, status_t* statusBuffer)
 {
+    //用于传输的数据结构
     binder_transaction_data tr;
 
     tr.target.ptr = 0; /* Don't pass uninitialized stack data to a remote process */
@@ -1038,6 +1048,7 @@ status_t IPCThreadState::writeTransactionData(int32_t cmd, uint32_t binderFlags,
 
     const status_t err = data.errorCheck();
     if (err == NO_ERROR) {
+        //赋值相关数据
         tr.data_size = data.ipcDataSize();
         tr.data.ptr.buffer = data.ipcData();
         tr.offsets_size = data.ipcObjectsCount()*sizeof(binder_size_t);
@@ -1052,8 +1063,9 @@ status_t IPCThreadState::writeTransactionData(int32_t cmd, uint32_t binderFlags,
     } else {
         return (mLastError = err);
     }
-
+    //先写命令，再写数据
     mOut.writeInt32(cmd);
+    //这里传入的是数据所对应的地址，而不是传输的整个数据
     mOut.write(&tr, sizeof(tr));
 
     return NO_ERROR;
@@ -1071,7 +1083,6 @@ status_t IPCThreadState::executeCommand(int32_t cmd)
     BBinder* obj;
     RefBase::weakref_type* refs;
     status_t result = NO_ERROR;
-
     switch ((uint32_t)cmd) {
     case BR_ERROR:
         result = mIn.readInt32();
@@ -1146,7 +1157,7 @@ status_t IPCThreadState::executeCommand(int32_t cmd)
         break;
 
     case BR_TRANSACTION_SEC_CTX:
-    case BR_TRANSACTION:
+    case BR_TRANSACTION://client端将请求发送给驱动，然后驱动将请求发送给server端，server端就会收到这个请求指令
         {
             binder_transaction_data_secctx tr_secctx;
             binder_transaction_data& tr = tr_secctx.transaction_data;
@@ -1154,6 +1165,7 @@ status_t IPCThreadState::executeCommand(int32_t cmd)
             if (cmd == (int) BR_TRANSACTION_SEC_CTX) {
                 result = mIn.read(&tr_secctx, sizeof(tr_secctx));
             } else {
+                //将数据读到tr中
                 result = mIn.read(&tr, sizeof(tr));
                 tr_secctx.secctx = 0;
             }
@@ -1161,7 +1173,7 @@ status_t IPCThreadState::executeCommand(int32_t cmd)
             ALOG_ASSERT(result == NO_ERROR,
                 "Not enough command data for brTRANSACTION");
             if (result != NO_ERROR) break;
-
+            //buffer是给Server端的上层使用的，
             Parcel buffer;
             buffer.ipcSetDataReference(
                 reinterpret_cast<const uint8_t*>(tr.data.ptr.buffer),
@@ -1209,6 +1221,9 @@ status_t IPCThreadState::executeCommand(int32_t cmd)
             if (tr.target.ptr) {
                 // We only have a weak reference on the target object, so we must first try to
                 // safely acquire a strong reference before doing anything else with it.
+                //这里是两个方法的合集。
+                //1.reinterpret_cast<BBinder*>(tr.cookie)。用于取出tr中的Binder的实体，
+                //2.BBinder的->transact方法来将数据传输给上层进行处理，交给上层的时候，有code，buffer和replay，上层处理完成之后，会将返回的数据通过reply返回回来
                 if (reinterpret_cast<RefBase::weakref_type*>(
                         tr.target.ptr)->attemptIncStrong(this)) {
                     error = reinterpret_cast<BBinder*>(tr.cookie)->transact(tr.code, buffer,
@@ -1228,6 +1243,7 @@ status_t IPCThreadState::executeCommand(int32_t cmd)
             if ((tr.flags & TF_ONE_WAY) == 0) {
                 LOG_ONEWAY("Sending reply to %d!", mCallingPid);
                 if (error < NO_ERROR) reply.setError(error);
+                //将数据发送给Binder驱动，返回给client端
                 sendReply(reply, 0);
             } else {
                 if (error != OK || reply.dataSize() != 0) {

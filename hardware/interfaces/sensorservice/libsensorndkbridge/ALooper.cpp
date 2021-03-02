@@ -40,8 +40,7 @@ void ALooper::wake() {
     mCondition.signal();
 }
 
-int ALooper::pollOnce(
-        int timeoutMillis, int *outFd, int *outEvents, void **outData) {
+int ALooper::pollOnce(int timeoutMillis, int *outFd, int *outEvents, void **outData) {
     if (outFd) { *outFd = 0; }
     if (outEvents) { *outEvents = 0; }
     if (outData) { *outData = NULL; }
@@ -53,13 +52,14 @@ int ALooper::pollOnce(
         waitUntilNs = systemTime(SYSTEM_TIME_MONOTONIC) + timeoutMillis * 1000000LL;
     }
 
+    //锁
     Mutex::Autolock autoLock(mLock);
     int64_t nowNs;
-    while ((timeoutMillis < 0
-                || (nowNs = systemTime(SYSTEM_TIME_MONOTONIC)) < waitUntilNs)
+    while ((timeoutMillis < 0|| (nowNs = systemTime(SYSTEM_TIME_MONOTONIC)) < waitUntilNs)
             && mReadyQueues.empty()
             && !mAwoken) {
         if (timeoutMillis < 0) {
+            //wait进行唤醒
             mCondition.wait(mLock);
         } else {
             mCondition.waitRelative(mLock, waitUntilNs - nowNs);

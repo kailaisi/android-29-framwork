@@ -39,7 +39,7 @@ import java.util.ArrayList;
  * <p>You can retrieve the MessageQueue for the current thread with
  * {@link Looper#myQueue() Looper.myQueue()}.
  */
-public final class MessageQueue {
+public final class MƒessageQueue {
     private static final String TAG = "MessageQueue";
     private static final boolean DEBUG = false;
 
