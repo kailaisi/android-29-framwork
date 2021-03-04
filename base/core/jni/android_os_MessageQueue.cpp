@@ -74,11 +74,11 @@ bool MessageQueue::raiseAndClearException(JNIEnv* env, const char* msg) {
     }
     return false;
 }
-
-NativeMessageQueue::NativeMessageQueue() :
-        mPollEnv(NULL), mPollObj(NULL), mExceptionObj(NULL) {
+mPollEnv(NULL), mPollObj(NULL), mExceptionObj(NULL) {
+            //获取当前所持有的Looper
     mLooper = Looper::getForThread();
     if (mLooper == NULL) {
+        //native层的Looper，它是整个Handler的核心部分
         mLooper = new Looper(false);
         Looper::setForThread(mLooper);
     }
@@ -107,7 +107,7 @@ void NativeMessageQueue::raiseException(JNIEnv* env, const char* msg, jthrowable
 void NativeMessageQueue::pollOnce(JNIEnv* env, jobject pollObj, int timeoutMillis) {
     mPollEnv = env;
     mPollObj = pollObj;
-    //这里是管道的信息
+    //丢给了Looper，并且带着超时时间
     mLooper->pollOnce(timeoutMillis);
     mPollObj = NULL;
     mPollEnv = NULL;
@@ -171,6 +171,7 @@ sp<MessageQueue> android_os_MessageQueue_getMessageQueue(JNIEnv* env, jobject me
 }
 
 static jlong android_os_MessageQueue_nativeInit(JNIEnv* env, jclass clazz) {
+    //获取native层的NativeMessageQueue对象
     NativeMessageQueue* nativeMessageQueue = new NativeMessageQueue();
     if (!nativeMessageQueue) {
         jniThrowRuntimeException(env, "Unable to allocate native queue");
@@ -189,6 +190,7 @@ static void android_os_MessageQueue_nativeDestroy(JNIEnv* env, jclass clazz, jlo
 static void android_os_MessageQueue_nativePollOnce(JNIEnv* env, jobject obj,
         jlong ptr, jint timeoutMillis) {
     NativeMessageQueue* nativeMessageQueue = reinterpret_cast<NativeMessageQueue*>(ptr);
+    //转发给NativeMessageQueue的pollOnce方法
     nativeMessageQueue->pollOnce(env, obj, timeoutMillis);
 }
 

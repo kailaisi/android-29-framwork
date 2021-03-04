@@ -67,7 +67,7 @@ public final class MƒessageQueue {
     // Barriers are indicated by messages with a null target whose arg1 field carries the token.
     @UnsupportedAppUsage
     private int mNextBarrierToken;
-
+    //Native层进行初始化
     private native static long nativeInit();
     private native static void nativeDestroy(long ptr);
     @UnsupportedAppUsage
@@ -332,7 +332,7 @@ public final class MƒessageQueue {
         }
         //置为-1，
         int pendingIdleHandlerCount = -1; // -1 only during first iteration
-        //用于确定下一个消息的执行时间
+        //用于确定下一个消息的执行时间。先设置为0，是为了直接检查当前有没有需要执行的msg，如果没有，那么这个nextPoll就会置为-1或者一个正数值
         int nextPollTimeoutMillis = 0;
         for (;;) {
             if (nextPollTimeoutMillis != 0) {

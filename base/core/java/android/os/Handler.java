@@ -97,13 +97,18 @@ public class Handler {
      */
     public void dispatchMessage(@NonNull Message msg) {
         if (msg.callback != null) {
+            //如果是通过CallBack创建的，则直接调用它的run方法。比如说view.postDelay()方法创建的    
             handleCallback(msg);
         } else {
             if (mCallback != null) {
+                //handler有没有全局callback
                 if (mCallback.handleMessage(msg)) {
+                    //如果全局callback返回了true，那么就不再调用下一步处理了。
+                    //这里可以hook方法，然后返回false，这样不会影响标准业务，但是可以在里面修改 msg消息
                     return;
                 }
             }
+            //调用handler复写的handleMessage方法
             handleMessage(msg);
         }
     }
