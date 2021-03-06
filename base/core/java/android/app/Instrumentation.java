@@ -385,7 +385,10 @@ public class Instrumentation {
      *                  idle.
      */
     public void waitForIdle(Runnable recipient) {
+    	//往MessageQueue中增加了个idler消息
         mMessageQueue.addIdleHandler(new Idler(recipient));
+		//如果当前没有消息，Handler处于Idler状态，那么添加IdleHandler是不会进行触发的，只有等下一次Idle状态才会触发
+		//这里增加一个空的消息，就能保证上面的idler会执行
         mThread.getHandler().post(new EmptyRunnable());
     }
 
@@ -394,11 +397,16 @@ public class Instrumentation {
      * from the main application thread -- use {@link #start} to execute
      * instrumentation in its own thread.
      */
+    //同步等待线程的Idle状态
     public void waitForIdleSync() {
         validateNotAppThread();
         Idler idler = new Idler(null);
+		//往MessageQueue中增加了个idler消息
         mMessageQueue.addIdleHandler(idler);
+		//如果当前没有消息，Handler处于Idler状态，那么添加IdleHandler是不会进行触发的，只有等下一次Idle状态才会触发
+		//这里增加一个空的消息，就能保证上面的idler会执行
         mThread.getHandler().post(new EmptyRunnable());
+		//通过wait方法，进行线程等待
         idler.waitForIdle();
     }
 
@@ -2278,12 +2286,15 @@ public class Instrumentation {
 
         public final boolean queueIdle() {
             if (mCallback != null) {
+				//回调执行
                 mCallback.run();
             }
             synchronized (this) {
+            	//当前处于idle状态，就会唤醒
                 mIdle = true;
                 notifyAll();
             }
+			 //返回false，表示只会执行一次
             return false;
         }
 

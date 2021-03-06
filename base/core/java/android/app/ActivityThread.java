@@ -2193,8 +2193,10 @@ public final class ActivityThread extends ClientTransactionHandler {
     final class GcIdler implements MessageQueue.IdleHandler {
         @Override
         public final boolean queueIdle() {
+        	//调用一次GC
             doGcIfNeeded();
             purgePendingResources();
+			//返回了false，证明是一次性的操作
             return false;
         }
     }
@@ -2541,6 +2543,7 @@ public final class ActivityThread extends ClientTransactionHandler {
     void scheduleGcIdler() {
         if (!mGcIdlerScheduled) {
             mGcIdlerScheduled = true;
+			//往主线程增加了一个IdleHandler
             Looper.myQueue().addIdleHandler(mGcIdler);
         }
         mH.removeMessages(H.GC_WHEN_IDLE);

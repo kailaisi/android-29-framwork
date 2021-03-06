@@ -357,7 +357,7 @@ public final class MƒessageQueue {
                 Message prevMsg = null;
                 Message msg = mMessages;
                 if (msg != null && msg.target == null) {
-                    //这里msg的target为null，表明这是一个同步屏障。所以当我们设置了同步屏障以后，会优先执行异步消息。
+                    //这里msg的target为null，表明这是一个同步屏障。当我们设置了同步屏障以后，会优先执行异步消息。
                     //如果没有找到异步消息的话，下面会设置nextPollTimeoutMillis = -1，从而导致睡眠，直到有一个异步消息为止
                     // Stalled by a barrier.  Find the next asynchronous message in the queue.
                     do {
@@ -403,10 +403,12 @@ public final class MƒessageQueue {
                 // in the queue (possibly a barrier) is due to be handled in the future.
                 //第一次空闲，那么获取空闲队列的队列大小。
                 if (pendingIdleHandlerCount < 0&& (mMessages == null || now < mMessages.when)) {
+					//获取当前的IdlerHandler的数量
                     pendingIdleHandlerCount = mIdleHandlers.size();
                 }
                 if (pendingIdleHandlerCount <= 0) {
                     // No idle handlers to run.  Loop and wait some more.
+                    //当前没有要处理的IdleHandler
                     mBlocked = true;
                     continue;
                 }
@@ -509,11 +511,13 @@ public final class MƒessageQueue {
         synchronized (this) {
             final int token = mNextBarrierToken++;
             final Message msg = Message.obtain();
-			//插入的msg消息的target并没有进行设置，所以会是空。也就是说向任务队列中插入一个target为null的Message消息，来表示一个同步屏障的消息
-            msg.markInUse();
+			//插入的msg消息的target并没有进行设置，所以会是null。也就是说向任务队列中插入一个target为null的Message消息，来表示一个同步屏障的消息
+			//因为target为空，所以是没有对应的handler去执行这个msg消息的
+			msg.markInUse();
+			//消息屏障也是有对应的执行时间的
             msg.when = when;
             msg.arg1 = token;
-
+			//将消息屏障插入到消息队列对应的位置。
             Message prev = null;
             Message p = mMessages;
             if (when != 0) {
@@ -529,6 +533,7 @@ public final class MƒessageQueue {
                 msg.next = p;
                 mMessages = msg;
             }
+			//返回token，token是对应的屏障的序列号。这个token主要是用来移除消息屏障的
             return token;
         }
     }
@@ -544,12 +549,14 @@ public final class MƒessageQueue {
      * @hide
      */
     @TestApi
+    //将消息屏障从消息队列移除
     public void removeSyncBarrier(int token) {
         // Remove a sync barrier token from the queue.
         // If the queue is no longer stalled by a barrier then wake it.
         synchronized (this) {
             Message prev = null;
             Message p = mMessages;
+			//找到target为空的message消息
             while (p != null && (p.target != null || p.arg1 != token)) {
                 prev = p;
                 p = p.next;
@@ -558,11 +565,16 @@ public final class MƒessageQueue {
                 throw new IllegalStateException("The specified message queue synchronization "
                         + " barrier token has not been posted or has already been removed.");
             }
+			//记录是否需要唤醒线程
             final boolean needWake;
+			//将消barrier从消息队列移除
             if (prev != null) {
                 prev.next = p.next;
+				//barrier消息并为位于消息队列头，证明还没有执行到
                 needWake = false;
             } else {
+				//barrier消息位于消息队列头部，那么当前的barrier消息已经执行到了，那么后面的正常的Message就不会执行
+				//这时候，移除了barrier消息，那么为了能够执行后面的Message消息，需要进行唤醒
                 mMessages = p.next;
                 needWake = mMessages == null || mMessages.target != null;
             }
@@ -570,8 +582,8 @@ public final class MƒessageQueue {
 
             // If the loop is quitting then it is already awake.
             // We can assume mPtr != 0 when mQuitting is false.
-            //唤醒looper循环
             if (needWake && !mQuitting) {
+				//唤醒looper循环
                 nativeWake(mPtr);
             }
         }

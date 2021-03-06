@@ -120,6 +120,7 @@ void NativeMessageQueue::pollOnce(JNIEnv* env, jobject pollObj, int timeoutMilli
 }
 
 void NativeMessageQueue::wake() {
+	//调用了Looper的wake()方法，Looper.cpp
     mLooper->wake();
 }
 
