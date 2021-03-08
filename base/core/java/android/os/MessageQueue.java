@@ -222,7 +222,8 @@ public final class MƒessageQueue {
      * @param fd The file descriptor whose listener will be unregistered.
      *
      * @see OnFileDescriptorEventListener
-     * @see #addOnFileDescriptorEventListener
+
+
      */
     public void removeOnFileDescriptorEventListener(@NonNull FileDescriptor fd) {
         if (fd == null) {
@@ -612,7 +613,8 @@ public final class MƒessageQueue {
             boolean needWake;
             if (p == null || when == 0 || when < p.when) {
                 // New head, wake up the event queue if blocked.
-                //如果当前队列没有要处理的消息，或者新入队的消息需要立即处理或者如对消息的发送时间比当前要处理的小时发送时间早
+                //当前消息插入到队列头。
+                //如果当前队列没有要处理的消息，或者新入队的消息需要立即处理或者如对消息的发送时间比当前要处理的消息发送时间早
                 //那么将消息放入到队列头，并唤醒消息
                 msg.next = p;
                 mMessages = msg;
@@ -621,7 +623,8 @@ public final class MƒessageQueue {
                 // Inserted within the middle of the queue.  Usually we don't have to wake
                 // up the event queue unless there is a barrier at the head of the queue
                 // and the message is the earliest asynchronous message in the queue.
-                //将消息放入到队列queue中。并不需要唤醒消息
+                //将消息没有插入到队列头。
+                //当前，而且当前线程是休眠的，而且队列头是消息屏障，而且当前消息是异步消息，那么就先按照需要唤醒处理
                 needWake = mBlocked && p.target == null && msg.isAsynchronous();
                 Message prev;
                 for (;;) {
@@ -631,6 +634,7 @@ public final class MƒessageQueue {
                         break;
                     }
                     if (needWake && p.isAsynchronous()) {
+						//如果插入的消息前面还有异步消息，说明当前消息肯定是没必要直接唤醒的，所以设置为不需要唤醒
                         needWake = false;
                     }
                 }
