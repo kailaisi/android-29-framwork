@@ -476,7 +476,7 @@ class Session extends IWindowSession.Stub implements IBinder.DeathRecipient {
     void windowAddedLocked(String packageName) {
         mPackageName = packageName;
         mRelayoutTag = "relayoutWindow: " + mPackageName;
-        //创建SurfaceSession对象。这里保证还有一个SurfaceSession对象。这
+        //创建SurfaceSession对象。这里保证只有一个SurfaceSession对象。
         if (mSurfaceSession == null) {
             if (WindowManagerService.localLOGV) Slog.v(
                 TAG_WM, "First window added to " + this + ", creating SurfaceSession");
