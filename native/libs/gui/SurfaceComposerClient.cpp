@@ -67,14 +67,14 @@ ComposerService::ComposerService()
 void ComposerService::connectLocked() {
     const String16 name("SurfaceFlinger");
 	//通过getService方法获取SurfaceFlinger服务，并将获取到的服务保存到mComposerService变量中
-    //这样就将SuraceComposerClient和SurfaceFling进行了一个绑定
+    //这样就将SuraceComposerClient和SurfaceFling进行了一个绑定。这里使用while循环，是因为存在SurfaceFling可能还没启动的情况。
     while (getService(name, &mComposerService) != NO_ERROR) {
         usleep(250000);
     }
     assert(mComposerService != nullptr);
 
     // Create the death listener.
-    //创建死亡回调
+    //创建销毁时候的回调
     class DeathObserver : public IBinder::DeathRecipient {
         ComposerService& mComposerService;
         virtual void binderDied(const wp<IBinder>& who) {
